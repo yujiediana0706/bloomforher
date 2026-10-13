@@ -126,8 +126,8 @@ const secondaryBtn =
 export default function HomePage() {
   return (
     <div className="hero-warm rounded-[2rem] border border-white/70 p-4 shadow-card sm:p-6 lg:p-8">
-      {/* Hero：左文右图 */}
-      <section className="grid items-center gap-8 lg:grid-cols-2">
+      {/* Hero：左文右图（≥768px 并排，贴近 mockup 布局） */}
+      <section className="grid items-center gap-8 md:grid-cols-2">
         <div className="pt-2 lg:pt-6">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-coral-500">
             ReBloom AI · Your experience. A brighter future in the AI era.
@@ -163,11 +163,11 @@ export default function HomePage() {
             className="absolute inset-0 h-full w-full rounded-[2rem] object-cover"
           />
           {/* 雷达图浮卡 */}
-          <div className="absolute left-0 top-5 w-44 rounded-2xl bg-white/90 p-3 shadow-card backdrop-blur">
+          <div className="absolute left-0 top-5 w-40 rounded-2xl bg-white/90 p-2.5 shadow-card backdrop-blur sm:w-44 sm:p-3">
             <p className="text-center text-[11px] font-black text-slateblue-900">
               职业画像
             </p>
-            <ResponsiveContainer width="100%" height={128}>
+            <ResponsiveContainer width="100%" height={112}>
               <RadarChart data={RADAR_DATA} outerRadius="74%">
                 <PolarGrid stroke="#d7dbe2" />
                 <PolarAngleAxis
@@ -184,8 +184,8 @@ export default function HomePage() {
               </RadarChart>
             </ResponsiveContainer>
           </div>
-          {/* 功能浮卡 */}
-          <div className="absolute bottom-5 right-0 w-52 space-y-2 rounded-2xl bg-white/90 p-3 shadow-card backdrop-blur">
+          {/* 功能浮卡（窄屏隐藏，避免与雷达卡压盖） */}
+          <div className="absolute bottom-5 right-0 hidden w-48 space-y-2 rounded-2xl bg-white/90 p-3 shadow-card backdrop-blur sm:block">
             {HERO_FLOATS.map((f) => {
               const Icon = f.icon;
               return (
