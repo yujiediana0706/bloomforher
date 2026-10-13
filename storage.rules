@@ -1,0 +1,22 @@
+rules_version = '2';
+
+// 「ReBloom AI · 她径」Cloud Storage 规则
+// resumes/{uid}/**：仅本人可读写（简历/证明文件为私有资料）
+// docs/{uid}/**   ：仅本人可读写（认证材料等）
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /resumes/{uid}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /docs/{uid}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

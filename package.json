@@ -1,12 +1,32 @@
 {
-  "name": "bloom-ai-her-path",
-  "workspaces": ["frontend", "backend"], 
+  "name": "rebloom-ai-her-path",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ReBloom AI · 她径 — 女性 AI 职业转型赋能平台（原型）",
   "scripts": {
-    "dev-frontend": "npm run dev --prefix frontend",
-    "dev-backend": "npm run dev --prefix backend",
-    "dev": "concurrently \"npm run dev-frontend\" \"npm run dev-backend\""
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "seed": "tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "next": "14.2.15",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "lucide-react": "^0.454.0",
+    "recharts": "^2.13.2"
   },
   "devDependencies": {
-    "concurrently": "latest"
+    "@types/node": "^20.16.11",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "firebase-admin": "^12.6.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
   }
 }

@@ -1,0 +1,151 @@
+rules_version = '2';
+
+// 「ReBloom AI · 她径」Firestore 安全规则（对齐规范 §6）
+//
+// 安全设计要点：
+// - 敏感聚合数据（证据、预约、交易、评价）一律禁止客户端直写，全部经服务端 API（admin SDK）。
+// - 用户私有档案 users/{uid} 仅本人可读；对社区公开的字段同步到 publicProfiles/{uid}（登录用户只读）。
+// - plazaPosts 主文档不含 authorId（authorId 存于 private/meta 子文档，仅作者可读），
+//   因此匿名帖作者身份不会被其他用户读取；willingToHelp 列表仅帖主可读。
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // ——— 用户档案 ———
+    match /users/{uid} {
+      allow read: if isSelf(uid);
+      allow create, update: if isSelf(uid);
+      allow delete: if false;
+    }
+
+    // 社区公开档案（name/bio/skills/coffeeAvailability/communityAgreed 等公开字段）
+    match /publicProfiles/{uid} {
+      allow read: if signedIn();
+      allow write: if isSelf(uid);
+    }
+
+    // ——— AI 旅程产物：仅本人 ———
+    match /skillProfiles/{uid} {
+      allow read, write: if isSelf(uid);
+    }
+    match /opportunityReports/{uid} {
+      allow read, write: if isSelf(uid);
+    }
+    match /returnPlans/{uid} {
+      allow read, write: if isSelf(uid);
+    }
+    match /planTasks/{id} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+    match /labTasks/{id} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // ——— 证据库：仅本人可读，写全部走 API ———
+    match /evidences/{id} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // ——— 对话广场 ———
+    match /plazaPosts/{postId} {
+      // 主文档不含 authorId，登录用户可读
+      allow read: if signedIn();
+      allow write: if false; // 发帖/评论/加油均走 API
+
+      match /comments/{cid} {
+        allow read: if signedIn();
+        allow write: if false;
+      }
+
+      // 仅帖主可读愿意帮助者列表
+      match /willingToHelp/{uid} {
+        allow read: if signedIn() &&
+          get(/databases/$(database)/documents/plazaPosts/$(postId)/private/meta).data.authorId == request.auth.uid;
+        allow write: if false;
+      }
+
+      // 帖主身份私有映射：非本人不可读
+      match /private/{docId} {
+        allow read: if signedIn() && resource.data.authorId == request.auth.uid;
+        allow write: if false;
+      }
+    }
+
+    // ——— Peer Coffee Chat：仅双方可读 ———
+    match /peerChats/{id} {
+      allow read: if signedIn() &&
+        (resource.data.requesterId == request.auth.uid || resource.data.helperId == request.auth.uid);
+      allow write: if false;
+    }
+
+    // ——— 导师市场：公开只读（导师文档永不含 meetingLink）———
+    match /mentors/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /mentorSlots/{id} {
+      allow read: if true;   // 档期展示
+      allow write: if false; // 预约事务走 API
+    }
+
+    // ——— 交易与评价：仅相关方读，写全部走 API ———
+    match /bookings/{id} {
+      allow read: if signedIn() &&
+        (resource.data.coacheeId == request.auth.uid || resource.data.mentorUserId == request.auth.uid);
+      allow write: if false;
+    }
+    match /packageOrders/{id} {
+      allow read: if signedIn() && resource.data.coacheeId == request.auth.uid;
+      allow write: if false;
+    }
+    match /reviews/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /endorsements/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // ——— 圈子通用 ———
+    match /posts/{postId} {
+      allow read: if signedIn();
+      // 作者可经规则直写，其余场景走 API
+      allow create: if signedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.authorId == request.auth.uid;
+
+      match /comments/{cid} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.resource.data.authorId == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+    match /kudos/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update, delete: if false;
+    }
+    match /reports/{id} {
+      allow create: if signedIn();
+      allow read: if false;
+    }
+
+    // ——— AI Coach 对话记录：仅本人 ———
+    match /conversations/{uid} {
+      allow read, write: if isSelf(uid);
+      match /messages/{mid} {
+        allow read, write: if isSelf(uid);
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { findUser, getDB, nowIso } from '@/lib/store';
+import { getUidFromRequest } from '@/lib/session';
+
+export const runtime = 'nodejs';
+
+const ALLOWED_FIELDS = [
+  'name',
+  'currentRole',
+  'targetRole',
+  'skills',
+  'goals',
+  'backgroundSummary',
+  'lifeStage',
+  'confidenceSelf',
+  'journeyStep',
+  'communityAgreed',
+  'coffeeAvailability',
+  'constraints',
+  'segment',
+  'resumePath',
+  'avatarUrl',
+] as const;
+
+export async function GET(req: NextRequest) {
+  const uid = getUidFromRequest(req);
+  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  const user = findUser(getDB(), uid);
+  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  return NextResponse.json({ user });
+}
+
+export async function POST(req: NextRequest) {
+  const uid = getUidFromRequest(req);
+  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  const body = (await req.json().catch(() => null)) as Record<
+    string,
+    unknown
+  > | null;
+  if (!body || typeof body !== 'object') {
+    return NextResponse.json({ error: '参数错误' }, { status: 400 });
+  }
+  const db = getDB();
+  const user = findUser(db, uid);
+  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+
+  for (const key of ALLOWED_FIELDS) {
+    if (key in body) {
+      // 原型阶段允许直接合并这些可编辑字段
+      (user as unknown as Record<string, unknown>)[key] = body[key];
+    }
+  }
+  user.updatedAt = nowIso();
+  return NextResponse.json({ user });
+}
