@@ -154,21 +154,21 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* 右侧视觉区：插画 + 雷达图浮卡 + 功能浮卡 */}
-        <div className="relative mx-auto h-[360px] w-full max-w-md sm:h-[420px]">
+        {/* 右侧视觉区：插画 + 挂边雷达卡 + 右下浮卡 */}
+        <div className="relative mx-auto h-[360px] w-full max-w-md sm:h-[440px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={HERO_IMG}
             alt="AI 时代的女性职业画像"
-            className="absolute inset-0 h-full w-full rounded-[2rem] object-cover"
+            className="absolute inset-0 h-full w-full rounded-[2rem] object-cover object-[center_18%]"
           />
-          {/* 雷达图浮卡 */}
-          <div className="absolute left-0 top-5 w-40 rounded-2xl bg-white/90 p-2.5 shadow-card backdrop-blur sm:w-44 sm:p-3">
-            <p className="text-center text-[11px] font-black text-slateblue-900">
+          {/* 雷达图浮卡：挂在左缘外，避开人物面部 */}
+          <div className="absolute -left-3 top-12 w-36 rounded-2xl bg-white/95 p-2 shadow-lg backdrop-blur sm:-left-6 sm:top-16 sm:w-40 sm:p-2.5">
+            <p className="text-center text-[10px] font-black text-slateblue-900 sm:text-[11px]">
               职业画像
             </p>
-            <ResponsiveContainer width="100%" height={112}>
-              <RadarChart data={RADAR_DATA} outerRadius="74%">
+            <ResponsiveContainer width="100%" height={104}>
+              <RadarChart data={RADAR_DATA} outerRadius="78%">
                 <PolarGrid stroke="#d7dbe2" />
                 <PolarAngleAxis
                   dataKey="dim"
@@ -184,8 +184,8 @@ export default function HomePage() {
               </RadarChart>
             </ResponsiveContainer>
           </div>
-          {/* 功能浮卡（窄屏隐藏，避免与雷达卡压盖） */}
-          <div className="absolute bottom-5 right-0 hidden w-48 space-y-2 rounded-2xl bg-white/90 p-3 shadow-card backdrop-blur sm:block">
+          {/* 功能浮卡：右下挂边（窄屏隐藏） */}
+          <div className="absolute -right-2 bottom-6 hidden w-44 space-y-1.5 rounded-2xl bg-white/95 p-2.5 shadow-lg backdrop-blur sm:block">
             {HERO_FLOATS.map((f) => {
               const Icon = f.icon;
               return (
@@ -193,7 +193,7 @@ export default function HomePage() {
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-softpink-200 text-coral-600">
                     <Icon className="h-3.5 w-3.5" />
                   </span>
-                  <span className="text-xs font-bold text-slateblue-900">
+                  <span className="text-[11px] font-bold text-slateblue-900">
                     {f.text}
                   </span>
                 </div>
