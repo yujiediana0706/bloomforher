@@ -44,14 +44,6 @@ body {
     linear-gradient(135deg, #fdfbf8 0%, #f7efe9 42%, #edeff3 100%);
 }
 
-/* 玻璃胶囊横条（AI Mentor 贯穿条） */
-.glass-pill {
-  background-image: linear-gradient(90deg, #ffffff 0%, #f7f2ef 50%, #ffffff 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 1px 2px rgba(62, 76, 99, 0.08);
-}
-
 /* 隐藏滚动条但保留滚动能力（横向芯片/旅程条） */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
