@@ -1,13 +1,41 @@
 import Link from 'next/link';
 import {
   ArrowRight,
+  Baby,
   Bot,
   CalendarClock,
+  Compass,
   FileText,
+  GraduationCap,
   HeartHandshake,
   Laptop,
+  Clock,
   type LucideIcon,
 } from 'lucide-react';
+
+/** 平台服务的用户群体（与 onboarding 生命阶段对齐） */
+const PERSONAS: { icon: LucideIcon; title: string; desc: string }[] = [
+  {
+    icon: GraduationCap,
+    title: '在校探索',
+    desc: '快毕业了，不知道 AI 时代自己能做什么',
+  },
+  {
+    icon: Compass,
+    title: '职业迷茫',
+    desc: '工作几年想转 AI，不知从哪开始',
+  },
+  {
+    icon: Baby,
+    title: '产后回归',
+    desc: '空窗一两年，怕跟不上、不敢投简历',
+  },
+  {
+    icon: Clock,
+    title: '兼职过渡',
+    desc: '要兼顾家庭，需要灵活节奏的转型',
+  },
+];
 
 /** 核心用户链路：诊断 → AI Mentor 陪伴 → 真人社区 */
 const CORE_BLOCKS: {
@@ -86,6 +114,37 @@ export default function HomePage() {
         </div>
         <p className="mt-3 text-xs text-slateblue-700">
           演示账号右上角一键切换 · 无需注册
+        </p>
+      </section>
+
+      {/* 我们为谁而做 */}
+      <section>
+        <p className="text-center text-[11px] font-black uppercase tracking-[0.18em] text-slateblue-700/70">
+          我们为谁而做
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {PERSONAS.map((p) => {
+            const Icon = p.icon;
+            return (
+              <div
+                key={p.title}
+                className="rounded-2xl border border-softpink-200 bg-softpink-100/60 px-4 py-3.5"
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className="h-4 w-4 shrink-0 text-coral-600" />
+                  <span className="text-sm font-extrabold text-slateblue-900">
+                    {p.title}
+                  </span>
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-slateblue-700">
+                  {p.desc}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-2.5 text-center text-xs text-slateblue-700/80">
+          以及每一个想在 AI 时代重新出发的你。
         </p>
       </section>
 
