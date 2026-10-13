@@ -1,17 +1,50 @@
+'use client';
+
 import Link from 'next/link';
 import {
   ArrowRight,
   Baby,
+  BellRing,
   Bot,
+  BrainCog,
   CalendarClock,
+  CheckCircle2,
+  Clock,
   Compass,
   FileText,
   GraduationCap,
   HeartHandshake,
   Laptop,
-  Clock,
   type LucideIcon,
 } from 'lucide-react';
+import {
+  PolarAngleAxis,
+  PolarGrid,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+} from 'recharts';
+
+/* —— Hero 右侧插画（AI 女性侧脸 × 神经网络光效）—— */
+const HERO_IMG =
+  'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Elegant%20glowing%20neon%20line%20art%20portrait%20of%20a%20woman%20in%20profile%20silhouette%20merging%20with%20flowing%20AI%20neural%20network%20lines%20and%20light%20particles%2C%20coral%20pink%20and%20warm%20silver%20gradient%2C%20futuristic%20minimal%2C%20soft%20dreamy%20light%2C%20clean%20light%20background%2C%20high%20detail&image_size=portrait_4_3';
+
+/** 雷达图演示数据（对应自信度校准六维） */
+const RADAR_DATA = [
+  { dim: '技术效能', v: 6.5 },
+  { dim: '工具就绪', v: 5.8 },
+  { dim: '空窗价值', v: 5.2 },
+  { dim: '领域迁移', v: 7.0 },
+  { dim: '问题拆解', v: 7.5 },
+  { dim: '质量判断', v: 8.0 },
+];
+
+/** Hero 右侧功能浮卡 */
+const HERO_FLOATS: { icon: LucideIcon; text: string }[] = [
+  { icon: CheckCircle2, text: '职业画像已生成' },
+  { icon: BrainCog, text: '可迁移技能 5 项' },
+  { icon: BellRing, text: '今日提醒：重写简历' },
+];
 
 /** 平台服务的用户群体（与 onboarding 生命阶段对齐） */
 const PERSONAS: { icon: LucideIcon; title: string; desc: string }[] = [
@@ -47,7 +80,7 @@ const CORE_BLOCKS: {
   {
     icon: FileText,
     title: '职业诊断',
-    desc: '生成你的职场诊断报告与 30 天计划',
+    desc: '建档 · 技能 · 机会，生成职业画像',
     href: '/onboarding',
   },
   {
@@ -65,7 +98,12 @@ const CORE_BLOCKS: {
 ];
 
 /** 增值功能（Extra） */
-const EXTRA_BLOCKS: { icon: LucideIcon; title: string; desc: string; href: string }[] = [
+const EXTRA_BLOCKS: {
+  icon: LucideIcon;
+  title: string;
+  desc: string;
+  href: string;
+}[] = [
   {
     icon: Laptop,
     title: '实操任务',
@@ -80,45 +118,134 @@ const EXTRA_BLOCKS: { icon: LucideIcon; title: string; desc: string; href: strin
   },
 ];
 
-const primaryLink =
-  'inline-flex items-center justify-center gap-2 rounded-xl bg-coral-500 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-coral-600';
-const secondaryLink =
-  'inline-flex items-center justify-center gap-2 rounded-xl border border-silver-300 bg-white px-5 py-2.5 text-sm font-bold text-slateblue-900 transition-colors hover:bg-silver-100';
+const primaryBtn =
+  'inline-flex items-center justify-center gap-2 rounded-full bg-coral-500 px-6 py-3 text-sm font-bold text-white shadow-card transition hover:bg-coral-600';
+const secondaryBtn =
+  'inline-flex items-center justify-center gap-2 rounded-full border border-silver-300 bg-white px-6 py-3 text-sm font-bold text-slateblue-900 transition hover:bg-silver-100';
 
 export default function HomePage() {
   return (
-    <div className="space-y-10">
-      {/* Hero：一句话定位 */}
-      <section className="pt-6 text-center">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-coral-500">
-          ReBloom AI · Your experience. A brighter future in the AI era.
-        </p>
-        <h1 className="mt-4 text-3xl font-black leading-tight text-slateblue-900 sm:text-4xl">
-          三步，
-          <br className="sm:hidden" />
-          从
-          <span className="text-coral-600">职业诊断</span>
-          到一路同行
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-slateblue-700 sm:text-base">
-          生成职场诊断报告与计划 → AI Mentor 陪你执行 → 对话广场链接真人。让女性的 AI 选择，从 Why me 走向 Why not me。
-        </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/onboarding" className={primaryLink}>
-            开始职业诊断
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link href="/dashboard" className={secondaryLink}>
-            查看我的职业画像
-          </Link>
+    <div className="hero-warm rounded-[2rem] border border-white/70 p-4 shadow-card sm:p-6 lg:p-8">
+      {/* Hero：左文右图 */}
+      <section className="grid items-center gap-8 lg:grid-cols-2">
+        <div className="pt-2 lg:pt-6">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-coral-500">
+            ReBloom AI · Your experience. A brighter future in the AI era.
+          </p>
+          <h1 className="mt-4 text-3xl font-black leading-[1.18] text-slateblue-900 sm:text-[2.6rem]">
+            走完三步，得到你的
+            <span className="text-coral-500">职场诊断报告</span>
+          </h1>
+          <p className="mt-4 max-w-lg text-sm leading-relaxed text-slateblue-700 sm:text-base">
+            把经历变成 AI 时代的职业画像，AI Mentor 陪你执行计划，对话广场链接真人——让女性的
+            AI 选择，从 Why me 走向 Why not me。
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link href="/onboarding" className={primaryBtn}>
+              开始职业诊断
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/dashboard" className={secondaryBtn}>
+              查看我的职业画像
+            </Link>
+          </div>
+          <p className="mt-3 text-xs text-slateblue-700/80">
+            演示账号右上角一键切换 · 无需注册
+          </p>
         </div>
-        <p className="mt-3 text-xs text-slateblue-700">
-          演示账号右上角一键切换 · 无需注册
-        </p>
+
+        {/* 右侧视觉区：插画 + 雷达图浮卡 + 功能浮卡 */}
+        <div className="relative mx-auto h-[360px] w-full max-w-md sm:h-[420px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={HERO_IMG}
+            alt="AI 时代的女性职业画像"
+            className="absolute inset-0 h-full w-full rounded-[2rem] object-cover"
+          />
+          {/* 雷达图浮卡 */}
+          <div className="absolute left-0 top-5 w-44 rounded-2xl bg-white/90 p-3 shadow-card backdrop-blur">
+            <p className="text-center text-[11px] font-black text-slateblue-900">
+              职业画像
+            </p>
+            <ResponsiveContainer width="100%" height={128}>
+              <RadarChart data={RADAR_DATA} outerRadius="74%">
+                <PolarGrid stroke="#d7dbe2" />
+                <PolarAngleAxis
+                  dataKey="dim"
+                  tick={{ fontSize: 8, fill: '#3e4c63' }}
+                />
+                <Radar
+                  dataKey="v"
+                  stroke="#E8725C"
+                  strokeWidth={2}
+                  fill="#F3B8C8"
+                  fillOpacity={0.55}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          {/* 功能浮卡 */}
+          <div className="absolute bottom-5 right-0 w-52 space-y-2 rounded-2xl bg-white/90 p-3 shadow-card backdrop-blur">
+            {HERO_FLOATS.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div key={f.text} className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-softpink-200 text-coral-600">
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="text-xs font-bold text-slateblue-900">
+                    {f.text}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {/* 光点装饰 */}
+          <span className="absolute -left-1 top-1/2 h-2.5 w-2.5 rounded-full bg-coral-300 shadow-[0_0_12px_rgba(232,114,92,0.8)]" />
+          <span className="absolute bottom-10 left-10 h-1.5 w-1.5 rounded-full bg-softpink-400 shadow-[0_0_10px_rgba(243,184,200,0.9)]" />
+        </div>
+      </section>
+
+      {/* AI Mentor 玻璃胶囊横条 */}
+      <Link
+        href="/coach"
+        className="glass-pill mt-7 flex items-center justify-center gap-2 rounded-full border border-white/80 px-4 py-3 text-sm font-bold text-slateblue-900 transition hover:shadow-card"
+      >
+        <Bot className="h-4 w-4 text-coral-500" />
+        AI Mentor 全程陪伴 · 提醒、答疑、反馈
+      </Link>
+
+      {/* 核心链路三步（横向大圆角卡） */}
+      <section className="mt-5 grid gap-4 md:grid-cols-3">
+        {CORE_BLOCKS.map((b, idx) => {
+          const Icon = b.icon;
+          return (
+            <Link
+              key={b.title}
+              href={b.href}
+              className="flex items-center gap-4 rounded-3xl bg-white p-5 shadow-card transition hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-softpink-200 text-coral-600">
+                <Icon className="h-6 w-6" />
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-coral-500 text-[10px] font-black text-white">
+                  {idx + 1}
+                </span>
+              </span>
+              <span className="min-w-0">
+                <span className="block text-lg font-black text-slateblue-900">
+                  {b.title}
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-slateblue-700">
+                  {b.desc}
+                </span>
+              </span>
+            </Link>
+          );
+        })}
       </section>
 
       {/* 我们为谁而做 */}
-      <section>
+      <section className="mt-8">
         <p className="text-center text-[11px] font-black uppercase tracking-[0.18em] text-slateblue-700/70">
           我们为谁而做
         </p>
@@ -128,7 +255,7 @@ export default function HomePage() {
             return (
               <div
                 key={p.title}
-                className="rounded-2xl border border-softpink-200 bg-softpink-100/60 px-4 py-3.5"
+                className="rounded-3xl border border-white/80 bg-white/70 px-4 py-3.5 shadow-card backdrop-blur"
               >
                 <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4 shrink-0 text-coral-600" />
@@ -148,64 +275,35 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* 核心链路三步 */}
-      <section>
-        <div className="grid gap-3 md:grid-cols-3">
-          {CORE_BLOCKS.map((b, idx) => {
+      {/* Extra 增值功能 */}
+      <section className="mt-8">
+        <p className="text-center text-[11px] font-black uppercase tracking-[0.18em] text-slateblue-700/70">
+          Extra · 增值功能
+        </p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          {EXTRA_BLOCKS.map((b) => {
             const Icon = b.icon;
             return (
               <Link
                 key={b.title}
                 href={b.href}
-                className="flex flex-col items-center gap-2 rounded-2xl border border-silver-300 bg-white p-6 text-center shadow-card transition-colors hover:border-coral-500 hover:bg-coral-50"
+                className="flex items-center gap-4 rounded-3xl bg-white/70 p-5 shadow-card backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-lg"
               >
-                <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-coral-50 text-coral-600">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-softpink-200 text-coral-600">
                   <Icon className="h-5 w-5" />
-                  <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-coral-500 text-[10px] font-black text-white">
-                    {idx + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-base font-black text-slateblue-900">
+                    {b.title}
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-slateblue-700">
+                    {b.desc}
                   </span>
                 </span>
-                <span className="text-base font-extrabold text-slateblue-900">
-                  {b.title}
-                </span>
-                <span className="text-xs leading-relaxed text-slateblue-700">
-                  {b.desc}
-                </span>
+                <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slateblue-700/40" />
               </Link>
             );
           })}
-        </div>
-
-        {/* Extra 增值功能 */}
-        <div className="mt-6 rounded-2xl border border-dashed border-silver-300 bg-white/60 p-4">
-          <p className="text-center text-[11px] font-black uppercase tracking-[0.18em] text-slateblue-700/70">
-            Extra · 增值功能
-          </p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {EXTRA_BLOCKS.map((b) => {
-              const Icon = b.icon;
-              return (
-                <Link
-                  key={b.title}
-                  href={b.href}
-                  className="flex items-center gap-3 rounded-xl border border-silver-200 bg-white px-4 py-3 transition-colors hover:border-coral-400 hover:bg-coral-50"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-softpink-200 text-coral-700">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-extrabold text-slateblue-900">
-                      {b.title}
-                    </h3>
-                    <p className="mt-0.5 text-xs leading-relaxed text-slateblue-700">
-                      {b.desc}
-                    </p>
-                  </div>
-                  <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slateblue-700/50" />
-                </Link>
-              );
-            })}
-          </div>
         </div>
       </section>
     </div>
