@@ -295,26 +295,61 @@ export function evaluateSubmission(submissionText: string): LabFeedback {
   };
 }
 
-/** 占位：AI Coach 回复（含证据重构法 / 微行动 / 暂停不等于淘汰 红线） */
+/** 反哺给 Agent 的上下文（真人沟通与任务反馈的沉淀） */
+export interface CoachContext {
+  /** 计划进度：已完成 / 总数 + 下一个待办任务标题 */
+  planProgress?: { done: number; total: number; nextTaskTitle?: string };
+  /** 最近一次实操任务反馈得分（任务反馈反哺） */
+  recentFeedbackScore?: number;
+  /** 已完成的导师会话次数（付费教练沟通反哺） */
+  completedSessionCount?: number;
+}
+
+/** 占位：AI Mentor 回复（含计划陪伴提醒 / 证据重构法 / 微行动 / 暂停不等于淘汰 红线） */
 export function coachReply(
   user: UserProfile,
   evidences: EvidenceItem[],
-  userMessage: string
+  userMessage: string,
+  context: CoachContext = {}
 ): { content: string; microAction?: string } {
   const negative = /不适合|不行|不会|怕|焦虑|配不上|跟不上|没经验|空窗/.test(userMessage);
   const pause = /暂停|休息|生病|累|没时间/.test(userMessage);
+  const planTalk = /计划|任务|坚持|拖延|忘记|忘了|做不到|进度|下一步|先做|这周|今天/.test(
+    userMessage
+  );
   const evidence = evidences[0];
+  const progress = context.planProgress;
+  const nextTask = progress?.nextTaskTitle;
 
   let content: string;
   if (pause) {
     content = `${user.name}，先照顾好自己。暂停不等于淘汰——把节奏调慢，不等于放弃目标。你的计划是可中断的，这周少做一点也没关系。`;
+  } else if (planTalk && progress && progress.total > 0) {
+    // 计划陪伴提醒：引用计划进度 + 反哺上下文
+    const parts: string[] = [];
+    if (nextTask) {
+      parts.push(`你的下一个任务是「${nextTask}」——先只做这一件，做完就算今天赢。`);
+    }
+    parts.push(`目前进度 ${progress.done}/${progress.total}，按你的节奏来就好。`);
+    if (typeof context.recentFeedbackScore === 'number') {
+      parts.push(
+        `我记得你上次任务反馈拿了 ${context.recentFeedbackScore} 分——那不是运气，是你真的会做。`
+      );
+    }
+    if (typeof context.completedSessionCount === 'number' && context.completedSessionCount > 0) {
+      parts.push(
+        `你和导师那 ${context.completedSessionCount} 次对话我也记着，里面提到的方向可以揉进下一步。`
+      );
+    }
+    content = `${user.name}，${parts.join('')}`;
   } else if (negative) {
     const ref = evidence
       ? `你已经有一份真实的证据：「${evidence.title}」——${evidence.detail}`
       : '你愿意走到这一步，本身就已经是证据。';
     content = `${user.name}，我听到你的不安了。${ref} 这不是鸡汤，这是你自己做出来的事实。从「凭什么是我」到「为什么不能是我」，你缺的不是能力，而是被看见。`;
   } else {
-    content = `${user.name}，我们一步一步来。基于你现在的档案与证据，我建议先把「${user.targetRole}」当作主线，用一个小作品验证方向，再决定要不要深入。`;
+    const taskHint = nextTask ? `我看了你的计划，下一步是「${nextTask}」。` : '';
+    content = `${user.name}，我们一步一步来。基于你现在的档案与证据，我建议先把「${user.targetRole}」当作主线，用一个小作品验证方向，再决定要不要深入。${taskHint}`;
   }
 
   if (negative && !content.includes('广场')) {

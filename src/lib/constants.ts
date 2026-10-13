@@ -94,16 +94,16 @@ export const JOURNEY_STEPS = [
   { step: 6, label: '加入社区', href: '/plaza' },
 ] as const;
 
-// —— 主导航（规范 §2 全局导航）——
+// —— 主导航（核心链路在前；extra=true 为增值功能，弱化展示）——
 export const NAV_ITEMS = [
-  { href: '/', label: '首页' },
-  { href: '/skills', label: '技能发现' },
-  { href: '/opportunities', label: 'AI 机会' },
-  { href: '/tasks-lab', label: '实操任务' },
-  { href: '/plan', label: '回归计划' },
-  { href: '/plaza', label: '对话广场' },
-  { href: '/community', label: '导师社区' },
-  { href: '/coach', label: 'AI 陪伴' },
-  { href: '/my-sessions', label: '我的预约' },
-  { href: '/dashboard', label: '个人中心' },
+  { href: '/', label: '首页', extra: false },
+  { href: '/skills', label: '技能发现', extra: false },
+  { href: '/opportunities', label: 'AI 机会', extra: false },
+  { href: '/plan', label: '回归计划', extra: false },
+  { href: '/coach', label: 'AI Mentor', extra: false },
+  { href: '/plaza', label: '对话广场', extra: false },
+  { href: '/tasks-lab', label: '实操任务', extra: true },
+  { href: '/community', label: '导师社区', extra: true },
+  { href: '/my-sessions', label: '我的预约', extra: true },
+  { href: '/dashboard', label: '个人中心', extra: false },
 ] as const;

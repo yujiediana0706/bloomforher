@@ -37,10 +37,17 @@ export function Navbar() {
                 className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
                   isActive(item.href)
                     ? 'bg-coral-500 text-white'
-                    : 'text-slateblue-700 hover:bg-silver-100'
+                    : item.extra
+                      ? 'text-slateblue-700/60 hover:bg-silver-100 hover:text-slateblue-700'
+                      : 'text-slateblue-700 hover:bg-silver-100'
                 }`}
               >
                 {item.label}
+                {item.extra ? (
+                  <span className="ml-0.5 align-top text-[9px] font-black text-coral-400">
+                    +
+                  </span>
+                ) : null}
               </Link>
             ))}
           </nav>
@@ -51,7 +58,7 @@ export function Navbar() {
               className="hidden items-center gap-1.5 rounded-xl bg-coral-500 px-3 py-2 text-xs font-bold text-white hover:bg-coral-600 sm:inline-flex"
             >
               <Bot className="h-3.5 w-3.5" />
-              AI 陪伴
+              AI Mentor
             </Link>
 
             <div className="relative">
