@@ -88,7 +88,9 @@ export async function callAgentEndpoint(
 
     if (!res.ok) {
       const err = await res.text();
-      console.error(`[Agent] 调用失败 (${endpoint}):`, res.status, err.slice(0, 300));
+      console.error(`[Agent] 调用失败 (${endpoint}):`);
+      console.error(`  Status: ${res.status}`);
+      console.error(`  Error: ${err.slice(0, 500)}`);
       return null;
     }
 
