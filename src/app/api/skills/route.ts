@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const user = findUser(db, uid);
   if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
 
-  const built = buildSkillProfile(user);
+  const built = await buildSkillProfile(user);
   const skillProfile: SkillProfile = { uid, createdAt: nowIso(), ...built };
   db.skillProfiles[uid] = skillProfile;
 

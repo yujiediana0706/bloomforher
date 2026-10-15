@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '无权操作该任务' }, { status: 403 });
   }
 
-  const feedback = evaluateSubmission(text);
+  const feedback = await evaluateSubmission(text);
   const submission: LabSubmission = {
     id: newId('sub'),
     text,

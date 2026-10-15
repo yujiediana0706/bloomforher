@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     completedSessionCount,
   };
 
-  const { content, microAction } = coachReply(user, recentEvidences, message, context);
+  const { content, microAction } = await coachReply(user, recentEvidences, message, context);
 
   // 写入对话历史
   const messages = db.coachMessages[uid] ?? (db.coachMessages[uid] = []);

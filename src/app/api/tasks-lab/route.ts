@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   let tasks = db.labTasks.filter((t) => t.uid === uid);
   if (tasks.length === 0) {
-    const built = buildLabTasks(user);
+    const built = await buildLabTasks(user);
     const created: LabTask[] = built.map((t) => ({
       ...t,
       id: newId('lab'),

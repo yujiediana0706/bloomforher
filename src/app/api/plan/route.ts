@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     feedback = undefined;
   }
 
-  const built = buildReturnPlan(user, feedback);
+  const built = await buildReturnPlan(user, feedback);
 
   // 保留已完成任务状态：同名 taskId 沿用旧计划的 completed
   const previous = db.returnPlans[uid];

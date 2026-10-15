@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '请先完成技能发现' }, { status: 400 });
   }
 
-  const built = buildOpportunityReport(user, skills);
+  const built = await buildOpportunityReport(user, skills);
   const opportunityReport: OpportunityReport = {
     uid,
     createdAt: nowIso(),

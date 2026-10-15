@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   const confidence = computeConfidenceScore(evidences);
-  const weeklySummary = buildWeeklyConfidenceSummary(user, evidences);
+  const weeklySummary = await buildWeeklyConfidenceSummary(user, evidences);
 
   return NextResponse.json({ evidences, confidence, weeklySummary });
 }
