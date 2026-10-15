@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, newId, nowIso, addEvidence } from '@/lib/store';
+import { getDB, findUser, newId, nowIso, addEvidence, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import type { CircleComment, EvidenceItem } from '@/lib/types';
 
@@ -49,7 +49,9 @@ export async function POST(
         createdAt: nowIso(),
       };
       db.circleComments.push(comment);
+      syncToFirestore('circleComments', comment.id, comment);
       post.commentCount += 1;
+      syncToFirestore('circlePosts', post.id, post);
       return NextResponse.json({ comment });
     }
 
@@ -90,6 +92,7 @@ export async function POST(
         reason,
         createdAt: nowIso(),
       });
+      syncToFirestore('reports', `rp_${Date.now()}`, { reporterId: uid, targetType: 'circle_post', targetId: post.id, reason, createdAt: nowIso() });
       return NextResponse.json({ ok: true });
     }
 

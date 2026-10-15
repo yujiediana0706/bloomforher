@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findUser, getDB, newId, nowIso } from '@/lib/store';
+import { findUser, getDB, newId, nowIso, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import type { Mentor } from '@/lib/types';
 
@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
       createdAt: nowIso(),
     };
     db.mentors.push(created);
+    syncToFirestore('mentors', created.id, created);
     mentor = created;
   } else {
     if (body.displayName !== undefined) mentor.displayName = body.displayName;

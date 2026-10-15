@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, newId, nowIso } from '@/lib/store';
+import { getDB, findUser, newId, nowIso, syncBatchToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { buildLabTasks } from '@/lib/ai';
 import type { LabTask } from '@/lib/types';
@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
       createdAt: nowIso(),
     }));
     db.labTasks.push(...created);
+    syncBatchToFirestore('labTasks', created);
     tasks = created;
   }
 

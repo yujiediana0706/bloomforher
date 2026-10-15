@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, newId, nowIso } from '@/lib/store';
+import { getDB, findUser, newId, nowIso, syncToFirestore } from '@/lib/store';
 import type { DB } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { pickAnonymousHandle } from '@/lib/constants';
@@ -130,8 +130,10 @@ export async function POST(
       };
       if (anonymous) comment.anonymousHandle = pickAnonymousHandle(uid, commentId);
       db.plazaComments.push(comment);
+      syncToFirestore('plazaComments', comment.id, comment);
       post.commentCount += 1;
       post.updatedAt = nowIso();
+      syncToFirestore('plazaPosts', post.id, post);
       return NextResponse.json({ comment: toPlazaCommentView(comment, db) });
     }
 
@@ -156,6 +158,7 @@ export async function POST(
         reason,
         createdAt: nowIso(),
       });
+      syncToFirestore('reports', `rp_${Date.now()}`, { reporterId: uid, targetType: 'plaza_post', targetId: post.id, reason, createdAt: nowIso() });
       return NextResponse.json({ ok: true });
     }
 

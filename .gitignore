@@ -30,7 +30,10 @@ serviceAccountKey.json
 .firebase/
 firebase-debug.log
 firestore-debug.log
+gcp-keys/
+*.service-account.json
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.vercel

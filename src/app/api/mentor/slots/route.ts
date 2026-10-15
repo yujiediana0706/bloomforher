@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, newId } from '@/lib/store';
+import { getDB, newId, syncToFirestore, deleteFromFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import type { MentorSlot } from '@/lib/types';
 
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
     status: 'available',
   };
   db.mentorSlots.push(slot);
+  syncToFirestore('mentorSlots', slot.id, slot);
   return NextResponse.json({ slot });
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, newId, nowIso, addEvidence } from '@/lib/store';
+import { getDB, findUser, newId, nowIso, addEvidence, syncToFirestore } from '@/lib/store';
 import type { DB } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import type { Booking, BookingKind, BookingStatus, PackageOrder } from '@/lib/types';
@@ -126,10 +126,12 @@ export async function POST(req: NextRequest) {
           createdAt: nowIso(),
         };
         db.packageOrders.push(packageOrder);
+        syncToFirestore('packageOrders', packageOrder.id, packageOrder);
         booking.packageOrderId = packageOrder.id;
       }
 
       db.bookings.push(booking);
+      syncToFirestore('bookings', booking.id, booking);
       return NextResponse.json({ booking, packageOrder });
     }
 
@@ -186,6 +188,7 @@ export async function POST(req: NextRequest) {
         updatedAt: nowIso(),
       };
       db.bookings.push(booking);
+      syncToFirestore('bookings', booking.id, booking);
       return NextResponse.json({ booking, packageOrder: order });
     }
 

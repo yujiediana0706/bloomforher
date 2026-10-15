@@ -1,5 +1,5 @@
-// 服务端内存数据层（原型）。所有写入统一经过 API routes，无需 Firebase 凭据即可运行。
-// 使用 globalThis 单例，保证在同一 Node 进程中跨请求/热更新保留状态。
+// 服务端数据层。优先使用 Firestore（有 GCP 凭据时），否则回退到内存（本地开发）。
+// 内存模式下用 globalThis 单例，保证同一 Node 进程中跨请求/热更新保留状态。
 
 import type {
   Booking,
@@ -41,6 +41,7 @@ import {
   SEED_SKILL_PROFILE,
   SEED_WILLING,
 } from './mockData';
+import { getFirestoreDb, useFirestore } from './firestore';
 
 export interface DB {
   users: UserProfile[];
@@ -66,6 +67,8 @@ export interface DB {
 declare global {
   // eslint-disable-next-line no-var
   var __rebloomDB: DB | undefined;
+  // eslint-disable-next-line no-var
+  var __rebloomFirestoreLoaded: boolean | undefined;
 }
 
 function initDB(): DB {
@@ -94,9 +97,128 @@ function initDB(): DB {
 export function getDB(): DB {
   if (!globalThis.__rebloomDB) {
     globalThis.__rebloomDB = initDB();
+    // 首次调用时异步从 Firestore 加载（fire-and-forget）
+    loadFromFirestore().catch((e) => {
+      console.error('[Firestore] 初始化加载失败:', (e as Error).message);
+    });
   }
   return globalThis.__rebloomDB;
 }
+
+/** 确保 Firestore 数据已加载（API routes 在写操作前调用） */
+export async function ensureLoaded(): Promise<DB> {
+  const db = getDB();
+  if (!globalThis.__rebloomFirestoreLoaded) {
+    await loadFromFirestore();
+  }
+  return db;
+}
+
+// —— Firestore 同步层 ——
+
+const COLLECTION_MAP: Record<string, keyof DB> = {
+  users: 'users',
+  skillProfiles: 'skillProfiles',
+  opportunityReports: 'opportunityReports',
+  returnPlans: 'returnPlans',
+  labTasks: 'labTasks',
+  evidences: 'evidences',
+  plazaPosts: 'plazaPosts',
+  plazaComments: 'plazaComments',
+  peerChats: 'peerChats',
+  mentors: 'mentors',
+  mentorSlots: 'mentorSlots',
+  bookings: 'bookings',
+  packageOrders: 'packageOrders',
+  circlePosts: 'circlePosts',
+  circleComments: 'circleComments',
+};
+
+/** 从 Firestore 加载数据到内存（幂等，只执行一次） */
+export async function loadFromFirestore(): Promise<void> {
+  if (globalThis.__rebloomFirestoreLoaded) return;
+  const fs = getFirestoreDb();
+  if (!fs) return;
+
+  const db = getDB();
+  console.log('[Firestore] 开始从 Firestore 加载数据...');
+
+  // 网络受限环境下设置超时，避免卡住
+  const timeout = <T>(p: Promise<T>, ms = 8000): Promise<T> =>
+    Promise.race([
+      p,
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), ms)),
+    ]);
+
+  for (const [collection, dbKey] of Object.entries(COLLECTION_MAP)) {
+    try {
+      const snapshot = await timeout(fs.collection(collection).get());
+      if (snapshot.empty) continue;
+
+      if (dbKey === 'skillProfiles' || dbKey === 'opportunityReports' || dbKey === 'returnPlans') {
+        // Record 类型：用 uid 作为 key
+        const record: Record<string, unknown> = {};
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data() as Record<string, unknown>;
+          if (data.uid) record[data.uid as string] = data;
+        });
+        (db as unknown as Record<string, unknown>)[dbKey] = record;
+      } else {
+        // 数组类型
+        const items = snapshot.docs.map((doc) => doc.data());
+        (db as unknown as Record<string, unknown>)[dbKey] = items;
+      }
+    } catch (e) {
+      console.error(`[Firestore] 加载 ${collection} 失败:`, (e as Error).message);
+    }
+  }
+
+  globalThis.__rebloomFirestoreLoaded = true;
+  console.log('[Firestore] 数据加载完成');
+}
+
+/** 同步单个文档到 Firestore（异步，不阻塞） */
+export function syncToFirestore(collection: string, docId: string, data: unknown): void {
+  const fs = getFirestoreDb();
+  if (!fs) return;
+
+  const docRef = fs.collection(collection).doc(docId);
+  docRef.set(data as Record<string, unknown>, { merge: true }).catch((e) => {
+    console.error(`[Firestore] 同步 ${collection}/${docId} 失败:`, (e as Error).message);
+  });
+}
+
+/** 同步数组中的一批文档到 Firestore */
+export function syncBatchToFirestore<T extends { id: string }>(collection: string, items: T[]): void {
+  const fs = getFirestoreDb();
+  if (!fs) return;
+
+  const batch = fs.batch();
+  items.forEach((item) => {
+    const ref = fs.collection(collection).doc(item.id);
+    batch.set(ref, item as Record<string, unknown>, { merge: true });
+  });
+  batch.commit().catch((e) => {
+    console.error(`[Firestore] 批量同步 ${collection} 失败:`, (e as Error).message);
+  });
+}
+
+/** 删除 Firestore 中的文档 */
+export function deleteFromFirestore(collection: string, docId: string): void {
+  const fs = getFirestoreDb();
+  if (!fs) return;
+
+  fs.collection(collection).doc(docId).delete().catch((e) => {
+    console.error(`[Firestore] 删除 ${collection}/${docId} 失败:`, (e as Error).message);
+  });
+}
+
+/** 判断当前是否使用 Firestore */
+export function isFirestoreMode(): boolean {
+  return useFirestore();
+}
+
+// —— 便于路由使用的查询助手 ——
 
 let counter = 0;
 export function newId(prefix: string): string {
@@ -108,7 +230,6 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
-// —— 便于路由使用的查询助手 ——
 export function findUser(db: DB, uid: string): UserProfile | undefined {
   return db.users.find((u) => u.uid === uid);
 }
@@ -119,6 +240,7 @@ export function addEvidence(
 ): EvidenceItem {
   const item: EvidenceItem = { ...ev, id: newId('ev'), createdAt: nowIso() };
   db.evidences.unshift(item);
+  syncToFirestore('evidences', item.id, item);
   return item;
 }
 

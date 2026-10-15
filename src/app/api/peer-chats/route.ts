@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, newId, nowIso, addEvidence } from '@/lib/store';
+import { getDB, findUser, newId, nowIso, addEvidence, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import type { PeerChat } from '@/lib/types';
 
@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
         updatedAt: nowIso(),
       };
       db.peerChats.push(chat);
+      syncToFirestore('peerChats', chat.id, chat);
       return NextResponse.json({ chat });
     }
 

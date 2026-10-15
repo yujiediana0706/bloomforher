@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, newId, nowIso } from '@/lib/store';
+import { getDB, findUser, newId, nowIso, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { LIFE_STAGE_LABELS } from '@/lib/constants';
 import type { CirclePost, CirclePostType } from '@/lib/types';
@@ -67,5 +67,6 @@ export async function POST(req: NextRequest) {
   if (typeof body.evidenceRef === 'string') post.evidenceRef = body.evidenceRef;
 
   db.circlePosts.unshift(post);
+  syncToFirestore('circlePosts', post.id, post);
   return NextResponse.json({ post });
 }

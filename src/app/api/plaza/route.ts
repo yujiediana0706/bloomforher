@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, newId, nowIso } from '@/lib/store';
+import { getDB, findUser, newId, nowIso, syncToFirestore } from '@/lib/store';
 import type { DB } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { pickAnonymousHandle } from '@/lib/constants';
@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
   if (anonymous) post.anonymousHandle = pickAnonymousHandle(uid, postId);
 
   db.plazaPosts.unshift(post);
+  syncToFirestore('plazaPosts', post.id, post);
 
   return NextResponse.json({ post: toPlazaPostView(post, uid, db) });
 }
