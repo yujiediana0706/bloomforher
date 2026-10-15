@@ -94,14 +94,14 @@ export const JOURNEY_STEPS = [
   { step: 6, label: '加入社区', href: '/plaza' },
 ] as const;
 
-// —— 主导航（核心链路在前；extra=true 为增值功能，弱化展示）——
+// —— 主导航（AI Mentor 是核心工作台；技能/机会/计划为诊断详情，从 Mentor 看板进入）——
 export const NAV_ITEMS = [
   { href: '/', label: '首页', extra: false },
-  { href: '/skills', label: '技能发现', extra: false },
-  { href: '/opportunities', label: 'AI 机会', extra: false },
-  { href: '/plan', label: '回归计划', extra: false },
   { href: '/coach', label: 'AI Mentor', extra: false },
   { href: '/plaza', label: '对话广场', extra: false },
+  { href: '/skills', label: '技能画像', extra: true },
+  { href: '/opportunities', label: 'AI 机会', extra: true },
+  { href: '/plan', label: '回归计划', extra: true },
   { href: '/tasks-lab', label: '实操任务', extra: true },
   { href: '/community', label: '导师社区', extra: true },
   { href: '/my-sessions', label: '我的预约', extra: true },

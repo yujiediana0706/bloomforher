@@ -8,15 +8,30 @@ import {
   BrainCog,
   CalendarClock,
   Check,
-  Circle,
+  FileText,
+  Radar,
   Send,
   Sparkles,
   User,
 } from 'lucide-react';
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar as RechartsRadar,
+  ResponsiveContainer,
+} from 'recharts';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Card, ProgressBar } from '@/components/ui';
 import { apiGet, apiSend } from '@/lib/client';
-import type { EvidenceItem, PlanTask, ReturnPlan } from '@/lib/types';
+import type {
+  EvidenceItem,
+  OpportunityReport,
+  PlanTask,
+  ReturnPlan,
+  SkillProfile,
+} from '@/lib/types';
 
 interface ChatMsg {
   role: 'user' | 'coach';
@@ -32,6 +47,16 @@ const QUICK_QUESTIONS = [
   '我不想执行计划了',
 ];
 
+function buildRadarData(skill: SkillProfile | null) {
+  if (!skill) return [];
+  return skill.confidenceCalibration.map((c) => ({
+    dim: c.dimension.slice(0, 4),
+    自评: c.selfScore,
+    AI: c.aiScore,
+    fullMark: 10,
+  }));
+}
+
 export default function CoachPage() {
   const { user, loading } = useAuth();
   const [messages, setMessages] = useState<ChatMsg[]>([
@@ -42,7 +67,11 @@ export default function CoachPage() {
   const [error, setError] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // —— 计划进度数据（右侧 dashboard）——
+  // —— 诊断摘要数据（右侧 dashboard 顶部）——
+  const [skill, setSkill] = useState<SkillProfile | null>(null);
+  const [opp, setOpp] = useState<OpportunityReport | null>(null);
+
+  // —— 计划进度数据 ——
   const [plan, setPlan] = useState<ReturnPlan | null>(null);
   const [evidenceCount, setEvidenceCount] = useState<number | null>(null);
   const [sessionCount, setSessionCount] = useState<number | null>(null);
@@ -51,27 +80,48 @@ export default function CoachPage() {
   const done = tasks.filter((t) => t.completed).length;
   const nextTask = tasks.find((t) => !t.completed)?.title;
 
+  // 自信度校准平均分（AI 侧）
+  const aiAvg =
+    skill && skill.confidenceCalibration.length > 0
+      ? Math.round(
+          skill.confidenceCalibration.reduce((s, c) => s + c.aiScore, 0) /
+            skill.confidenceCalibration.length
+        )
+      : null;
+  const selfAvg =
+    skill && skill.confidenceCalibration.length > 0
+      ? Math.round(
+          skill.confidenceCalibration.reduce((s, c) => s + c.selfScore, 0) /
+            skill.confidenceCalibration.length
+        )
+      : null;
+
   useEffect(() => {
     if (!user) return;
     let alive = true;
     void (async () => {
-      const [planRes, evRes, sessionRes] = await Promise.allSettled([
-        apiGet<{ plan: ReturnPlan | null }>('/api/plan'),
-        apiGet<{ evidences: EvidenceItem[] }>('/api/evidence'),
-        apiGet<{ bookings: { status: string }[] }>('/api/my-sessions'),
-      ]);
+      const [skillRes, oppRes, planRes, evRes, sessionRes] =
+        await Promise.allSettled([
+          apiGet<{ skillProfile: SkillProfile | null }>('/api/skills'),
+          apiGet<{ opportunityReport: OpportunityReport | null }>(
+            '/api/opportunities'
+          ),
+          apiGet<{ plan: ReturnPlan | null }>('/api/plan'),
+          apiGet<{ evidences: EvidenceItem[] }>('/api/evidence'),
+          apiGet<{ bookings: { status: string }[] }>('/api/my-sessions'),
+        ]);
       if (!alive) return;
+      if (skillRes.status === 'fulfilled') setSkill(skillRes.value.skillProfile);
+      if (oppRes.status === 'fulfilled') setOpp(oppRes.value.opportunityReport);
       if (planRes.status === 'fulfilled') setPlan(planRes.value.plan);
-      if (evRes.status === 'fulfilled') {
+      if (evRes.status === 'fulfilled')
         setEvidenceCount(evRes.value.evidences.length);
-      }
-      if (sessionRes.status === 'fulfilled') {
+      if (sessionRes.status === 'fulfilled')
         setSessionCount(
           sessionRes.value.bookings.filter(
             (b) => b.status === 'completed' || b.status === 'released'
           ).length
         );
-      }
     })();
     return () => {
       alive = false;
@@ -84,11 +134,10 @@ export default function CoachPage() {
 
   const toggleTask = async (taskId: string, completed: boolean) => {
     try {
-      const res = await apiSend<{ plan: ReturnPlan; evidence: EvidenceItem | null }>(
-        '/api/plan-tasks',
-        'PATCH',
-        { taskId, completed }
-      );
+      const res = await apiSend<{
+        plan: ReturnPlan;
+        evidence: EvidenceItem | null;
+      }>('/api/plan-tasks', 'PATCH', { taskId, completed });
       setPlan(res.plan);
       if (res.evidence) setEvidenceCount((c) => (c ?? 0) + 1);
     } catch {
@@ -186,6 +235,10 @@ export default function CoachPage() {
     );
   }
 
+  const radarData = buildRadarData(skill);
+  const topRoles = opp?.roleMatches.slice(0, 3) ?? [];
+  const hasDiagnosis = !!skill && !!opp;
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       {/* 标题区（压缩） */}
@@ -198,7 +251,7 @@ export default function CoachPage() {
         </p>
       </div>
 
-      {/* 双栏工作台：左聊天 1fr / 右进度 1.2fr */}
+      {/* 双栏工作台 */}
       <div className="grid gap-4 lg:h-[calc(100vh-140px)] lg:grid-cols-[1fr_1.2fr]">
         {/* 左：AI 对话框 */}
         <Card className="flex min-h-[520px] flex-col p-0 lg:min-h-0">
@@ -258,7 +311,7 @@ export default function CoachPage() {
             <div ref={bottomRef} />
           </div>
 
-          {/* 输入区（固定底部） */}
+          {/* 输入区 */}
           <div className="border-t border-silver-200 px-4 py-3 sm:px-5">
             {error ? (
               <p className="mb-2 rounded-xl border border-warmred/40 bg-warmred/10 px-3 py-2 text-xs font-bold text-warmred">
@@ -303,9 +356,129 @@ export default function CoachPage() {
           </div>
         </Card>
 
-        {/* 右：计划进度 dashboard */}
+        {/* 右：进度看板（从上到下：诊断摘要 → 今日提醒 → 进度总览 → 任务表） */}
         <div className="min-h-0 space-y-4 overflow-y-auto pr-0.5">
-          {/* 今日提醒 */}
+          {/* ① 诊断摘要（融合技能 + 机会） */}
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-coral-500" />
+                <p className="text-[11px] font-black uppercase tracking-wide text-coral-600">
+                  你的职业诊断
+                </p>
+              </div>
+              {hasDiagnosis ? (
+                <Link
+                  href="/skills"
+                  className="text-[11px] font-bold text-slateblue-700 underline underline-offset-4 hover:text-coral-600"
+                >
+                  完整报告 →
+                </Link>
+              ) : null}
+            </div>
+
+            {hasDiagnosis ? (
+              <>
+                <div className="mt-3 flex items-start gap-3">
+                  {/* mini radar */}
+                  <div className="h-[140px] w-[140px] shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={radarData}>
+                        <PolarGrid stroke="#e5e7eb" />
+                        <PolarAngleAxis
+                          dataKey="dim"
+                          tick={{ fontSize: 9, fill: '#62708b' }}
+                        />
+                        <PolarRadiusAxis
+                          domain={[0, 10]}
+                          tick={{ fontSize: 8 }}
+                          stroke="#d1d5db"
+                          tickCount={5}
+                        />
+                        <RechartsRadar
+                          name="自评"
+                          dataKey="自评"
+                          stroke="#94a3b8"
+                          fill="#94a3b8"
+                          fillOpacity={0.15}
+                          strokeWidth={1.5}
+                        />
+                        <RechartsRadar
+                          name="AI"
+                          dataKey="AI"
+                          stroke="#e8725c"
+                          fill="#e8725c"
+                          fillOpacity={0.22}
+                          strokeWidth={1.5}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* 右侧文字 */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-end gap-3">
+                      <div>
+                        <p className="text-[10px] font-bold text-slateblue-700">
+                          自信度校准（AI vs 自评）
+                        </p>
+                        <p className="mt-0.5 text-2xl font-black text-coral-600">
+                          {aiAvg}
+                          <span className="ml-0.5 text-xs text-slateblue-700">
+                            / 10
+                          </span>
+                        </p>
+                      </div>
+                      <div className="pb-1">
+                        <p className="text-[10px] font-bold text-slateblue-700">
+                          你给自己打
+                        </p>
+                        <p className="text-sm font-black text-slateblue-500">
+                          {selfAvg}/10
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-slateblue-700">
+                      {skill?.uniqueValue}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Top 3 岗位 */}
+                {topRoles.length > 0 ? (
+                  <div className="mt-3 border-t border-silver-200 pt-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slateblue-700">
+                      你最匹配的方向
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {topRoles.map((r) => (
+                        <Link
+                          key={r.id}
+                          href="/opportunities"
+                          className="rounded-full border border-coral-200 bg-coral-50 px-2.5 py-1 text-[11px] font-bold text-coral-700 transition-colors hover:bg-coral-100"
+                        >
+                          {r.title} · {r.matchScore}%
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <Card className="mt-3 border-dashed border-silver-300 bg-silver-50 text-center">
+                <p className="text-xs text-slateblue-700">
+                  还没有你的职业诊断——
+                  <Link href="/onboarding" className="text-coral-600 underline">
+                    去 onboarding
+                  </Link>{' '}
+                  走完，AI 会生成技能画像 + 岗位匹配。
+                </p>
+              </Card>
+            )}
+          </Card>
+
+          {/* ② 今日提醒 */}
           <Card className="border-softpink-300 !bg-softpink-100 p-4">
             <div className="flex items-start gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-coral-500 text-white">
@@ -339,7 +512,7 @@ export default function CoachPage() {
             </div>
           </Card>
 
-          {/* 进度总览 + 记忆信号 */}
+          {/* ③ 进度总览 + 记忆信号 */}
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-black uppercase tracking-wide text-coral-600">
@@ -350,7 +523,9 @@ export default function CoachPage() {
               </span>
             </div>
             <div className="mt-3">
-              <ProgressBar value={tasks.length ? (done / tasks.length) * 100 : 0} />
+              <ProgressBar
+                value={tasks.length ? (done / tasks.length) * 100 : 0}
+              />
             </div>
             <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-slateblue-700">
               <BrainCog className="h-3.5 w-3.5 shrink-0 text-coral-500" />
@@ -373,7 +548,7 @@ export default function CoachPage() {
             </div>
           </Card>
 
-          {/* 进度记录表（按周分组，可勾选） */}
+          {/* ④ 进度记录表 */}
           {plan ? (
             <Card className="p-4">
               <div className="flex items-center gap-2">

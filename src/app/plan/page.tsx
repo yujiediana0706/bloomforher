@@ -1,28 +1,18 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  BookOpen,
-  Check,
-  Flag,
-  PauseCircle,
-  RefreshCw,
-  Sliders,
-  Sparkles,
-  Target,
-} from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, BookOpen, Check, PauseCircle, RefreshCw, Sliders, Sparkles, Target } from 'lucide-react';
 import {
   Badge,
   Button,
   Card,
   EmptyState,
-  SectionTitle,
 } from '@/components/ui';
 import { useAuth } from '@/components/AuthProvider';
 import { apiGet, apiSend } from '@/lib/client';
 import type { PlanTask, ReturnPlan } from '@/lib/types';
 
-const EXAMPLE_FEEDBACK = '这周孩子生病了';
 const PAUSE_LINE = '暂停不等于淘汰';
 
 export default function PlanPage() {
@@ -80,7 +70,7 @@ export default function PlanPage() {
     const ok = await handleGenerate({ feedback: feedback.trim() });
     if (ok) {
       setPauseTip(
-        `AI 已按「${feedback.trim()}」重新生成计划：${PAUSE_LINE}，你已完成的任务进度都已保留，剩下的任务会顺延。`
+        `AI 已按「${feedback.trim()}」重新生成计划：${PAUSE_LINE}，你已完成的任务进度都已保留。`
       );
       setFeedback('');
     }
@@ -104,22 +94,32 @@ export default function PlanPage() {
     }
   }
 
-  if (loading) {
-    return <EmptyState text="正在加载…" />;
-  }
-  if (!user) {
+  if (loading) return <EmptyState text="正在加载…" />;
+  if (!user)
     return <EmptyState text="请先登录（可用右上角切换演示账号）" />;
-  }
-
-  const maxHours = user.constraints.weeklyHours;
 
   return (
-    <div className="space-y-6">
-      <SectionTitle
-        eyebrow="Journey ⑤ 回归计划"
-        title="你的 30 天回归计划"
-        desc="按你的人生阶段设计节奏：可中断、可调整，暂停不会清零你走过的路。"
-      />
+    <div className="mx-auto max-w-3xl space-y-5">
+      {/* 返回链接 */}
+      <Link
+        href="/coach"
+        className="inline-flex items-center gap-1 text-xs font-bold text-slateblue-700 underline underline-offset-4 hover:text-coral-600"
+      >
+        <ArrowLeft className="h-3 w-3" />
+        返回 AI Mentor 工作台
+      </Link>
+
+      <div>
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-coral-500">
+          诊断详情 · 回归计划
+        </p>
+        <h1 className="mt-1 text-2xl font-black text-slateblue-900">
+          你的 30 天回归计划
+        </h1>
+        <p className="mt-1 text-sm text-slateblue-700">
+          按你的人生阶段设计节奏：可中断、可调整，暂停不会清零你走过的路。
+        </p>
+      </div>
 
       {error ? (
         <p className="rounded-xl border border-warmred/40 bg-warmred/10 px-3 py-2 text-sm font-bold text-warmred">
@@ -156,59 +156,50 @@ export default function PlanPage() {
 
       {plan ? (
         <>
-          {/* 顶部：节奏标签 + 每周小时数 */}
+          {/* 节奏 + 断档预案 + 调整计划 — 三张紧凑卡 */}
           <Card className="border-softpink-300 bg-gradient-to-br from-softpink-100 to-white">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-coral-500">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-coral-500">
                   你的节奏
-                </span>
-                <h3 className="mt-1 text-xl font-black text-slateblue-900">
+                </p>
+                <h3 className="mt-0.5 text-lg font-black text-slateblue-900">
                   {plan.paceLabel}
                 </h3>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Badge tone="coral">
-                  每周投入 {plan.weeklyHours} 小时
-                </Badge>
-                <Badge tone="silver">共 {plan.totalWeeks} 周</Badge>
+              <div className="flex flex-wrap gap-2">
+                <Badge tone="coral">每周 {plan.weeklyHours}h</Badge>
+                <Badge tone="silver">{plan.totalWeeks} 周</Badge>
               </div>
             </div>
-            <p className="mt-3 text-xs text-slateblue-700">
-              你的档案里每周可投入上限为 {maxHours} 小时，计划已按此上限安排，不会超出。
-            </p>
           </Card>
 
-          {/* 断档回归预案 */}
           <Card className="border-softpink-300 bg-softpink-100">
             <div className="flex items-center gap-2">
               <PauseCircle className="h-4 w-4 text-coral-500" />
-              <h3 className="text-sm font-extrabold text-slateblue-900">
-                断档回归预案（Return Playbook）
-              </h3>
+              <p className="text-xs font-extrabold text-slateblue-900">
+                断档回归预案
+              </p>
             </div>
-            <p className="mt-2 text-sm leading-relaxed text-slateblue-800">
+            <p className="mt-1.5 text-xs leading-relaxed text-slateblue-800">
               {plan.returnPlaybook}
             </p>
           </Card>
 
-          {/* 调整计划 */}
           <Card>
             <div className="flex items-center gap-2">
               <Sliders className="h-4 w-4 text-coral-500" />
-              <h3 className="text-sm font-extrabold text-slateblue-900">
-                调整计划
-              </h3>
+              <p className="text-xs font-extrabold text-slateblue-900">调整计划</p>
             </div>
-            <p className="mt-1 text-xs text-slateblue-700">
+            <p className="mt-0.5 text-xs text-slateblue-700">
               用一句自然语言告诉我发生了什么，我来重新排布节奏。
             </p>
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
               <input
                 className="w-full rounded-xl border border-silver-300 bg-silver-50 px-3 py-2 text-sm text-slateblue-900 outline-none transition-colors focus:border-coral-500 focus:bg-white"
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                placeholder={`示例：「${EXAMPLE_FEEDBACK}」`}
+                placeholder='示例："这周孩子生病了"'
               />
               <Button
                 className="shrink-0"
@@ -229,63 +220,56 @@ export default function PlanPage() {
               </Button>
             </div>
             {pauseTip ? (
-              <p className="mt-3 rounded-xl border border-warmgreen/40 bg-warmgreen/10 px-3 py-2 text-sm font-bold text-[#3f7a4a]">
+              <p className="mt-2.5 rounded-xl border border-warmgreen/40 bg-warmgreen/10 px-3 py-2 text-xs font-bold text-[#3f7a4a]">
                 {pauseTip}
               </p>
             ) : null}
           </Card>
 
-          {/* 周卡视图 */}
+          {/* 周卡 */}
           <section>
-            <h3 className="mb-3 text-sm font-extrabold text-slateblue-900">
+            <h3 className="mb-2 text-sm font-extrabold text-slateblue-900">
               每周安排
             </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               {plan.weeks.map((week) => (
                 <Card key={week.week} className="flex flex-col">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="text-xs font-bold text-coral-500">
+                      <p className="text-[11px] font-bold text-coral-500">
                         第 {week.week} 周
-                      </span>
+                      </p>
                       <h4 className="text-sm font-extrabold text-slateblue-900">
                         {week.theme}
                       </h4>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1">
-                      <Badge tone="silver">{week.weeklyHours} 小时/周</Badge>
-                      {week.interruptible ? (
-                        <Badge tone="pink">可中断</Badge>
-                      ) : null}
-                    </div>
+                    <Badge tone="silver">{week.weeklyHours}h/周</Badge>
                   </div>
 
-                  {/* 学习资源 */}
-                  <div className="mt-3">
-                    <p className="flex items-center gap-1 text-xs font-bold text-slateblue-900">
-                      <BookOpen className="h-3.5 w-3.5" />
+                  <div className="mt-2.5">
+                    <p className="flex items-center gap-1 text-[11px] font-bold text-slateblue-900">
+                      <BookOpen className="h-3 w-3" />
                       学习资源
                     </p>
-                    <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-slateblue-700">
+                    <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-[11px] text-slateblue-700">
                       {week.learningResources.map((r) => (
                         <li key={r}>{r}</li>
                       ))}
                     </ul>
                   </div>
 
-                  {/* 实践任务（可勾选） */}
-                  <div className="mt-3">
-                    <p className="text-xs font-bold text-slateblue-900">
+                  <div className="mt-2.5">
+                    <p className="text-[11px] font-bold text-slateblue-900">
                       实践任务
                     </p>
-                    <div className="mt-1 space-y-2">
+                    <div className="mt-0.5 space-y-1">
                       {week.practiceTasks.map((task) => (
                         <button
                           key={task.id}
                           type="button"
                           onClick={() => void toggleTask(task)}
                           disabled={pendingTaskId === task.id}
-                          className={`flex w-full items-start gap-2 rounded-xl border px-3 py-2 text-left transition-colors ${
+                          className={`flex w-full items-start gap-2 rounded-xl border px-2.5 py-1.5 text-left transition-colors ${
                             task.completed
                               ? 'border-warmgreen/40 bg-warmgreen/10'
                               : 'border-silver-300 bg-white hover:bg-silver-100'
@@ -298,13 +282,11 @@ export default function PlanPage() {
                                 : 'border-silver-400'
                             }`}
                           >
-                            {task.completed ? (
-                              <Check className="h-3 w-3" />
-                            ) : null}
+                            {task.completed ? <Check className="h-2.5 w-2.5" /> : null}
                           </span>
                           <span className="min-w-0 flex-1">
                             <span
-                              className={`block text-xs font-bold ${
+                              className={`block text-[11px] font-bold ${
                                 task.completed
                                   ? 'text-slateblue-700 line-through'
                                   : 'text-slateblue-900'
@@ -312,25 +294,18 @@ export default function PlanPage() {
                             >
                               {task.title}
                             </span>
-                            <span className="mt-0.5 block text-[11px] text-slateblue-700">
-                              约 {task.estimatedHours} 小时 ·{' '}
-                              {task.category === 'milestone'
-                                ? '里程碑'
-                                : '练习'}
-                            </span>
                           </span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* 求职里程碑 */}
-                  <div className="mt-3">
-                    <p className="flex items-center gap-1 text-xs font-bold text-slateblue-900">
-                      <Target className="h-3.5 w-3.5" />
+                  <div className="mt-2.5">
+                    <p className="flex items-center gap-1 text-[11px] font-bold text-slateblue-900">
+                      <Target className="h-3 w-3" />
                       求职里程碑
                     </p>
-                    <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-slateblue-700">
+                    <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-[11px] text-slateblue-700">
                       {week.jobSearchMilestones.map((m) => (
                         <li key={m}>{m}</li>
                       ))}
@@ -342,10 +317,9 @@ export default function PlanPage() {
           </section>
 
           <Card className="flex items-center gap-2">
-            <Flag className="h-4 w-4 shrink-0 text-coral-500" />
-            <p className="text-xs text-slateblue-700">
-              勾选任务即完成，会自动生成一条「学习进展」证据。如果这周状态不好，勾不掉也没关系——
-              {PAUSE_LINE}。
+            <PauseCircle className="h-4 w-4 shrink-0 text-coral-500" />
+            <p className="text-[11px] text-slateblue-700">
+              勾选任务即完成，会自动生成证据。这周状态不好？{PAUSE_LINE}。
             </p>
           </Card>
         </>

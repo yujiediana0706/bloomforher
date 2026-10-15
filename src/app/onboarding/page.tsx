@@ -188,7 +188,7 @@ export default function OnboardingPage() {
       await apiSend('/api/skills', 'POST');
       await apiSend('/api/opportunities', 'POST');
       await refresh();
-      router.push('/skills');
+      router.push('/coach');
     } catch (e) {
       setError(e instanceof Error ? e.message : '保存失败，请重试');
     } finally {
