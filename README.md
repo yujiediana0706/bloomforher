@@ -4,11 +4,11 @@
 >
 > 面向女性的 AI 职业转型赋能平台：以「证据驱动」的方式，把过往经验翻译成 AI 时代的可迁移能力，用**同辈互助（免费）+ 专业导师（付费担保）双轨**陪伴每一位女性完成转型。
 
-**当前状态：产品原型（Phase 1）**
+**当前状态：产品原型（Phase 2 — Cloud Run 已部署）**
 
-- 全部页面与交互流程已实现，使用**服务端内存数据层**（`globalThis` 单例）模拟 Firestore；
-- **AI Coach 暂未接入真实模型**：`src/lib/ai.ts` 为单点占位层（规则式回复），将来替换即可接入 agent platform；
-- **尚未部署**（本地可完整跑通）。
+- ✅ 全部页面与交互流程已实现，使用**双模式数据层**（内存 fallback + Firestore 持久化）；
+- ✅ **Agent Platform 已接入**：5 个独立 Agent（评估、教练、记忆、主动、匹配）在 GCP Agent Studio 运行，通过 Reasoning Engine 调用；
+- ✅ **Cloud Run 已部署**（见 §8）。
 
 ---
 
@@ -20,8 +20,8 @@ bloomforher/
 │   ├── app/
 │   │   ├── layout.tsx              # 全局布局：AuthProvider + Navbar + footer
 │   │   ├── globals.css             # Tailwind 指令 + 金属质感工具类
-│   │   ├── page.tsx                # 落地页：6 步旅程图 + hero
-│   │   ├── onboarding/             # 旅程 ① 建档（8 屏表单）
+│   │   ├── page.tsx                # 落地页：三步核心链路 + hero
+│   │   ├── onboarding/             # 旅程 ① 建档（多屏表单）
 │   │   ├── skills/                 # 旅程 ② 技能发现（可迁移技能 + 自信度矫正板）
 │   │   ├── opportunities/          # 旅程 ③ AI 机会（岗位匹配 + 女性友好赛道）
 │   │   ├── tasks-lab/              # 旅程 ④ 实操任务（提交 → 流式反馈 + 评分）
@@ -30,7 +30,7 @@ bloomforher/
 │   │   ├── community/              # 导师社区
 │   │   ├── mentors/[id]/           # 导师详情 + 档期预约
 │   │   ├── my-sessions/            # 我的预约（同辈互助区 + 导师会话区）
-│   │   ├── coach/                  # 贯穿层 A：AI Coach（SSE 流式，占位回复）
+│   │   ├── coach/                  # 贯穿层 A：AI Mentor（SSE 流式）
 │   │   ├── evidence/               # 贯穿层 B：证据库 +「我可以」墙
 │   │   ├── dashboard/              # 工作台：旅程进度 + 自信度环 + 影响力数据
 │   │   ├── become-mentor/          # 申请成为导师
@@ -41,48 +41,80 @@ bloomforher/
 │       ├── types.ts                # 领域类型（对齐数据模型）
 │       ├── constants.ts            # 阶段标签 / 自信度公式 / 花名 / 导航
 │       ├── mockData.ts             # 种子数据（与 scripts/seed.ts 单一事实来源）
-│       ├── store.ts                # 服务端内存数据层（getDB 单例）
-│       ├── ai.ts                   # ⬅ AI 占位层（将来接 agent 的唯一改动点）
+│       ├── store.ts                # 双模式数据层（内存 + Firestore 同步）
+│       ├── firestore.ts            # GCP Firestore 客户端（懒加载）
+│       ├── ai.ts                   # ⬅ Agent Platform 调用层（5 个 Agent）
+│       ├── agent-client.ts         # Reasoning Engine query API 客户端
 │       ├── accounts.ts             # 客户端安全常量（演示账号）
 │       ├── session.ts              # 服务端会话（cookie，替代 Firebase Auth）
 │       └── client.ts               # 前端请求封装（apiGet / apiSend）
 ├── scripts/seed.ts                 # ⬅ 幂等播种脚本（firebase-admin，先清后插）
-├── firestore.rules                 # Firestore 安全规则（§6 完整实现）
+├── Dockerfile                      # Cloud Run 容器镜像（node:20-alpine + standalone）
+├── cloudbuild.yaml                 # Cloud Build CI/CD（构建 → 推送 → 部署）
+├── firestore.rules                 # Firestore 安全规则
 ├── firestore.indexes.json          # 复合索引清单
-├── storage.rules                   # Cloud Storage 规则（简历/证明私有）
-├── firebase.json / .firebaserc     # Firebase 配置（project: rebloom-cup）
-├── apphosting.yaml                 # Firebase App Hosting 配置
-├── .env.example                    # 环境变量清单
-└── legacy/                         # 旧版 Vite 前端 + Express 后端（保留 git 历史，未删除）
+└── .env.local                      # 环境变量（Agent endpoint / GOOGLE_CLOUD_PROJECT）
 ```
 
-## 2. 文字版架构图
+---
+
+## 2. GCP 技术架构
 
 ```
-┌──────────────────────────── 浏览器（Next.js App Router · Client Components）────────────────────────────┐
-│  落地页 → onboarding → skills → opportunities → tasks-lab → plan                                        │
-│  对话广场 / 导师社区 / 我的预约 / AI Coach / 证据库 / 工作台                                            │
-│           │  apiGet / apiSend（src/lib/client.ts）                                                       │
-└───────────┼──────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────── 浏览器（Next.js App Router · React 18）────────────────────────────────────┐
+│  落地页 → onboarding → skills → opportunities → tasks-lab → plan                                               │
+│  对话广场 / 导师社区 / 我的预约 / AI Mentor / 证据库 / 工作台                                                   │
+│  导航栏仅保留「首页 · AI Mentor · 对话广场」，其余收拢至 AI Mentor「更多功能」                                    │
+└───────────┬────────────────────────────────────────────────────────────────────────────────────────────────────┘
             │  HTTP / SSE
-┌───────────▼─────────────────────  Next.js Route Handlers（runtime = nodejs）─────────────────────────────┐
-│  /api/auth/session  /api/skills  /api/opportunities  /api/plan  /api/plan-tasks  /api/tasks-lab(+submit) │
-│  /api/evidence  /api/coach/chat(SSE)  /api/plaza(+[id]+willing)  /api/peer-chats                          │
-│  /api/mentors(+[id])  /api/mentor/profile  /api/mentor/slots  /api/bookings  /api/reviews                │
-│  /api/circles(+[id])  /api/dashboard  /api/profile  /api/my-sessions                                     │
-│           │                                                                                              │
-│           ├─▶ src/lib/store.ts     服务端内存数据层（globalThis 单例，模拟 Firestore）                    │
-│           └─▶ src/lib/ai.ts        AI 占位层（buildSkillProfile / coachReply / evaluateSubmission …）      │
-└──────────────────────────────────────────────────────────────────────────────────────────────────────┘
-            │  将来：接 agent platform（AI Coach）
-            ▼
-    Google Agent Platform 上的 ReBloom AI Coach Agent ──▶ Gemini
+┌───────────▼────────────────────────────── Next.js Route Handlers（runtime = nodejs）────────────────────────────┐
+│  /api/auth/session  /api/skills  /api/opportunities  /api/plan  /api/plan-tasks  /api/tasks-lab(+submit)         │
+│  /api/evidence  /api/coach/chat(SSE)  /api/plaza(+[id]+willing)  /api/peer-chats                                │
+│  /api/mentors(+[id])  /api/mentor/profile  /api/mentor/slots  /api/bookings  /api/reviews                       │
+│  /api/circles(+[id])  /api/dashboard  /api/profile  /api/my-sessions                                            │
+│                                                                                                                  │
+│  ├─▶ src/lib/store.ts          双模式数据层（内存 fallback + Firestore 持久化）                                │
+│  └─▶ src/lib/ai.ts             Agent Platform 调用层（7 个函数 → 5 个 Agent）                                   │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
             │
-            ▼  部署时替换内存层为真实持久化
-   Firebase（Auth 邮箱+Google / Firestore Native / Storage）──▶ 规则 firestore.rules + 索引
+            │  内部网络调用（GCP OAuth token endpoint，Cloud Run 内网可用）
+            ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  GCP Agent Studio — 5 个独立 Agent（Gemini 模型）                                                                │
+│  ├─ rebloom-assessment      评估 Agent：技能画像、机会分析、回归计划、实操任务、提交评分                           │
+│  ├─ rebloom-coach           教练 Agent：AI Mentor 对话、内容安全审核、周度总结                                     │
+│  ├─ rebloom-memory          记忆 Agent：RAG 知识库检索（公共职业知识 + 用户私有记忆）                             │
+│  ├─ rebloom-proactive       主动 Agent：触发式提醒、行为分析、干预策略                                             │
+│  └─ rebloom-mentor-match    匹配 Agent：导师推荐匹配                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+            │
+            ▼
+  Cloud Firestore（持久化）   /   Google Cloud Storage（简历/证明）
 ```
 
-## 3. 数据模型（Firestore 集合，对齐规范 §6）
+### Agent 调用链路
+
+```
+用户消息 → /api/coach/chat → src/lib/ai.ts/coachReply()
+                                              │
+                                              ▼
+                          src/lib/agent-client.ts/callAgentEndpoint()
+                                              │
+                                              ▼
+                          projects/{project}/locations/{location}/reasoningEngines/{id}/:query
+                                              │
+                                              ▼
+                          ReBloom Coach Agent（Gemini，注入 4 层记忆）
+                                              │
+                                              ▼
+                          SSE 流式返回 → 浏览器
+```
+
+**内容安全审核**：对话广场发帖前，自动调用 rebloom-coach Agent 进行温和内容审核（仅拦截仇恨言论/暴力威胁/歧视/色情/恶意攻击，正常分享/吐槽/消极表达均放行）。
+
+---
+
+## 3. 数据模型（Firestore 集合）
 
 | 集合 | 结构要点 |
 | --- | --- |
@@ -102,9 +134,11 @@ bloomforher/
 
 **关键业务规则**：证据自动沉淀（测评/计划勾选/任务提交/released 赠言/peer chat 完成后的感谢/帖子加油达 3/里程碑 1·5·10）；自信度 = 起始 40 + 加权（导师背书 8、同辈感谢 6、测评 6、作品 6、任务进展 3、里程碑 5、同辈认可 2），上限 100；匿名花名、并发 409、越权 403、未登录 401。
 
+---
+
 ## 4. 设计系统
 
-科技 × 简约 × 温暖。主基调为**银色金属感**（页面底 `#EEF0F4`、卡片白、`rounded-2xl`、极浅金属渐变条用于导航下沿与进度轨道）；点缀暖色：暖珊瑚橘 `#E8725C`（主 CTA / 当前步高亮 / 加油态）、柔粉 `#F3B8C8` / 杏粉 `#F9E4E0`（证据墙 / 求助帖 /「我可以」标签）、强调文字石板蓝灰 `#3E4C63`、状态色 confirmed 石板蓝 / released 暖绿 `#7FB685` / rejected 暖红。中文字体使用系统字体栈（不依赖被墙的 Google Fonts）。完整色板见 [tailwind.config.ts](tailwind.config.ts)。
+科技 × 简约 × 温暖。主基调为**银色金属感**（页面底 `#EEF0F4`、卡片白、`rounded-2xl`、极浅金属渐变条用于导航下沿与进度轨道）；点缀暖色：暖珊瑚橘 `#E8725C`（主 CTA / 当前步高亮 / 加油态）、柔粉 `#F3B8C8` / 杏粉 `#F9E4E0`（证据墙 / 求助帖 /「我可以」标签）、强调文字石板蓝灰 `#3E4C63`、状态色 confirmed 石板蓝 / released 暖绿 `#7FB685` / rejected 暖红。中文字体使用系统字体栈（不依赖 Google Fonts）。完整色板见 [tailwind.config.ts](tailwind.config.ts)。
 
 ---
 
@@ -127,7 +161,7 @@ npm run build          # 生产构建
 | 账号 | 说明 |
 | --- | --- |
 | `demo.returner@rebloom.test` | 产后回归 · 林知夏（**完整数据**：技能发现 + 机会分析 + 30 天计划 + 2 个实操任务 + 8 条证据 + 2 条 released 导师预约 + 1 条 completed peer chat） |
-| `demo.explorer@rebloom.test` | 在校探索 · 陈思远（全新账号，适合从零体验完整 6 步旅程） |
+| `demo.explorer@rebloom.test` | 在校探索 · 陈思远（全新账号，适合从零体验完整旅程） |
 | `demo.mentor1@rebloom.test` | 导师 · 林知夏（前大厂 AI 产品经理，¥299 / ¥1299） |
 | `demo.mentor2@rebloom.test` | 导师 · 周明远（女性科技创业者，¥399 / ¥1799） |
 | `demo.mentor3@rebloom.test` | 导师 · 苏叶（AI 运营专家，¥199 / ¥899） |
@@ -142,50 +176,67 @@ npm run build          # 生产构建
 
 | 变量 | 用途 |
 | --- | --- |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` / `..._AUTH_DOMAIN` / `..._PROJECT_ID` / `..._STORAGE_BUCKET` / `..._MESSAGING_SENDER_ID` / `..._APP_ID` | 浏览器端 Firebase 配置 |
-| `GEMINI_API_KEY` | 服务端 AI 密钥（**现阶段留空即可**，AI 未接入） |
-| `SERVICE_ACCOUNT_PATH` / `GOOGLE_APPLICATION_CREDENTIALS` | 播种脚本使用服务账号 |
-| `FIREBASE_PROJECT_ID` | 默认 `rebloom-cup` |
+| `AGENT_ENDPOINT_ASSESSMENT` | 评估 Agent Reasoning Engine endpoint |
+| `AGENT_ENDPOINT_COACH` | 教练 Agent Reasoning Engine endpoint |
+| `AGENT_ENDPOINT_MEMORY` | 记忆 Agent Reasoning Engine endpoint |
+| `AGENT_ENDPOINT_PROACTIVE` | 主动 Agent Reasoning Engine endpoint |
+| `AGENT_ENDPOINT_MENTOR_MATCH` | 匹配 Agent Reasoning Engine endpoint |
+| `GOOGLE_CLOUD_PROJECT` | GCP 项目 ID |
+| `GOOGLE_APPLICATION_CREDENTIALS` | 服务账号路径（本地播种用） |
+| `NEXT_PUBLIC_FIREBASE_*` | 浏览器端 Firebase 配置 |
 
 ---
 
-## 7. 接下来：接入 AI Coach agent（agent platform）
+## 7. Agent Platform 架构
 
-AI 相关逻辑全部收敛在 [src/lib/ai.ts](file:///Users/yujiejiang/bloomforher/src/lib/ai.ts) 单点。接入步骤：
+5 个独立 Agent 在 GCP Agent Studio 创建，通过 Reasoning Engine `query` API 调用：
 
-1. 在 agent platform 搭好 ReBloom AI Coach Agent，按 §5.7 配置 system prompt（注入：用户档案、lifeStage、技能发现、机会分析、30 天计划进度、最近 5 条证据、近期预约；红线：证据重构法、暂停不等于淘汰、情绪低落时引导去广场、不虚构经历、不给医疗/法律建议）。
-2. 在项目内新增 agent 调用客户端（替换 `ai.ts` 内 `coachReply` 等占位实现），`/api/coach/chat` 保持 SSE 流式输出不变。
-3. 配置 `GEMINI_API_KEY`（或 agent 服务的凭据）为 App Hosting secret。
+| Agent | 职责 | AI 函数映射 |
+| --- | --- | --- |
+| **rebloom-assessment** | 评估 Agent | `buildSkillProfile` / `buildOpportunityReport` / `buildReturnPlan` / `buildLabTasks` / `evaluateSubmission` |
+| **rebloom-coach** | 教练 Agent | `coachReply` / `buildWeeklyConfidenceSummary` / `moderateContent` |
+| **rebloom-memory** | 记忆 Agent | RAG 知识库检索（公共职业知识 + 用户私有记忆） |
+| **rebloom-proactive** | 主动 Agent | 触发式提醒、行为分析、干预策略 |
+| **rebloom-mentor-match** | 匹配 Agent | 导师推荐匹配 |
 
-## 8. 部署（Firebase App Hosting）
+**Prompt 注入 4 层记忆**：所有上传简历的解析文本、coachNote、跟踪的行动项 + 技能、诊断报告关键结论。
 
-> 规范要求实际执行并写入 README；**当前处于原型阶段，尚未部署**，以下为执行清单。
+**本地开发限制**：中国大陆网络无法访问 GCP OAuth token endpoint，Agent 调用自动回退到占位逻辑；部署到 Cloud Run 后 GCP 内部网络无限制，Agent 调用正常。
 
-1. `npm i -g firebase-tools` → `firebase login`；Firebase Console 新建项目 `rebloom-cup`，启用 Authentication（邮箱 + Google）、Firestore Native、Storage。
-2. Google AI Studio 申请 `GEMINI_API_KEY`，在 App Hosting 配置为服务端 secret；`NEXT_PUBLIC_FIREBASE_*` 配普通环境变量（见 [apphosting.yaml](apphosting.yaml)）。
-3. `firebase init apphosting firestore storage`；部署规则与索引：
-   ```bash
-   firebase deploy --only firestore:rules,firestore:indexes,storage
-   ```
-4. 代码推 GitHub，App Hosting 连仓库部署（或 `firebase apphosting:backends:create`）；**region 选 `asia-southeast1`**。
-5. 本地放置服务账号私钥，运行播种：
-   ```bash
-   SERVICE_ACCOUNT_PATH=./serviceAccountKey.json npm run seed
-   ```
-6. 部署后按验收标准走一遍（见下）。
+---
 
-**重新部署 / 重新播种**
+## 8. 部署（Cloud Run）
 
-```bash
-firebase deploy                       # 重新部署
-npm run seed                          # 重新播种（幂等：先清后插）
+### 架构
+
+```
+GitHub (main 分支) → Cloud Build 触发器 → Docker 构建 → GCR → Cloud Run
 ```
 
-**线上 URL**：`待部署（部署后填写，如 https://rebloom-cup.web.app）`
+### 已完成的配置
+
+1. ✅ Cloud Build 触发器：push 到 `main` 分支自动触发
+2. ✅ `Dockerfile`：`node:20-alpine` + multi-stage + standalone 输出
+3. ✅ `cloudbuild.yaml`：3 步（build → push → deploy），Agent endpoint 直接写死
+4. ✅ Cloud Run 服务：`rebloom-ai`，region `asia-southeast1`，允许未认证访问
+
+### 线上 URL
+
+**https://rebloom-ai-107927033625.asia-southeast1.run.app**
+
+### 重新部署
+
+推送代码到 `main` 分支即可自动触发 Cloud Build：
+
+```bash
+git push origin main
+```
+
+或在 GCP Console → Cloud Build → 触发器 → 手动触发。
 
 ---
 
-## 9. 验收自检（§11）
+## 9. 验收自检
 
 | 项 | 状态 |
 | --- | --- |
@@ -193,13 +244,16 @@ npm run seed                          # 重新播种（幂等：先清后插）
 | `npx tsc --noEmit` 通过 | ✅ 无类型错误 |
 | 无 simulator 残留 / 无管理员入口 | ✅ |
 | 色板符合 §8（银灰金属底 + 珊瑚橘/柔粉点缀） | ✅ |
-| 6 步旅程 + 广场 + 导师 + Coach + 证据库 + 工作台全流程可交互 | ✅（内存数据层） |
-| AI 回复为真实模型 | ⏳ 待接 agent platform（当前为占位层） |
-| 线上 URL + GitHub + 部署 | ⏳ 待部署 |
+| 核心链路（诊断 → AI Mentor → 对话广场）全流程可交互 | ✅ |
+| AI 回复为真实模型 | ✅ Agent Platform 已接入 |
+| 内容安全审核 | ✅ rebloom-coach 温和审核 |
+| 线上 URL + GitHub + Cloud Run 部署 | ✅ |
+
+---
 
 ## 10. 30 秒演示口播脚本
 
-> （对应 §11 端到端 Demo，用 `demo.explorer` 从零跑一条，或直接用 `demo.returner` 看完整数据）
+> （用 `demo.returner` 登录，体验完整数据）
 
 「很多女性不是没有能力，是**低估了自己和技术的相关性**。ReBloom 做的事很简单——
 
@@ -223,4 +277,4 @@ npm run seed                          # 重新播种（幂等：先清后插）
 | `npm run build` / `npm start` | 生产构建 / 启动 |
 | `npx tsc --noEmit` | 类型检查 |
 | `npm run seed` | 幂等播种 Firestore（需服务账号） |
-| `firebase deploy` | 部署规则/索引（App Hosting 部署见 §8） |
+| `git push origin main` | 触发 Cloud Build 自动部署 |
