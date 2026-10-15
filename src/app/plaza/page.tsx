@@ -457,7 +457,7 @@ export default function PlazaPage() {
               取消
             </Button>
             <Button onClick={() => void handlePublish()} disabled={submitting}>
-              {submitting ? '发布中…' : '发布'}
+              {submitting ? 'AI 守护者审核中…' : '发布'}
             </Button>
           </div>
         </div>

@@ -398,3 +398,46 @@ ${evidences.slice(0, 5).map((e, i) => `${i + 1}. ${e.title} — ${e.detail}`).jo
   }
   return `${user.name}，这周我看到了两条具体证据：一是「${picks[0].title}」（${picks[0].detail}），二是「${picks[1].title}」（${picks[1].detail}）。它们不是空泛的鼓励，而是你真实做出来的事——请把它们记住。`;
 }
+
+/** 内容安全审核（AI 守护者） */
+export async function moderateContent(content: { title?: string; body?: string; images?: string[] }): Promise<{ pass: boolean; advice?: string }> {
+  if (!isAgentAvailable()) {
+    // 本地开发无 Agent 时，默认通过
+    return { pass: true };
+  }
+
+  const ep = getAgentEndpoint('coach');
+  if (!ep) return { pass: true };
+
+  const text = [content.title, content.body].filter(Boolean).join('\n\n');
+  const hasImages = (content.images?.length ?? 0) > 0;
+
+  const prompt = `你是一位社区内容安全守护者，名字叫「小径」。你的任务是审核用户发布的社区内容，确保社区氛围温暖、支持、安全。
+
+请审核以下内容：
+
+${text}
+${hasImages ? `[包含 ${content.images!.length} 张图片]` : ''}
+
+审核标准：
+1. 拦截：仇恨言论、暴力威胁、歧视性语言、色情内容、恶意攻击
+2. 放行：正常分享、求助、吐槽、情感表达（即使有些消极）
+3. 温和提醒：内容过于消极或可能引发不适时，给出温和建议
+
+输出格式：严格 JSON
+{"pass": true/false, "advice": "温和的建议（仅当 pass 为 false 时提供）"}
+
+注意：
+- 只拦截明显违规内容，模糊地带放行
+- 建议要温柔，不说教，像朋友提醒一样
+- 如果内容只是消极但不违规，pass: true，advice 可以写「这里好像有点消极，要不要换个表述？」`;
+
+  const res = await callAgentEndpoint(ep, { input: prompt });
+  if (res) {
+    const parsed = extractJson<{ pass: boolean; advice?: string }>(res.text);
+    if (parsed) return parsed;
+  }
+
+  // Agent 调用失败时，默认通过（不阻塞用户）
+  return { pass: true };
+}

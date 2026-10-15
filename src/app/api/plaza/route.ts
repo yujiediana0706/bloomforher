@@ -3,6 +3,7 @@ import { getDB, findUser, newId, nowIso, syncToFirestore } from '@/lib/store';
 import type { DB } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { pickAnonymousHandle } from '@/lib/constants';
+import { moderateContent } from '@/lib/ai';
 import type { PlazaPost } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -82,6 +83,15 @@ export async function POST(req: NextRequest) {
   if (images.length > MAX_IMAGES) {
     return NextResponse.json(
       { error: `图片最多 ${MAX_IMAGES} 张` },
+      { status: 400 }
+    );
+  }
+
+  // AI 内容安全审核（守护者）
+  const moderation = await moderateContent({ title, body: text, images });
+  if (!moderation.pass) {
+    return NextResponse.json(
+      { error: moderation.advice || '内容未通过审核，请调整后再试', code: 'CONTENT_REJECTED' },
       { status: 400 }
     );
   }
