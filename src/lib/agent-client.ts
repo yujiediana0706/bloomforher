@@ -1,4 +1,4 @@
-// Agent Platform / Gemini 调用客户端。有 endpoint 时调真实 Agent，无则返回 null（回退到占位逻辑）。
+// Agent Platform / Reasoning Engine 调用客户端。有 endpoint 时调真实 Agent，无则返回 null（回退到占位逻辑）。
 // 仅服务端使用。
 
 import { GoogleAuth } from 'google-auth-library';
@@ -44,45 +44,33 @@ interface AgentResponse {
   text: string;
 }
 
-/** 调 Vertex AI Agent Platform（detectIntent）或 Gemini generateContent */
-export async function callAgent(req: AgentRequest): Promise<AgentResponse | null> {
-  const auth = getAuth();
-  if (!auth) return null;
-
-  const client = await auth.getClient();
-  const token = (await client.getAccessToken()).token;
-
-  // 优先走 Agent Platform（如果配置了 endpoint）
-  const endpoint = process.env.AGENT_ENDPOINT_COACH;
-  if (endpoint) {
-    return callAgentPlatform(token!, endpoint, req);
-  }
-
-  // 否则走 Vertex AI Gemini generateContent
-  return callGemini(token!, req);
-}
-
-/** 调 Agent Platform（Agent Builder） */
-async function callAgentPlatform(
-  token: string,
+/** 调 Reasoning Engine（Agent Studio 部署的 Agent） */
+export async function callAgentEndpoint(
   endpoint: string,
   req: AgentRequest
 ): Promise<AgentResponse | null> {
+  const auth = getAuth();
+  if (!auth) return null;
+
   try {
-    // Agent Builder 的 REST API 格式
-    const url = `https://agent.googleapis.com/v1/${endpoint}:detectIntent`;
-    const body = {
-      queryInput: {
-        text: { text: req.input, languageCode: 'zh-CN' },
-      },
-      queryParams: {
-        payload: {
-          systemInstruction: req.systemInstruction,
-          context: req.context ? JSON.stringify(req.context) : undefined,
-          history: req.history,
-        },
-      },
-    };
+    const client = await auth.getClient();
+    const token = (await client.getAccessToken()).token;
+
+    // 从 endpoint 提取 location
+    // endpoint 格式：projects/107927033625/locations/us-west1/reasoningEngines/5963861020219801600
+    const locationMatch = endpoint.match(/locations\/([^/]+)/);
+    const location = locationMatch?.[1] || 'us-central1';
+
+    const url = `https://${location}-aiplatform.googleapis.com/v1/${endpoint}:query`;
+
+    // 构建输入文本
+    let fullInput = req.input;
+    if (req.systemInstruction) {
+      fullInput = `[系统设定] ${req.systemInstruction}\n\n[用户输入] ${req.input}`;
+    }
+    if (req.context) {
+      fullInput += `\n\n[上下文] ${JSON.stringify(req.context)}`;
+    }
 
     const res = await fetch(url, {
       method: 'POST',
@@ -90,29 +78,39 @@ async function callAgentPlatform(
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        input: {
+          query: fullInput,
+          ...(req.history && { history: req.history }),
+        },
+      }),
     });
 
     if (!res.ok) {
       const err = await res.text();
-      console.error('[Agent Platform] 调用失败:', res.status, err.slice(0, 200));
+      console.error(`[Agent] 调用失败 (${endpoint}):`, res.status, err.slice(0, 300));
       return null;
     }
 
     const data = await res.json();
-    const text = data.queryResult?.responseMessages?.[0]?.text?.text?.[0]
-      || data.queryResult?.fulfillmentText
-      || '';
+    // Reasoning Engine 返回格式：{ output: { text: "..." } } 或 { output: "..." }
+    const text = data.output?.text || data.output || '';
     return { text };
   } catch (e) {
-    console.error('[Agent Platform] 异常:', (e as Error).message);
+    console.error(`[Agent] 异常 (${endpoint}):`, (e as Error).message);
     return null;
   }
 }
 
-/** 调 Vertex AI Gemini generateContent */
-async function callGemini(token: string, req: AgentRequest): Promise<AgentResponse | null> {
+/** 调 Vertex AI Gemini generateContent（fallback） */
+export async function callGemini(req: AgentRequest): Promise<AgentResponse | null> {
+  const auth = getAuth();
+  if (!auth) return null;
+
   try {
+    const client = await auth.getClient();
+    const token = (await client.getAccessToken()).token;
+
     const location = 'us-central1';
     const model = 'gemini-2.0-flash';
     const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
@@ -120,7 +118,6 @@ async function callGemini(token: string, req: AgentRequest): Promise<AgentRespon
     // 构建 contents
     const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
-    // 系统提示词
     if (req.systemInstruction) {
       contents.push({
         role: 'user',
@@ -132,7 +129,6 @@ async function callGemini(token: string, req: AgentRequest): Promise<AgentRespon
       });
     }
 
-    // 上下文
     if (req.context) {
       contents.push({
         role: 'user',
@@ -144,7 +140,6 @@ async function callGemini(token: string, req: AgentRequest): Promise<AgentRespon
       });
     }
 
-    // 历史
     if (req.history) {
       for (const msg of req.history) {
         contents.push({
@@ -154,7 +149,6 @@ async function callGemini(token: string, req: AgentRequest): Promise<AgentRespon
       }
     }
 
-    // 当前输入
     contents.push({ role: 'user', parts: [{ text: req.input }] });
 
     const res = await fetch(url, {
@@ -184,4 +178,16 @@ async function callGemini(token: string, req: AgentRequest): Promise<AgentRespon
 /** 判断 Agent 是否可用（有 endpoint 或能调 Gemini） */
 export function isAgentAvailable(): boolean {
   return getAuth() !== null;
+}
+
+/** 获取指定 Agent 的 endpoint */
+export function getAgentEndpoint(agentName: 'assessment' | 'coach' | 'memory' | 'proactive' | 'mentorMatch'): string | null {
+  const envMap: Record<string, string> = {
+    assessment: 'AGENT_ENDPOINT_ASSESSMENT',
+    coach: 'AGENT_ENDPOINT_COACH',
+    memory: 'AGENT_ENDPOINT_MEMORY',
+    proactive: 'AGENT_ENDPOINT_PROACTIVE',
+    mentorMatch: 'AGENT_ENDPOINT_MENTOR_MATCH',
+  };
+  return process.env[envMap[agentName]] || null;
 }

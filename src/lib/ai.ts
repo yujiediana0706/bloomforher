@@ -2,7 +2,7 @@
 // 所有函数均为异步，返回类型不变。
 
 import { LIFE_STAGE_LABELS } from './constants';
-import { callAgent, isAgentAvailable } from './agent-client';
+import { callAgentEndpoint, getAgentEndpoint, isAgentAvailable } from './agent-client';
 import type {
   EvidenceItem,
   GenderRiskHint,
@@ -172,7 +172,9 @@ export async function buildSkillProfile(user: UserProfile): Promise<Omit<SkillPr
   "confidenceCalibration": [{"dimension": "...", "selfScore": 5, "aiScore": 8, "evidenceRef": "..."}]
 }`;
 
-    const res = await callAgent({ input: prompt, context: { user } });
+    const ep = getAgentEndpoint('assessment');
+    if (!ep) return fallbackSkillProfile(user);
+    const res = await callAgentEndpoint(ep, { input: prompt, context: { user } });
     if (res) {
       const parsed = extractJson<Omit<SkillProfile, 'uid' | 'createdAt'>>(res.text);
       if (parsed) return parsed;
@@ -209,7 +211,9 @@ ${skills.transferableSkills.map(s => `- ${s.name}: ${s.evidence}`).join('\n')}
   "genderRiskHints": [{"scenario": "...", "gentleAdvice": "..."}]
 }`;
 
-    const res = await callAgent({ input: prompt, context: { user, skills } });
+    const ep = getAgentEndpoint('assessment');
+    if (!ep) return fallbackOpportunityReport(user, skills);
+    const res = await callAgentEndpoint(ep, { input: prompt, context: { user, skills } });
     if (res) {
       const parsed = extractJson<Omit<OpportunityReport, 'uid' | 'createdAt'>>(res.text);
       if (parsed) return parsed;
@@ -247,7 +251,9 @@ ${adjustmentFeedback ? `- 调整反馈：${adjustmentFeedback}` : ''}
   "weeks": [{"week": 1, "theme": "...", "weeklyHours": 6, "learningResources": ["..."], "practiceTasks": [{"id": "pt_1_1", "week": 1, "title": "...", "category": "practice", "estimatedHours": 3, "completed": false}], "jobSearchMilestones": ["..."], "interruptible": true}]
 }`;
 
-    const res = await callAgent({ input: prompt, context: { user, adjustmentFeedback } });
+    const ep = getAgentEndpoint('assessment');
+    if (!ep) return fallbackReturnPlan(user);
+    const res = await callAgentEndpoint(ep, { input: prompt, context: { user, adjustmentFeedback } });
     if (res) {
       const parsed = extractJson<Omit<ReturnPlan, 'uid' | 'createdAt'>>(res.text);
       if (parsed) return parsed;
@@ -269,7 +275,9 @@ export async function buildLabTasks(user: UserProfile): Promise<Omit<LabTask, 'i
 输出格式：严格 JSON 数组：
 [{"taskKey": "...", "title": "...", "scenario": "...", "toolHint": "...", "rubric": ["..."], "estimatedMinutes": 30, "status": "todo", "submissions": []}]`;
 
-    const res = await callAgent({ input: prompt, context: { user } });
+    const ep = getAgentEndpoint('assessment');
+    if (!ep) return fallbackLabTasks(user);
+    const res = await callAgentEndpoint(ep, { input: prompt, context: { user } });
     if (res) {
       const parsed = extractJson<Omit<LabTask, 'id' | 'uid' | 'createdAt'>[]>(res.text);
       if (parsed) return parsed;
@@ -295,7 +303,9 @@ ${submissionText}
 输出格式：严格 JSON：
 {"highlights": ["..."], "actionableSuggestions": ["..."], "skillGapAnalysis": ["..."], "score": 4.5, "evaluatedAt": "..."}`;
 
-    const res = await callAgent({ input: prompt });
+    const ep = getAgentEndpoint('assessment');
+    if (!ep) return fallbackEvaluateSubmission(submissionText);
+    const res = await callAgentEndpoint(ep, { input: prompt });
     if (res) {
       const parsed = extractJson<LabFeedback>(res.text);
       if (parsed) return parsed;
@@ -342,7 +352,9 @@ export async function coachReply(
       completedSessionCount: context.completedSessionCount,
     };
 
-    const res = await callAgent({
+    const ep = getAgentEndpoint('coach');
+    if (!ep) return fallbackCoachReply(user, evidences, userMessage, context);
+    const res = await callAgentEndpoint(ep, {
       systemInstruction: systemPrompt,
       input: userMessage,
       context: contextStr,
@@ -374,7 +386,9 @@ ${evidences.slice(0, 5).map((e, i) => `${i + 1}. ${e.title} — ${e.detail}`).jo
 - 80 字以内
 - 结尾给一个鼓励`;
 
-    const res = await callAgent({ input: prompt });
+    const ep = getAgentEndpoint('coach');
+    if (!ep) return `${user.name}，这周你开始建立证据了。等再多积累几条，我就能为你写出更具体的自信总结。`;
+    const res = await callAgentEndpoint(ep, { input: prompt });
     if (res) return res.text;
   }
 
