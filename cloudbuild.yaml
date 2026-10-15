@@ -16,7 +16,7 @@ steps:
       - 'push'
       - 'gcr.io/$PROJECT_ID/rebloom-ai:$SHORT_SHA'
 
-  # 3. 部署到 Cloud Run
+  # 3. 部署到 Cloud Run（Agent endpoint 直接写死，无需触发器配置）
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -33,29 +33,21 @@ steps:
       - '--set-env-vars'
       - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID'
       - '--set-env-vars'
-      - 'AGENT_ENDPOINT_ASSESSMENT=${_AGENT_ENDPOINT_ASSESSMENT}'
+      - 'AGENT_ENDPOINT_ASSESSMENT=projects/107927033625/locations/us-west1/reasoningEngines/5963861020219801600'
       - '--set-env-vars'
-      - 'AGENT_ENDPOINT_COACH=${_AGENT_ENDPOINT_COACH}'
+      - 'AGENT_ENDPOINT_COACH=projects/107927033625/locations/us-west1/reasoningEngines/3754845402994573312'
       - '--set-env-vars'
-      - 'AGENT_ENDPOINT_MEMORY=${_AGENT_ENDPOINT_MEMORY}'
+      - 'AGENT_ENDPOINT_MEMORY=projects/107927033625/locations/us-west1/reasoningEngines/6254343196185198592'
       - '--set-env-vars'
-      - 'AGENT_ENDPOINT_PROACTIVE=${_AGENT_ENDPOINT_PROACTIVE}'
+      - 'AGENT_ENDPOINT_PROACTIVE=projects/107927033625/locations/us-west1/reasoningEngines/7979221853468098560'
       - '--set-env-vars'
-      - 'AGENT_ENDPOINT_MENTOR_MATCH=${_AGENT_ENDPOINT_MENTOR_MATCH}'
+      - 'AGENT_ENDPOINT_MENTOR_MATCH=projects/107927033625/locations/us-west1/reasoningEngines/8951999372980125696'
       - '--memory'
       - '512Mi'
       - '--cpu'
       - '1'
       - '--timeout'
       - '300'
-
-substitutions:
-  # 这些需要在 Cloud Build 触发器里配置
-  _AGENT_ENDPOINT_ASSESSMENT: projects/107927033625/locations/us-west1/reasoningEngines/5963861020219801600
-  _AGENT_ENDPOINT_COACH: projects/107927033625/locations/us-west1/reasoningEngines/3754845402994573312
-  _AGENT_ENDPOINT_MEMORY: projects/107927033625/locations/us-west1/reasoningEngines/6254343196185198592
-  _AGENT_ENDPOINT_PROACTIVE: projects/107927033625/locations/us-west1/reasoningEngines/7979221853468098560
-  _AGENT_ENDPOINT_MENTOR_MATCH: projects/107927033625/locations/us-west1/reasoningEngines/8951999372980125696
 
 images:
   - 'gcr.io/$PROJECT_ID/rebloom-ai:$SHORT_SHA'
