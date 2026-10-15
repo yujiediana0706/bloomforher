@@ -2,11 +2,11 @@
 
 FROM node:22-alpine AS base
 
-# 安装依赖
+# 安装依赖（包含 devDependencies，构建需要）
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 # 构建
 FROM base AS builder
