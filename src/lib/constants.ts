@@ -94,16 +94,19 @@ export const JOURNEY_STEPS = [
   { step: 6, label: '加入社区', href: '/plaza' },
 ] as const;
 
-// —— 主导航（AI Mentor 是核心工作台；技能/机会/计划为诊断详情，从 Mentor 看板进入）——
+// —— 主导航（极简：核心三卡；其余功能全部从 AI Mentor dashboard 入口进）——
 export const NAV_ITEMS = [
-  { href: '/', label: '首页', extra: false },
-  { href: '/coach', label: 'AI Mentor', extra: false },
-  { href: '/plaza', label: '对话广场', extra: false },
-  { href: '/skills', label: '技能画像', extra: true },
-  { href: '/opportunities', label: 'AI 机会', extra: true },
-  { href: '/plan', label: '回归计划', extra: true },
-  { href: '/tasks-lab', label: '实操任务', extra: true },
-  { href: '/community', label: '导师社区', extra: true },
-  { href: '/my-sessions', label: '我的预约', extra: true },
-  { href: '/dashboard', label: '个人中心', extra: false },
+  { href: '/', label: '首页' },
+  { href: '/coach', label: 'AI Mentor' },
+  { href: '/plaza', label: '对话广场' },
+] as const;
+
+/** 需要在 AI Mentor dashboard 展示入口的功能清单 */
+export const MENTOR_DASHBOARD_LINKS = [
+  { href: '/skills', label: '技能画像', desc: 'AI 校准过的六维自信度', icon: 'FileText' },
+  { href: '/opportunities', label: 'AI 机会', desc: '为你匹配的岗位方向', icon: 'Compass' },
+  { href: '/plan', label: '回归计划', desc: '30 天节奏，可暂停', icon: 'CalendarClock' },
+  { href: '/tasks-lab', label: '实操任务', desc: '30 分钟做出第一个作品', icon: 'Rocket' },
+  { href: '/community', label: '导师社区', desc: '认证教练，付费担保', icon: 'Users' },
+  { href: '/dashboard', label: '个人中心', desc: '档案、简历、账号', icon: 'UserCircle' },
 ] as const;

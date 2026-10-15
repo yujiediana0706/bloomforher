@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bot, ChevronDown, Menu, Sparkles, X } from 'lucide-react';
+import { ChevronDown, Menu, Sparkles, X } from 'lucide-react';
 import { NAV_ITEMS } from '@/lib/constants';
 import { useAuth, DEMO_ACCOUNTS } from './AuthProvider';
 
@@ -34,33 +34,18 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
+                className={`shrink-0 rounded-xl px-3 py-1.5 text-sm font-bold transition-colors ${
                   isActive(item.href)
                     ? 'bg-coral-500 text-white'
-                    : item.extra
-                      ? 'text-slateblue-700/60 hover:bg-silver-100 hover:text-slateblue-700'
-                      : 'text-slateblue-700 hover:bg-silver-100'
+                    : 'text-slateblue-700 hover:bg-silver-100'
                 }`}
               >
                 {item.label}
-                {item.extra ? (
-                  <span className="ml-0.5 align-top text-[9px] font-black text-coral-400">
-                    +
-                  </span>
-                ) : null}
               </Link>
             ))}
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <Link
-              href="/coach"
-              className="hidden items-center gap-1.5 rounded-xl bg-coral-500 px-3 py-2 text-xs font-bold text-white hover:bg-coral-600 sm:inline-flex"
-            >
-              <Bot className="h-3.5 w-3.5" />
-              AI Mentor
-            </Link>
-
             <div className="relative">
               <button
                 type="button"
@@ -126,7 +111,7 @@ export function Navbar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
-                className={`rounded-xl px-3 py-2 text-xs font-bold ${
+                className={`rounded-xl px-3 py-2 text-sm font-bold ${
                   isActive(item.href)
                     ? 'bg-coral-500 text-white'
                     : 'text-slateblue-700 hover:bg-silver-100'
