@@ -5,6 +5,7 @@ import {
   getAgentEndpoint,
   getLastAgentError,
   getLastGeminiError,
+  getLastGeminiModel,
   isAgentAvailable,
   listReasoningEngines,
 } from '@/lib/agent-client';
@@ -45,7 +46,7 @@ export async function GET() {
     endpointsPresent: Object.fromEntries(
       Object.entries(endpoints).map(([k, v]) => [k, !!v])
     ),
-    gemini: gemini ? { ok: true, sample: gemini.text.slice(0, 120) } : { ok: false, error: geminiError },
+    gemini: gemini ? { ok: true, model: getLastGeminiModel(), sample: gemini.text.slice(0, 120) } : { ok: false, error: geminiError },
     agent: agent ? { ok: true, sample: agent.text.slice(0, 120) } : { ok: false, error: agentError },
     engines: { 'us-west1': enginesUsWest1, 'us-central1': enginesUsCentral1 },
   });

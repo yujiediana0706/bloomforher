@@ -12,6 +12,7 @@ let _auth: GoogleAuth | null = null;
 let _initFailed = false;
 let _lastAgentError: string | null = null;
 let _lastGeminiError: string | null = null;
+let _lastGeminiModel: string | null = null;
 
 export function getLastAgentError(): string | null {
   return _lastAgentError;
@@ -19,6 +20,10 @@ export function getLastAgentError(): string | null {
 
 export function getLastGeminiError(): string | null {
   return _lastGeminiError;
+}
+
+export function getLastGeminiModel(): string | null {
+  return _lastGeminiModel;
 }
 
 function getAuth(): GoogleAuth | null {
@@ -125,9 +130,13 @@ export async function callAgentEndpoint(
 }
 
 /** 调 Vertex AI Gemini generateContent（fallback）。模型名可通过 GEMINI_MODEL 覆盖，默认按候选列表逐个探测。 */
-const MODEL_CANDIDATES = process.env.GEMINI_MODEL
-  ? [process.env.GEMINI_MODEL]
-  : ['gemini-2.5-flash', 'gemini-2.0-flash-001', 'gemini-1.5-flash-002'];
+const MODEL_CANDIDATES: Array<{ model: string; location: string }> = process.env.GEMINI_MODEL
+  ? [{ model: process.env.GEMINI_MODEL, location: process.env.GEMINI_LOCATION || 'global' }]
+  : [
+      { model: 'gemini-3.5-flash', location: 'global' },
+      { model: 'gemini-2.5-flash', location: 'us-central1' },
+      { model: 'gemini-2.0-flash-001', location: 'us-central1' },
+    ];
 
 export async function callGemini(req: AgentRequest): Promise<AgentResponse | null> {
   const auth = getAuth();
@@ -136,8 +145,6 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
   try {
     const client = await auth.getClient();
     const token = (await client.getAccessToken()).token;
-
-    const location = 'us-central1';
 
     // 构建 contents（各模型复用）
     const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
@@ -175,7 +182,7 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
 
     contents.push({ role: 'user', parts: [{ text: req.input }] });
 
-    for (const model of MODEL_CANDIDATES) {
+    for (const { model, location } of MODEL_CANDIDATES) {
       const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
 
       const res = await fetch(url, {
@@ -202,6 +209,7 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
         continue;
       }
       _lastGeminiError = null;
+      _lastGeminiModel = model;
       return { text };
     }
     return null;
