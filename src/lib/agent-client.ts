@@ -190,7 +190,9 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
     _geminiAttempts = [];
 
     for (const { model, location } of MODEL_CANDIDATES) {
-      const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
+      // global 端点主机名不带区域前缀，其余区域为 {location}-aiplatform.googleapis.com
+      const host = location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
+      const url = `https://${host}/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
 
       const res = await fetch(url, {
         method: 'POST',
