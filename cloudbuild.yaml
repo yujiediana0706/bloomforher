@@ -36,6 +36,9 @@ steps:
       - '512Mi'
       - '--cpu'
       - '1'
+      # Faster cold starts: boosted CPU during instance startup (billed only
+      # for the short boost window, not while idle).
+      - '--cpu-boost'
       - '--timeout'
       - '300'
 
