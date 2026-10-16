@@ -5,9 +5,25 @@ import { AuthGate } from '@/components/AuthGate';
 import { Navbar } from '@/components/Navbar';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://rebloom-ai-107927033625.asia-southeast1.run.app'),
   title: 'ReBloom AI | Your experience. A brighter future in the AI era.',
   description:
     'An AI career-transition platform built for women: helping women move from "Why me" to "Why not me". Skill discovery · AI opportunities · hands-on tasks · return plans · community plaza · mentor network.',
+  openGraph: {
+    title: 'ReBloom AI | Your experience. A brighter future in the AI era.',
+    description:
+      'An AI career-transition platform built for women: skill discovery, AI opportunities, hands-on tasks, return plans, community plaza and mentor network.',
+    type: 'website',
+    siteName: 'ReBloom AI',
+    locale: 'en_US',
+    url: '/',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'ReBloom AI | Your experience. A brighter future in the AI era.',
+    description:
+      'An AI career-transition platform built for women: skill discovery, AI opportunities, hands-on tasks, return plans, community plaza and mentor network.',
+  },
 };
 
 export default function RootLayout({
