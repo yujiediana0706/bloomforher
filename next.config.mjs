@@ -7,6 +7,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  // Resume parsing libraries must stay external so their native/dynamic
+  // requires resolve at runtime instead of being bundled by webpack.
+  experimental: {
+    serverComponentsExternalPackages: ['unpdf', 'mammoth'],
+  },
   webpack: (config) => {
     config.resolve.alias['@'] = path.resolve(__dirname, 'src');
     return config;

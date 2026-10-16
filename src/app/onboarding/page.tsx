@@ -81,7 +81,7 @@ const COACH_LINES: Record<number, string> = {
   1: "Hi there, I'm your AI Coach. Let me get to know you first—this information helps me build a profile that fits you better. No rush, take your time.",
   2: 'Just write down the path you have traveled; no need to polish it into a pretty resume. Real experiences hold many transferable skills.',
   3: 'You can have several goals at once, and adjust direction along the way. Tell me your current constraints, and I will help you design a pace you can actually keep.',
-  4: 'The resume is optional. In this prototype we only record the file name; real parsing will come once AI is integrated.',
+  4: 'You can upload your resume here—I will actually read the text inside it and use your real experience for your diagnosis. This is optional, and you can skip it.',
   5: 'Your current life stage directly shapes the pace of the plan—none is better or worse, just different ways to arrange things.',
   6: 'Next is a self-rated confidence check. Go with your gut—there are no right answers; I will later calibrate objectively based on your evidence.',
   7: 'Just three questions left. Remember: women often underestimate themselves systematically, so your scores may be lower than your real ability.',
@@ -107,6 +107,11 @@ export default function OnboardingPage() {
   });
   const [weeklyHours, setWeeklyHours] = useState(10);
   const [resumeName, setResumeName] = useState('');
+  const [resumeStatus, setResumeStatus] = useState<
+    'idle' | 'uploading' | 'parsed' | 'error'
+  >('idle');
+  const [resumePreview, setResumePreview] = useState('');
+  const [resumeError, setResumeError] = useState('');
   const [lifeStage, setLifeStage] = useState<LifeStage | null>(null);
   const [confidence, setConfidence] = useState<Record<string, number>>(
     () => Object.fromEntries(CONFIDENCE_QUESTIONS.map((q) => [q.key, 5]))
@@ -122,7 +127,11 @@ export default function OnboardingPage() {
     setCurrentRole((v) => v || user.currentRole);
     setTargetRole((v) => v || user.targetRole);
     setBackgroundSummary((v) => v || user.backgroundSummary);
-    setResumeName((v) => v || user.resumePath || '');
+    setResumeName((v) => v || user.resumeFileName || user.resumePath || '');
+    if (user.resumeText) {
+      setResumePreview((v) => v || user.resumeText!);
+      setResumeStatus((s) => (s === 'idle' ? 'parsed' : s));
+    }
     setLifeStage((v) => v ?? user.lifeStage);
     setConstraints((c) => ({
       returnToWork: c.returnToWork || user.constraints.returnToWork,
@@ -137,6 +146,40 @@ export default function OnboardingPage() {
 
   function setConfidenceValue(key: string, value: number) {
     setConfidence((c) => ({ ...c, [key]: value }));
+  }
+
+  async function uploadResume(file: File) {
+    setResumeStatus('uploading');
+    setResumeError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/resume', { method: 'POST', body: fd });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        resumeFileName?: string;
+        resumeText?: string;
+      };
+      if (!res.ok) throw new Error(data.error || 'Failed to read your resume.');
+      setResumeName(data.resumeFileName || file.name);
+      setResumePreview(data.resumeText || '');
+      setResumeStatus('parsed');
+    } catch (e) {
+      setResumeStatus('error');
+      setResumeError(e instanceof Error ? e.message : 'Failed to read your resume.');
+    }
+  }
+
+  async function removeResume() {
+    setResumeName('');
+    setResumePreview('');
+    setResumeStatus('idle');
+    setResumeError('');
+    try {
+      await fetch('/api/resume', { method: 'DELETE' });
+    } catch {
+      /* best-effort */
+    }
   }
 
   async function handleFinish() {
@@ -352,38 +395,74 @@ export default function OnboardingPage() {
         {/* 4. Resume upload */}
         {step === 4 ? (
           <div className="space-y-3">
-            <p className="text-sm font-bold text-slateblue-900">
-              Upload resume (optional)
-            </p>
+            <div>
+              <p className="text-sm font-bold text-slateblue-900">
+                Upload your resume (optional, but recommended)
+              </p>
+              <p className="mt-1 text-xs text-slateblue-700">
+                I read the text inside your resume so your diagnosis and coaching
+                can use your real experience. PDF, DOCX, or TXT, up to 5&nbsp;MB.
+              </p>
+            </div>
             <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-silver-400 bg-silver-50 px-6 py-8 text-center transition-colors hover:border-coral-500 hover:bg-coral-50">
-              <Upload className="h-5 w-5 text-coral-500" />
+              {resumeStatus === 'uploading' ? (
+                <RefreshCw className="h-5 w-5 animate-spin text-coral-500" />
+              ) : (
+                <Upload className="h-5 w-5 text-coral-500" />
+              )}
               <span className="text-sm font-bold text-slateblue-900">
-                Click to choose a file
+                {resumeStatus === 'uploading'
+                  ? 'Reading your resume…'
+                  : 'Click to choose a file'}
               </span>
               <span className="text-xs text-slateblue-700">
-                Prototype only records the file name; nothing is actually
-                uploaded
+                It will be parsed and saved to your profile
               </span>
               <input
                 type="file"
+                accept=".pdf,.docx,.txt,.md"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) setResumeName(f.name);
+                  if (f) void uploadResume(f);
+                  e.target.value = '';
                 }}
               />
             </label>
-            {resumeName ? (
-              <div className="flex items-center gap-2 rounded-xl border border-softpink-300 bg-softpink-100 px-3 py-2 text-sm font-bold text-coral-700">
-                <FileText className="h-4 w-4" />
-                {resumeName}
-                <button
-                  type="button"
-                  onClick={() => setResumeName('')}
-                  className="ml-auto text-xs font-bold text-slateblue-700 hover:text-coral-600"
-                >
-                  Remove
-                </button>
+
+            {resumeError ? (
+              <p className="rounded-xl border border-warmred/40 bg-warmred/10 px-3 py-2 text-sm font-bold text-warmred">
+                {resumeError}
+              </p>
+            ) : null}
+
+            {resumeName && resumeStatus !== 'error' ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 rounded-xl border border-softpink-300 bg-softpink-100 px-3 py-2 text-sm font-bold text-coral-700">
+                  <FileText className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{resumeName}</span>
+                  {resumeStatus === 'parsed' ? (
+                    <Check className="h-4 w-4 shrink-0" />
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => void removeResume()}
+                    className="ml-auto shrink-0 text-xs font-bold text-slateblue-700 hover:text-coral-600"
+                  >
+                    Remove
+                  </button>
+                </div>
+                {resumePreview ? (
+                  <details className="rounded-xl border border-silver-300 bg-silver-50 px-3 py-2">
+                    <summary className="cursor-pointer text-xs font-bold text-slateblue-700">
+                      Preview the text the AI will read
+                    </summary>
+                    <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-slateblue-700">
+                      {resumePreview.slice(0, 1200)}
+                      {resumePreview.length > 1200 ? '…' : ''}
+                    </p>
+                  </details>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -490,7 +569,12 @@ export default function OnboardingPage() {
                     .filter(Boolean)
                     .join(', ') || '—',
                 ],
-                ['Resume', resumeName || 'Not uploaded (optional)'],
+                [
+                  'Resume',
+                  resumeName
+                    ? `${resumeName} (parsed ✓)`
+                    : 'Not uploaded (optional)',
+                ],
               ].map(([k, v]) => (
                 <div
                   key={k}

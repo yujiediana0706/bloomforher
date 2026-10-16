@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, nowIso } from '@/lib/store';
+import { ensureLoaded, findUser, nowIso, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { buildReturnPlan } from '@/lib/ai';
 import type { ReturnPlan } from '@/lib/types';
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const db = getDB();
+  const db = await ensureLoaded();
   return NextResponse.json({ plan: db.returnPlans[uid] ?? null });
 }
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const db = getDB();
+  const db = await ensureLoaded();
   const user = findUser(db, uid);
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
@@ -51,9 +51,11 @@ export async function POST(req: NextRequest) {
 
   const plan: ReturnPlan = { uid, createdAt: nowIso(), ...built };
   db.returnPlans[uid] = plan;
+  syncToFirestore('returnPlans', uid, plan);
 
   if (user.journeyStep < 5) user.journeyStep = 5;
   user.updatedAt = nowIso();
+  syncToFirestore('users', uid, user);
 
   return NextResponse.json({ plan });
 }

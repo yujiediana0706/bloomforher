@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findUser, getDB, nowIso } from '@/lib/store';
+import { ensureLoaded, findUser, nowIso, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 
 export const runtime = 'nodejs';
@@ -25,7 +25,8 @@ const ALLOWED_FIELDS = [
 export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
-  const user = findUser(getDB(), uid);
+  const db = await ensureLoaded();
+  const user = findUser(db, uid);
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
   return NextResponse.json({ user });
 }
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
   if (!body || typeof body !== 'object') {
     return NextResponse.json({ error: 'Invalid request parameters' }, { status: 400 });
   }
-  const db = getDB();
+  const db = await ensureLoaded();
   const user = findUser(db, uid);
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
@@ -51,5 +52,6 @@ export async function POST(req: NextRequest) {
     }
   }
   user.updatedAt = nowIso();
+  syncToFirestore('users', uid, user);
   return NextResponse.json({ user });
 }

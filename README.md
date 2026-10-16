@@ -10,6 +10,8 @@
 - ✅ **Real AI is wired in**: the platform calls **Agent Platform (Vertex AI Reasoning Engine) first**, and falls back to a direct **Vertex AI Gemini 3.5 Flash** call (global endpoint) — so live answers always come from a real large model.
 - ✅ 5 independent agents (assessment, coach, memory, proactive, mentor-match) are created in GCP Agent Studio with Reasoning Engine endpoints.
 - ✅ **Real users and real auth**: self-built email + password registration/login (scrypt salted hashing + a signed httpOnly session cookie); users and credentials are persisted in Firestore. There are **no demo or pre-seeded accounts**.
+- ✅ **Real resume parsing**: users can upload a resume (PDF / DOCX / TXT); the server extracts the text, stores it on their profile, and feeds it to the AI coach and the diagnosis prompts.
+- ✅ **Profile and diagnosis persist to Firestore**: the onboarding profile, skill profile, opportunity report and return plan are all written back to Firestore.
 - ✅ **Deployed on Cloud Run** (see §8).
 
 This is a submission prototype for the **Google AI Builder Cup** (Sustainability & Social Impact track), APAC region.
@@ -52,6 +54,7 @@ bloomforher/
 │       ├── ai.ts                   # AI call layer (Agent Platform first → Gemini fallback)
 │       ├── agent-client.ts         # Reasoning Engine query + Vertex AI Gemini client
 │       ├── auth.ts                 # server-only auth: scrypt password hashing + signed session tokens
+│       ├── resume.ts               # server-only resume parsing (PDF / DOCX / TXT)
 │       ├── accounts.ts             # client-safe session constant
 │       ├── session.ts              # server-side session (signed httpOnly cookie)
 │       └── client.ts               # front-end request helpers (apiGet / apiSend)
@@ -129,7 +132,7 @@ User message → /api/coach/chat → src/lib/ai.ts/coachReply()
 
 | Collection | Key fields |
 | --- | --- |
-| `users/{uid}` | Profile: name/email/currentRole/targetRole/skills[]/goals[]/constraints/lifeStage/confidenceSelf/journeyStep/coffeeAvailability[]/communityAgreed |
+| `users/{uid}` | Profile: name/email/currentRole/targetRole/skills[]/goals[]/constraints/lifeStage/confidenceSelf/journeyStep/coffeeAvailability[]/communityAgreed/resumeFileName/resumeText (text extracted from the uploaded resume) |
 | `credentials/{uid}` | Auth credentials: scrypt `salt` + `hash` (never exposed to the client) |
 | `publicProfiles/{uid}` | Subset of community-visible fields (read by the Plaza for booking; avoids exposing the full private profile) |
 | `skillProfiles/{uid}` | Skill discovery: transferableSkills[] + uniqueValue + confidenceCalibration[] |

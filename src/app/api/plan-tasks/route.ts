@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, addEvidence } from '@/lib/store';
+import { addEvidence, ensureLoaded, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import type { EvidenceItem, PlanTask } from '@/lib/types';
 
@@ -14,7 +14,7 @@ export async function PATCH(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const db = getDB();
+  const db = await ensureLoaded();
   const plan = db.returnPlans[uid];
   if (!plan) {
     return NextResponse.json({ error: 'No return plan has been generated yet' }, { status: 404 });
@@ -46,6 +46,7 @@ export async function PATCH(req: NextRequest) {
 
   const wasCompleted = target.completed;
   target.completed = completed;
+  syncToFirestore('returnPlans', uid, plan);
 
   let evidence: EvidenceItem | null = null;
   if (completed && !wasCompleted) {

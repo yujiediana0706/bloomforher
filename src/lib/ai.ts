@@ -42,6 +42,14 @@ function extractJson<T>(text: string): T | null {
   }
 }
 
+/** Resume text block injected into prompts (empty when no resume was uploaded). */
+function resumeBlock(user: UserProfile, max = 3000): string {
+  const text = user.resumeText?.trim();
+  if (!text) return '';
+  const name = user.resumeFileName ? ` (${user.resumeFileName})` : '';
+  return `- Resume${name}, extracted text:\n${text.slice(0, max)}\n`;
+}
+
 // —— Placeholder implementations (local development fallback) ——
 
 function fallbackSkillProfile(user: UserProfile): Omit<SkillProfile, 'uid' | 'createdAt'> {
@@ -144,6 +152,15 @@ function fallbackCoachReply(user: UserProfile, evidences: EvidenceItem[], userMe
   } else if (negative) {
     const ref = evidence ? `You already have one piece of real evidence: "${evidence.title}"—${evidence.detail}.` : 'The fact that you are willing to get this far is itself evidence.';
     content = `${user.name}, I hear your unease. ${ref} This is not a platitude—it is a fact you created yourself.`;
+  } else if (/resume|cv|experience|work history/i.test(userMessage) && user.resumeText) {
+    const lines = user.resumeText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 6);
+    content = `${user.name}, here is what I read from your resume:\n${lines
+      .map((l) => `- ${l}`)
+      .join('\n')}\nThese experiences are exactly the raw material we can translate into AI-era capabilities.`;
   } else {
     const taskHint = nextTask ? `I looked at your plan; the next step is "${nextTask}".` : '';
     content = `${user.name}, let us take it one step at a time. Based on your current profile and evidence, I suggest treating "${user.targetRole}" as your main line for now. ${taskHint}`;
@@ -169,7 +186,7 @@ User profile:
 - Life stage: ${LIFE_STAGE_LABELS[user.lifeStage]}
 - Current skills: ${user.skills.join(', ')}
 - Background summary: ${user.backgroundSummary}
-- Self-rated confidence: ${user.confidenceSelf}/10
+${resumeBlock(user)}- Self-rated confidence: ${user.confidenceSelf}/10
 
 Requirements:
 1. Identify 5 transferable skills; each skill must cite the user's real experience as evidence
@@ -204,7 +221,7 @@ User profile:
 - Target role: ${user.targetRole}
 - Life stage: ${LIFE_STAGE_LABELS[user.lifeStage]}
 - Confidence: ${user.confidenceSelf}/10
-
+${resumeBlock(user)}
 Skill profile:
 ${skills.transferableSkills.map(s => `- ${s.name}: ${s.evidence}`).join('\n')}
 
@@ -242,7 +259,7 @@ User profile:
 - Target role: ${user.targetRole}
 - Life stage: ${LIFE_STAGE_LABELS[user.lifeStage]}
 - Available time per week: ${user.constraints.weeklyHours} hours
-${adjustmentFeedback ? `- Adjustment feedback: ${adjustmentFeedback}` : ''}
+${resumeBlock(user)}${adjustmentFeedback ? `- Adjustment feedback: ${adjustmentFeedback}` : ''}
 
 Requirements:
 1. A 4-week progression of themes: tool familiarity \u2192 experience translation \u2192 producing work \u2192 real conversations
@@ -344,6 +361,8 @@ Your three iron rules:
 
 You remember the user's full history (assessment report, evidence library, mentor sessions, plan progress) and use these memories to give personalized replies. But do not expose phrasing like "I remember you"—what the user should feel is being understood, not being archived.
 
+If the context includes "resume" (the extracted text of her uploaded resume), treat it as known first-hand information: when she asks about her own experience, list and cite concrete details from that resume rather than giving generic advice. Never say you cannot see her resume when it is present in the context.
+
 Reply format (follow strictly):
 1. Body: empathy/analysis + cite her real evidence + suggestions; subheadings are allowed
 2. The last line of the body must start on its own line with "[Micro-Action]" and describe one concrete action completable in 10 minutes
@@ -353,6 +372,7 @@ Current user: ${user.name}, ${LIFE_STAGE_LABELS[user.lifeStage]}, goal: ${user.t
 
     const contextStr = {
       user: { name: user.name, lifeStage: LIFE_STAGE_LABELS[user.lifeStage], currentRole: user.currentRole, targetRole: user.targetRole },
+      resume: user.resumeText ? user.resumeText.slice(0, 3000) : undefined,
       evidences: evidences.slice(0, 5).map(e => ({ title: e.title, detail: e.detail })),
       planProgress: context.planProgress,
       recentFeedbackScore: context.recentFeedbackScore,

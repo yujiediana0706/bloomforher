@@ -5,9 +5,13 @@ import Link from 'next/link';
 import {
   ArrowRight,
   Award,
+  Check,
+  FileText,
   Heart,
+  RefreshCw,
   Sparkles,
   TrendingUp,
+  Upload,
   Users,
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
@@ -51,6 +55,52 @@ interface DashboardData {
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [resumeBusy, setResumeBusy] = useState(false);
+  const [resumeMsg, setResumeMsg] = useState('');
+  const [resumeFile, setResumeFile] = useState<string | null>(null);
+  const [resumeText, setResumeText] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!data) return;
+    setResumeFile(data.user.resumeFileName ?? null);
+    setResumeText(data.user.resumeText ?? null);
+  }, [data]);
+
+  async function uploadResume(file: File) {
+    setResumeBusy(true);
+    setResumeMsg('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/resume', { method: 'POST', body: fd });
+      const j = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        resumeFileName?: string;
+        resumeText?: string;
+      };
+      if (!res.ok) throw new Error(j.error || 'Upload failed');
+      setResumeFile(j.resumeFileName ?? file.name);
+      setResumeText(j.resumeText ?? null);
+      setResumeMsg('Resume parsed and saved to your profile.');
+    } catch (e) {
+      setResumeMsg(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setResumeBusy(false);
+    }
+  }
+
+  async function removeResume() {
+    setResumeBusy(true);
+    setResumeMsg('');
+    try {
+      await fetch('/api/resume', { method: 'DELETE' });
+      setResumeFile(null);
+      setResumeText(null);
+      setResumeMsg('Resume removed.');
+    } finally {
+      setResumeBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -161,6 +211,75 @@ export default function DashboardPage() {
           )}
         </Card>
       </div>
+
+      <Card className="mt-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-coral-500" />
+            <p className="text-sm font-extrabold text-slateblue-900">
+              Your resume
+            </p>
+          </div>
+          {resumeFile ? (
+            <button
+              type="button"
+              disabled={resumeBusy}
+              onClick={() => void removeResume()}
+              className="text-xs font-bold text-slateblue-700 hover:text-coral-600 disabled:opacity-60"
+            >
+              Remove
+            </button>
+          ) : null}
+        </div>
+
+        {resumeFile ? (
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center gap-2 rounded-xl border border-softpink-300 bg-softpink-100 px-3 py-2 text-sm font-bold text-coral-700">
+              <FileText className="h-4 w-4 shrink-0" />
+              <span className="truncate">{resumeFile}</span>
+              <Check className="h-4 w-4 shrink-0" />
+            </div>
+            {resumeText ? (
+              <details className="rounded-xl border border-silver-300 bg-silver-50 px-3 py-2">
+                <summary className="cursor-pointer text-xs font-bold text-slateblue-700">
+                  Parsed text your AI mentor can read
+                </summary>
+                <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-slateblue-700">
+                  {resumeText.slice(0, 1500)}
+                  {resumeText.length > 1500 ? '…' : ''}
+                </p>
+              </details>
+            ) : null}
+          </div>
+        ) : (
+          <p className="mt-2 text-xs text-slateblue-700">
+            No resume yet—upload one so your AI mentor and diagnosis can use your
+            real experience.
+          </p>
+        )}
+
+        <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-silver-400 bg-silver-50 px-4 py-3 text-center text-xs font-bold text-slateblue-900 transition-colors hover:border-coral-500 hover:bg-coral-50">
+          {resumeBusy ? (
+            <RefreshCw className="h-4 w-4 animate-spin text-coral-500" />
+          ) : (
+            <Upload className="h-4 w-4 text-coral-500" />
+          )}
+          {resumeFile ? 'Replace resume' : 'Upload resume'} (PDF, DOCX, TXT)
+          <input
+            type="file"
+            accept=".pdf,.docx,.txt,.md"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void uploadResume(f);
+              e.target.value = '';
+            }}
+          />
+        </label>
+        {resumeMsg ? (
+          <p className="mt-2 text-xs font-bold text-slateblue-700">{resumeMsg}</p>
+        ) : null}
+      </Card>
 
       <div className="mt-4">
         <p className="mb-3 text-sm font-extrabold text-slateblue-900">

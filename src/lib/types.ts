@@ -34,6 +34,10 @@ export interface UserProfile {
   targetRole: string;
   skills: string[];
   resumePath?: string;
+  /** Original file name of the uploaded resume. */
+  resumeFileName?: string;
+  /** Plain text extracted from the uploaded resume, used by the AI coach. */
+  resumeText?: string;
   goals: string[];
   constraints: UserConstraints;
   segment: Segment;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, addEvidence, nowIso } from '@/lib/store';
+import { ensureLoaded, findUser, addEvidence, nowIso, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { buildSkillProfile } from '@/lib/ai';
 import type { SkillProfile } from '@/lib/types';
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const db = getDB();
+  const db = await ensureLoaded();
   return NextResponse.json({ skillProfile: db.skillProfiles[uid] ?? null });
 }
 
@@ -18,13 +18,14 @@ export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const db = getDB();
+  const db = await ensureLoaded();
   const user = findUser(db, uid);
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const built = await buildSkillProfile(user);
   const skillProfile: SkillProfile = { uid, createdAt: nowIso(), ...built };
   db.skillProfiles[uid] = skillProfile;
+  syncToFirestore('skillProfiles', uid, skillProfile);
 
   addEvidence(db, {
     uid,
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
 
   if (user.journeyStep < 2) user.journeyStep = 2;
   user.updatedAt = nowIso();
+  syncToFirestore('users', uid, user);
 
   return NextResponse.json({ skillProfile });
 }

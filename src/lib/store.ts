@@ -66,6 +66,9 @@ declare global {
   var __rebloomDB: DB | undefined;
   // eslint-disable-next-line no-var
   var __rebloomFirestoreLoaded: boolean | undefined;
+  // In-flight Firestore load, shared so concurrent callers await one pass.
+  // eslint-disable-next-line no-var
+  var __rebloomLoadPromise: Promise<void> | undefined;
 }
 
 function initDB(): DB {
@@ -135,11 +138,28 @@ const COLLECTION_MAP: Record<string, keyof DB> = {
   circleComments: 'circleComments',
 };
 
-/** Load Firestore data into memory (idempotent, runs once). */
+/**
+ * Load Firestore data into memory. Single-flight: concurrent callers await the
+ * same load, and the load only ever runs once, so a second concurrent pass can
+ * never overwrite the in-memory DB after new writes have already happened.
+ */
 export async function loadFromFirestore(): Promise<void> {
   if (globalThis.__rebloomFirestoreLoaded) return;
+  if (!globalThis.__rebloomLoadPromise) {
+    globalThis.__rebloomLoadPromise = doLoadFromFirestore()
+      .then((loaded) => {
+        if (loaded) globalThis.__rebloomFirestoreLoaded = true;
+      })
+      .finally(() => {
+        globalThis.__rebloomLoadPromise = undefined;
+      });
+  }
+  await globalThis.__rebloomLoadPromise;
+}
+
+async function doLoadFromFirestore(): Promise<boolean> {
   const fs = getFirestoreDb();
-  if (!fs) return;
+  if (!fs) return false;
 
   const db = getDB();
   console.log('[Firestore] loading data from Firestore...');
@@ -185,8 +205,8 @@ export async function loadFromFirestore(): Promise<void> {
     })
   );
 
-  globalThis.__rebloomFirestoreLoaded = true;
   console.log('[Firestore] data loaded');
+  return true;
 }
 
 /** Sync a single document to Firestore (async, non-blocking). */
