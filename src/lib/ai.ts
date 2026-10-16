@@ -366,11 +366,17 @@ export async function coachReply(
     });
 
     if (res) {
-      // 从回复中提取微行动（如果有标记）
-      const microMatch = res.text.match(/【微行动】(.+?)(?=\n|$)/);
-      const content = res.text.replace(/【微行动】.+?(\n|$)/, '').trim();
-      const microAction = microMatch?.[1]?.trim() || '花 5 分钟，在你的「我可以」墙里挑一条证据，读一遍并写下一句感受。';
-      return { content, microAction };
+      // 从回复中提取微行动：兼容 【微行动】 与 **微行动：** 两种写法
+      const DEFAULT_MICRO = '花 5 分钟，在你的「我可以」墙里挑一条证据，读一遍并写下一句感受。';
+      const markerRe = /(?:【微行动】|\*\*微行动\*\*\s*[:：]?)/;
+      const idx = res.text.search(markerRe);
+      if (idx >= 0) {
+        const content = res.text.slice(0, idx).replace(/[-—\s]+$/, '').trim();
+        const microAction =
+          res.text.slice(idx).replace(markerRe, '').replace(/^[\s:：*]+/, '').trim() || DEFAULT_MICRO;
+        return { content, microAction };
+      }
+      return { content: res.text.trim(), microAction: DEFAULT_MICRO };
     }
   }
   return fallbackCoachReply(user, evidences, userMessage, context);
