@@ -1,21 +1,21 @@
-// 「ReBloom AI · 她径」领域类型定义（对齐规范 §6 数据模型）
+// ReBloom AI domain types (aligned with spec §6 data model)
 
 export type Segment = 'explorer' | 'setter' | 'mentor';
 
 export type LifeStage =
-  | 'student' // 在校探索
-  | 'early_career' // 职场新人
-  | 'growth' // 职场深耕
-  | 'pregnancy_planning' // 孕前深耕
-  | 'parental_leave' // 育儿期
-  | 'returning_parent' // 产后回归
-  | 'parttime_transition'; // 兼职过渡
+  | 'student' // student explorer
+  | 'early_career' // early career
+  | 'growth' // deepening a career
+  | 'pregnancy_planning' // planning a pregnancy
+  | 'parental_leave' // parental leave
+  | 'returning_parent' // returning parent
+  | 'parttime_transition'; // part-time transition
 
 export type JourneyStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface CoffeeAvailability {
-  dayOfWeek: number; // 0=周日 ... 6=周六
-  timeRange: string; // 如 "20:00-21:00"
+  dayOfWeek: number; // 0=Sunday ... 6=Saturday
+  timeRange: string; // e.g. "20:00-21:00"
 }
 
 export interface UserConstraints {
@@ -38,7 +38,7 @@ export interface UserProfile {
   constraints: UserConstraints;
   segment: Segment;
   lifeStage: LifeStage;
-  confidenceSelf: number; // 1-10 基线自评
+  confidenceSelf: number; // 1-10 baseline self-assessment
   journeyStep: JourneyStep;
   coffeeAvailability: CoffeeAvailability[];
   communityAgreed: boolean;
@@ -47,20 +47,20 @@ export interface UserProfile {
   updatedAt: string;
 }
 
-// —— 旅程 ② 技能发现 ——
+// —— Journey ② Skill discovery ——
 export interface TransferableSkill {
   id: string;
   name: string;
-  evidence: string; // 必须引用真实经历
+  evidence: string; // must reference real experience
   aiRelevance: number; // 0-100
   narrative: string;
 }
 
 export interface ConfidenceCalibrationItem {
   dimension: string;
-  selfScore: number; // 1-10 自评
-  aiScore: number; // 1-10 基于证据的客观评分
-  evidenceRef: string; // "你在 X 中已经做到了 Y，这正是 AI 岗位需要的 Z 能力"
+  selfScore: number; // 1-10 self-assessment
+  aiScore: number; // 1-10 evidence-based objective score
+  evidenceRef: string; // "In X you already did Y, which is exactly the Z an AI role needs"
 }
 
 export interface SkillProfile {
@@ -71,13 +71,13 @@ export interface SkillProfile {
   createdAt: string;
 }
 
-// —— 旅程 ③ AI 机会 ——
+// —— Journey ③ AI opportunities ——
 export type RoleCategory =
-  | 'AI 产品'
-  | 'AI 运营'
-  | 'AI 教育'
-  | 'AI 伦理'
-  | '数据治理';
+  | 'AI Product'
+  | 'AI Operations'
+  | 'AI Education'
+  | 'AI Ethics'
+  | 'Data Governance';
 
 export interface RoleMatch {
   id: string;
@@ -110,7 +110,7 @@ export interface OpportunityReport {
   createdAt: string;
 }
 
-// —— 旅程 ④ 实操任务 ——
+// —— Journey ④ Hands-on tasks ——
 export interface LabFeedback {
   highlights: string[];
   actionableSuggestions: string[];
@@ -140,7 +140,7 @@ export interface LabTask {
   createdAt: string;
 }
 
-// —— 旅程 ⑤ 30 天计划 ——
+// —— Journey ⑤ 30-day plan ——
 export interface PlanTask {
   id: string;
   week: number;
@@ -163,16 +163,16 @@ export interface PlanWeek {
 
 export interface ReturnPlan {
   uid: string;
-  paceLabel: string; // 孕前深耕 / 产后回归 / 兼职过渡 / 在校探索 / 职场深耕
+  paceLabel: string; // planning a pregnancy / returning parent / part-time transition / student explorer / deepening a career
   weeklyHours: number;
   totalWeeks: number;
   interruptibleStages: number[];
-  returnPlaybook: string; // 断档回归预案（如 8 周回归计划）
+  returnPlaybook: string; // career-break return playbook (e.g. an 8-week return plan)
   weeks: PlanWeek[];
   createdAt: string;
 }
 
-// —— 贯穿层 B 证据库 ——
+// —— Cross-cutting layer B: evidence library ——
 export type EvidenceType =
   | 'assessment_result'
   | 'skill_progress'
@@ -197,17 +197,17 @@ export interface EvidenceItem {
   createdAt: string;
 }
 
-// —— 对话广场（公益·免费，小红书式图文社区，不分类）——
+// —— Community plaza (free, public-interest, social feed, no categories) ——
 export type PlazaPostStatus = 'open' | 'resolved' | 'hidden';
 
 export interface PlazaPost {
   id: string;
-  authorId: string; // 匿名帖仍存真实 uid，列表接口不返回给非本人
+  authorId: string; // anonymous posts still store the real uid; the list API hides it from non-authors
   anonymous: boolean;
   anonymousHandle?: string;
   title: string;
   body: string;
-  images: string[]; // 最多 3 张（data URL 或图片链接）
+  images: string[]; // at most 3 (data URL or image link)
   tags: string[];
   status: PlazaPostStatus;
   kudosCount: number;
@@ -239,7 +239,7 @@ export interface WillingToHelp {
   createdAt: string;
 }
 
-// —— Peer Coffee Chat 预约（免费）——
+// —— Peer coffee chat bookings (free) ——
 export type PeerChatStatus = 'requested' | 'confirmed' | 'completed' | 'cancelled';
 
 export interface PeerChat {
@@ -258,7 +258,7 @@ export interface PeerChat {
   updatedAt: string;
 }
 
-// —— 专业导师市场（付费·担保交易）——
+// —— Professional mentor marketplace (paid, escrowed) ——
 export interface MentorReview {
   id: string;
   authorName: string;
@@ -318,7 +318,7 @@ export interface Booking {
   snapshotMentorName: string;
   snapshotPrice: number;
   scheduledTime: string;
-  meetingLink?: string; // 仅 confirmed/completed/released 且仅学员本人可见
+  meetingLink?: string; // only confirmed/completed/released, and visible only to the coachee
   packageOrderId?: string;
   topic: string;
   review?: { rating: number; comment: string; createdAt: string };
@@ -338,7 +338,7 @@ export interface PackageOrder {
   createdAt: string;
 }
 
-// —— 圈子通用 ——
+// —— Circles (general) ——
 export type CirclePostType = 'qa' | 'opportunity' | 'win' | 'cheer';
 
 export interface CirclePost {

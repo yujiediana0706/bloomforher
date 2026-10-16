@@ -21,27 +21,27 @@ interface PlazaPostView extends Omit<PlazaPost, 'authorId'> {
 }
 
 const EMPTY_TEXT =
-  '这里还没有人开口——做第一个说出困惑的人，姐妹们在等你';
+  'No one has spoken up yet — be the first to share your question. Your peers are waiting for you';
 
 const MAX_IMAGES = 3;
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 单张 ≤ 2MB
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // single image ≤ 2MB
 
-// 按钮措辞：不叫「帮助」，叫「同行」——不是求助大厅，是同行的社区
-const WILLING_CTA = '我愿同行';
-const WILLING_DONE = '✓ 已同行';
+// Button wording: not "help", but "walk alongside" — a peer community, not a request desk
+const WILLING_CTA = "I'm willing to help";
+const WILLING_DONE = '✓ Willing to help';
 
 const AGREEMENTS = [
-  '无评判：每个困惑都值得被认真对待，不嘲笑、不说教。',
-  '不泄露他人隐私：未经允许，不截图、不转发他人的经历与信息。',
-  '不推销：这里不卖课、不卖货、不拉私单。',
-  '遇到危机信号转专业资源：涉及自伤、暴力等，请引导到专业帮助。',
-  '感恩比建议更有力：先共情、再分享，陪伴本身就是支持。',
+  'No judgment: every question deserves to be taken seriously — no mockery, no lecturing.',
+  "Protect others' privacy: never screenshot or forward someone's experiences or information without permission.",
+  'No selling: no course sales, no product promotion, no off-platform solicitation here.',
+  'Route crisis signals to professional resources: for self-harm, violence, or similar, please guide the person to professional help.',
+  'Gratitude is stronger than advice: empathize first, then share — companionship itself is support.',
 ];
 
 function formatDate(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return `${d.getMonth() + 1}月${d.getDate()}日`;
+  return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
 function PostCard({
@@ -62,7 +62,7 @@ function PostCard({
           <img src={cover} alt="" className="w-full object-cover" />
           {post.images.length > 1 ? (
             <span className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[11px] font-bold text-white">
-              {post.images.length} 张
+              {post.images.length} photos
             </span>
           ) : null}
         </Link>
@@ -71,7 +71,7 @@ function PostCard({
       <div className="p-3.5">
         {post.status === 'resolved' ? (
           <Badge tone="green" className="mb-1.5">
-            已解决
+            Resolved
           </Badge>
         ) : null}
 
@@ -114,7 +114,7 @@ function PostCard({
           <span className="inline-flex shrink-0 items-center gap-2.5">
             <span className="inline-flex items-center gap-1">
               <Users className="h-3 w-3" />
-              {post.willingToHelpCount} 同行
+              {post.willingToHelpCount} willing to help
             </span>
             <span className="inline-flex items-center gap-1">
               <Heart className="h-3 w-3" />
@@ -144,7 +144,7 @@ function PostCard({
             href={`/plaza/${post.id}`}
             className="ml-auto text-xs font-bold text-slateblue-700 hover:text-coral-600"
           >
-            查看详情 →
+            View details →
           </Link>
         </div>
       </div>
@@ -192,20 +192,20 @@ export default function PlazaPage() {
 
   const handleWilling = async (postId: string) => {
     if (!user) {
-      setNotice('请先登录（右上角可切换演示账号）');
+      setNotice('Please sign in (switch demo accounts in the top-right corner)');
       return;
     }
     try {
       await apiSend(`/api/plaza/${postId}/willing`, 'POST');
       setWillingIds((prev) => new Set(prev).add(postId));
-      setNotice('已同行：谢谢你愿意陪她走一段。');
+      setNotice('Marked as willing to help — thank you for walking alongside her.');
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
-      if (msg.includes('已经')) {
+      if (msg.includes('already')) {
         setWillingIds((prev) => new Set(prev).add(postId));
-        setNotice('你已经报名同行，无需重复。');
+        setNotice('You are already willing to help — no need to do it again.');
       } else {
-        setNotice(msg || '操作失败，请稍后再试');
+        setNotice(msg || 'Something went wrong, please try again later');
       }
     }
   };
@@ -216,11 +216,11 @@ export default function PlazaPage() {
     const picked = Array.from(files).slice(0, room);
     for (const file of picked) {
       if (!file.type.startsWith('image/')) {
-        setNotice('只能上传图片文件');
+        setNotice('Only image files can be uploaded');
         continue;
       }
       if (file.size > MAX_IMAGE_BYTES) {
-        setNotice(`「${file.name}」超过 2MB，请压缩后再试`);
+        setNotice(`"${file.name}" is over 2MB, please compress it and try again`);
         continue;
       }
       const reader = new FileReader();
@@ -247,11 +247,11 @@ export default function PlazaPage() {
 
   const handlePublish = async () => {
     if (!user) {
-      setNotice('请先登录（右上角可切换演示账号）');
+      setNotice('Please sign in (switch demo accounts in the top-right corner)');
       return;
     }
     if (!form.title.trim() && !form.body.trim() && form.images.length === 0) {
-      setNotice('标题、正文、图片至少填写一项');
+      setNotice('Fill in at least one of title, body, or image');
       return;
     }
     setSubmitting(true);
@@ -268,10 +268,10 @@ export default function PlazaPage() {
       });
       setPublishOpen(false);
       setForm({ title: '', body: '', tags: '', anonymous: false, images: [] });
-      setNotice('已发布，谢谢你的分享。');
+      setNotice('Posted — thank you for sharing.');
       await load();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '发布失败，请稍后再试');
+      setNotice(e instanceof Error ? e.message : 'Could not post, please try again later');
     } finally {
       setSubmitting(false);
     }
@@ -284,7 +284,7 @@ export default function PlazaPage() {
       setAgreementDone(true);
       await refresh();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '保存失败，请稍后再试');
+      setNotice(e instanceof Error ? e.message : 'Could not save, please try again later');
     }
   };
 
@@ -292,35 +292,37 @@ export default function PlazaPage() {
 
   return (
     <div className="space-y-5">
-      {/* 顶部 banner */}
+      {/* Top banner */}
       <div className="rounded-2xl border border-silver-300 bg-gradient-to-r from-silver-200 via-softpink-100 to-softpink-200 p-5 shadow-card">
         <p className="text-xs font-bold uppercase tracking-wider text-coral-500">
-          对话广场 · 公益免费
+          Conversation Plaza · Free & non-profit
         </p>
         <h1 className="mt-1 text-lg font-black text-slateblue-900 sm:text-xl">
-          这里没有蠢问题，只有还没被回答的困惑。
+          No silly questions here — only questions still waiting for an answer.
         </h1>
         <p className="mt-1 text-sm leading-relaxed text-slateblue-700">
-          像发图文笔记一样：困惑、成果、心情、找搭子，随手发出来——点「我愿同行」，陪她走一段。
+          Post it like a photo note — questions, wins, feelings, or finding a
+          buddy. Share freely, then tap "I'm willing to help" to walk alongside
+          someone.
         </p>
       </div>
 
       {!authLoading && !user ? (
         <div className="rounded-2xl border border-coral-100 bg-coral-50 px-4 py-3 text-sm font-bold text-coral-700">
-          请先登录（右上角可切换演示账号）
+          Please sign in (switch demo accounts in the top-right corner)
         </div>
       ) : null}
 
-      {/* 标题 + 发布 */}
+      {/* Heading + publish */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <SectionTitle
-          eyebrow="广场动态"
-          title="姐妹们的声音"
-          desc="每一条声音都值得被接住。"
+          eyebrow="Plaza feed"
+          title="Voices from our community"
+          desc="Every voice deserves a response."
         />
         <Button onClick={() => setPublishOpen(true)}>
           <Plus className="h-4 w-4" />
-          发布
+          Post
         </Button>
       </div>
 
@@ -330,9 +332,9 @@ export default function PlazaPage() {
         </div>
       ) : null}
 
-      {/* 瀑布流列表 */}
+      {/* Masonry feed */}
       {loading ? (
-        <p className="py-8 text-center text-sm text-slateblue-700">加载中…</p>
+        <p className="py-8 text-center text-sm text-slateblue-700">Loading…</p>
       ) : posts.length === 0 ? (
         <EmptyState text={EMPTY_TEXT} />
       ) : (
@@ -348,44 +350,44 @@ export default function PlazaPage() {
         </div>
       )}
 
-      {/* 发布 Modal */}
+      {/* Post modal */}
       <Modal
         open={publishOpen}
         onClose={() => setPublishOpen(false)}
-        title="发布新帖"
+        title="Create a post"
       >
         <div className="space-y-4">
           <label className="block">
             <span className="mb-1.5 block text-xs font-bold text-slateblue-700">
-              标题（可不填）
+              Title (optional)
             </span>
             <input
               value={form.title}
               onChange={(e) =>
                 setForm((f) => ({ ...f, title: e.target.value }))
               }
-              placeholder="一句话说出你的心情 / 成果 / 困惑"
+              placeholder="Sum up your mood, a win, or a question in one line"
               className="w-full rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
             />
           </label>
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-bold text-slateblue-700">
-              正文（可不填）
+              Body (optional)
             </span>
             <textarea
               value={form.body}
               onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
               rows={4}
-              placeholder="多说一点，让我们更懂你"
+              placeholder="Tell us a bit more so we can understand you better"
               className="w-full rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
             />
           </label>
 
-          {/* 图片（最多 3 张） */}
+          {/* Images (up to 3) */}
           <div>
             <span className="mb-1.5 block text-xs font-bold text-slateblue-700">
-              图片（最多 {MAX_IMAGES} 张，单张 ≤ 2MB）
+              Images (up to {MAX_IMAGES}, each ≤ 2MB)
             </span>
             <div className="flex flex-wrap gap-2">
               {form.images.map((src, i) => (
@@ -396,13 +398,13 @@ export default function PlazaPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={src}
-                    alt={`预览 ${i + 1}`}
+                    alt={`Preview ${i + 1}`}
                     className="h-full w-full object-cover"
                   />
                   <button
                     onClick={() => removeImage(i)}
                     className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white"
-                    aria-label="移除图片"
+                    aria-label="Remove image"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -414,7 +416,7 @@ export default function PlazaPage() {
                   className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-silver-400 text-slateblue-700 transition-colors hover:border-coral-400 hover:text-coral-600"
                 >
                   <ImagePlus className="h-5 w-5" />
-                  <span className="text-[11px] font-bold">添加图片</span>
+                  <span className="text-[11px] font-bold">Add image</span>
                 </button>
               ) : null}
             </div>
@@ -430,12 +432,12 @@ export default function PlazaPage() {
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-bold text-slateblue-700">
-              标签（逗号分隔）
+              Tags (comma-separated)
             </span>
             <input
               value={form.tags}
               onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
-              placeholder="如：产后回归, AI 运营, 找搭子"
+              placeholder="e.g. returning after leave, AI operations, finding a buddy"
               className="w-full rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
             />
           </label>
@@ -449,29 +451,30 @@ export default function PlazaPage() {
               }
               className="h-4 w-4 accent-coral-500"
             />
-            匿名发布（将显示为花名）
+            Post anonymously (your name will be replaced with a handle)
           </label>
 
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="secondary" onClick={() => setPublishOpen(false)}>
-              取消
+              Cancel
             </Button>
             <Button onClick={() => void handlePublish()} disabled={submitting}>
-              {submitting ? 'AI 守护者审核中…' : '发布'}
+              {submitting ? 'AI guardian reviewing…' : 'Post'}
             </Button>
           </div>
         </div>
       </Modal>
 
-      {/* 公约 Modal */}
+      {/* Community agreement modal */}
       <Modal
         open={agreementOpen}
         onClose={() => setAgreementDone(true)}
-        title="ReBloom 广场公约"
+        title="ReBloom Plaza Agreement"
         width="max-w-xl"
       >
         <p className="mb-3 text-sm leading-relaxed text-slateblue-700">
-          欢迎来到对话广场。为了让每一位姐妹都能安心开口，我们约定：
+          Welcome to the Conversation Plaza. So every woman here can speak up
+          safely, we agree to:
         </p>
         <ol className="space-y-2">
           {AGREEMENTS.map((a, i) => (
@@ -488,11 +491,11 @@ export default function PlazaPage() {
             onChange={(e) => setAgreedChecked(e.target.checked)}
             className="h-4 w-4 accent-coral-500"
           />
-          我已阅读并同意以上公约
+          I have read and agree to the agreement above
         </label>
         <div className="mt-4 flex justify-end">
           <Button onClick={() => void handleAgree()} disabled={!agreedChecked}>
-            同意并进入广场
+            Agree and enter the plaza
           </Button>
         </div>
       </Modal>

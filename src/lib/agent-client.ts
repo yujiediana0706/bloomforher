@@ -1,5 +1,5 @@
-// Agent Platform / Reasoning Engine 调用客户端。有 endpoint 时调真实 Agent，无则返回 null（回退到占位逻辑）。
-// 仅服务端使用。
+// Agent Platform / Reasoning Engine call client. When an endpoint exists it calls the real Agent; otherwise it returns null (falling back to placeholder logic).
+// Server-side only.
 
 import { GoogleAuth } from 'google-auth-library';
 import { readFileSync } from 'fs';
@@ -19,29 +19,29 @@ function getAuth(): GoogleAuth | null {
 
   try {
     if (keyPath) {
-      // 本地开发：显式服务账号 key 文件
+      // Local development: explicit service-account key file
       const key = JSON.parse(readFileSync(keyPath, 'utf8'));
       _auth = new GoogleAuth({ credentials: key, projectId: projectId || undefined, scopes: SCOPES });
     } else {
-      // Cloud Run / GCP：Application Default Credentials（元数据服务器），无需 key 文件
+      // Cloud Run / GCP: Application Default Credentials (metadata server), no key file needed
       _auth = new GoogleAuth({ projectId: projectId || undefined, scopes: SCOPES });
     }
     return _auth;
   } catch (e) {
-    console.error('[Agent] 初始化失败:', (e as Error).message);
+    console.error('[Agent] initialization failed:', (e as Error).message);
     _initFailed = true;
     return null;
   }
 }
 
 export interface AgentRequest {
-  /** 系统提示词（角色设定） */
+  /** System prompt (role definition) */
   systemInstruction?: string;
-  /** 用户输入 */
+  /** User input */
   input: string;
-  /** 上下文（JSON 字符串） */
+  /** Context (JSON string) */
   context?: Record<string, unknown>;
-  /** 历史消息 */
+  /** History messages */
   history?: Array<{ role: 'user' | 'model'; content: string }>;
 }
 
@@ -49,7 +49,7 @@ interface AgentResponse {
   text: string;
 }
 
-/** 调 Reasoning Engine（Agent Studio 部署的 Agent） */
+/** Call the Reasoning Engine (an Agent deployed in Agent Studio) */
 export async function callAgentEndpoint(
   endpoint: string,
   req: AgentRequest
@@ -61,20 +61,20 @@ export async function callAgentEndpoint(
     const client = await auth.getClient();
     const token = (await client.getAccessToken()).token;
 
-    // 从 endpoint 提取 location
-    // endpoint 格式：projects/107927033625/locations/us-west1/reasoningEngines/5963861020219801600
+    // Extract the location from the endpoint
+    // endpoint format: projects/107927033625/locations/us-west1/reasoningEngines/5963861020219801600
     const locationMatch = endpoint.match(/locations\/([^/]+)/);
     const location = locationMatch?.[1] || 'us-central1';
 
     const url = `https://${location}-aiplatform.googleapis.com/v1/${endpoint}:query`;
 
-    // 构建输入文本
+    // Build the input text
     let fullInput = req.input;
     if (req.systemInstruction) {
-      fullInput = `[系统设定] ${req.systemInstruction}\n\n[用户输入] ${req.input}`;
+      fullInput = `[System] ${req.systemInstruction}\n\n[User input] ${req.input}`;
     }
     if (req.context) {
-      fullInput += `\n\n[上下文] ${JSON.stringify(req.context)}`;
+      fullInput += `\n\n[Context] ${JSON.stringify(req.context)}`;
     }
 
     const res = await fetch(url, {
@@ -94,29 +94,29 @@ export async function callAgentEndpoint(
     if (!res.ok) {
       const err = await res.text();
       _lastAgentError = `HTTP ${res.status}: ${err.slice(0, 300)}`;
-      console.error(`[Agent] 调用失败 (${endpoint}): ${_lastAgentError}`);
+      console.error(`[Agent] call failed (${endpoint}): ${_lastAgentError}`);
       return null;
     }
 
     const data = await res.json();
-    // Reasoning Engine 返回格式：{ output: { text: "..." } } 或 { output: "..." }
+    // Reasoning Engine return format: { output: { text: "..." } } or { output: "..." }
     const raw = data.output;
     const text = typeof raw === 'string' ? raw : (raw?.text ?? '');
     if (!text) {
       _lastAgentError = `empty output; raw=${JSON.stringify(data).slice(0, 300)}`;
-      console.error(`[Agent] 空输出 (${endpoint}): ${_lastAgentError}`);
+      console.error(`[Agent] empty output (${endpoint}): ${_lastAgentError}`);
       return null;
     }
     _lastAgentError = null;
     return { text };
   } catch (e) {
     _lastAgentError = (e as Error).message;
-    console.error(`[Agent] 异常 (${endpoint}):`, _lastAgentError);
+    console.error(`[Agent] exception (${endpoint}):`, _lastAgentError);
     return null;
   }
 }
 
-/** 调 Vertex AI Gemini generateContent（fallback）。模型名可通过 GEMINI_MODEL 覆盖，默认按候选列表逐个探测。 */
+/** Call Vertex AI Gemini generateContent (fallback). The model name can be overridden via GEMINI_MODEL; by default it probes each candidate in order. */
 const MODEL_CANDIDATES: Array<{ model: string; location: string }> = process.env.GEMINI_MODEL
   ? [{ model: process.env.GEMINI_MODEL, location: process.env.GEMINI_LOCATION || 'global' }]
   : [
@@ -133,17 +133,17 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
     const client = await auth.getClient();
     const token = (await client.getAccessToken()).token;
 
-    // 构建 contents（各模型复用）
+    // Build the contents (reused across models)
     const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
     if (req.context) {
       contents.push({
         role: 'user',
-        parts: [{ text: `[上下文] ${JSON.stringify(req.context)}` }],
+        parts: [{ text: `[Context] ${JSON.stringify(req.context)}` }],
       });
       contents.push({
         role: 'model',
-        parts: [{ text: '我已收到上下文信息。' }],
+        parts: [{ text: 'I have received the context information.' }],
       });
     }
 
@@ -159,7 +159,7 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
     contents.push({ role: 'user', parts: [{ text: req.input }] });
 
     for (const { model, location } of MODEL_CANDIDATES) {
-      // global 端点主机名不带区域前缀，其余区域为 {location}-aiplatform.googleapis.com
+      // The global endpoint host name has no region prefix; other regions use {location}-aiplatform.googleapis.com
       const host = location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
       const url = `https://${host}/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
 
@@ -179,7 +179,7 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
       if (!res.ok) {
         const err = await res.text();
         _lastGeminiError = `HTTP ${res.status} (${model}): ${err.slice(0, 200)}`;
-        console.error('[Gemini] 调用失败:', _lastGeminiError);
+        console.error('[Gemini] call failed:', _lastGeminiError);
         continue;
       }
 
@@ -187,7 +187,7 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
       if (!text) {
         _lastGeminiError = `empty output (${model}); raw=${JSON.stringify(data).slice(0, 200)}`;
-        console.error('[Gemini] 空输出:', _lastGeminiError);
+        console.error('[Gemini] empty output:', _lastGeminiError);
         continue;
       }
       _lastGeminiError = null;
@@ -196,17 +196,17 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
     return null;
   } catch (e) {
     _lastGeminiError = (e as Error).message;
-    console.error('[Gemini] 异常:', _lastGeminiError);
+    console.error('[Gemini] exception:', _lastGeminiError);
     return null;
   }
 }
 
-/** 判断 Agent 是否可用（有 endpoint 或能调 Gemini） */
+/** Determine whether the Agent is available (has an endpoint, or can call Gemini) */
 export function isAgentAvailable(): boolean {
   return getAuth() !== null;
 }
 
-/** 获取指定 Agent 的 endpoint */
+/** Get the endpoint for the specified Agent */
 export function getAgentEndpoint(agentName: 'assessment' | 'coach' | 'memory' | 'proactive' | 'mentorMatch'): string | null {
   const envMap: Record<string, string> = {
     assessment: 'AGENT_ENDPOINT_ASSESSMENT',

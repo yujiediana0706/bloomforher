@@ -14,7 +14,7 @@ function mentorOwnerUid(db: DB, mentorId: string): string | undefined {
 
 export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const mentorIds = db.mentors
@@ -54,11 +54,11 @@ interface BookingBody {
 
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   let body: BookingBody = {};
   try {
@@ -76,20 +76,20 @@ export async function POST(req: NextRequest) {
         typeof topic !== 'string' ||
         (kind !== 'single' && kind !== 'package')
       ) {
-        return NextResponse.json({ error: '参数不合法' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
       }
       const mentor = db.mentors.find((m) => m.id === mentorId);
       if (!mentor) {
-        return NextResponse.json({ error: '导师不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Mentor not found' }, { status: 404 });
       }
       const slot = db.mentorSlots.find(
         (s) => s.id === slotId && s.mentorId === mentorId
       );
       if (!slot) {
-        return NextResponse.json({ error: '时段不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Slot not found' }, { status: 404 });
       }
       if (slot.status !== 'available') {
-        return NextResponse.json({ error: '该时段已被预约' }, { status: 409 });
+        return NextResponse.json({ error: 'This slot is already booked' }, { status: 409 });
       }
       slot.status = 'booked';
 
@@ -142,26 +142,26 @@ export async function POST(req: NextRequest) {
         typeof slotId !== 'string' ||
         typeof topic !== 'string'
       ) {
-        return NextResponse.json({ error: '参数不合法' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
       }
       const order = db.packageOrders.find((o) => o.id === packageOrderId);
       if (!order) {
-        return NextResponse.json({ error: '套餐订单不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Package order not found' }, { status: 404 });
       }
       if (order.coacheeId !== uid) {
-        return NextResponse.json({ error: '无权使用该套餐' }, { status: 403 });
+        return NextResponse.json({ error: 'You are not allowed to use this package' }, { status: 403 });
       }
       if (order.remainingRedemptions <= 0) {
-        return NextResponse.json({ error: '套餐次数已用完' }, { status: 409 });
+        return NextResponse.json({ error: 'No redemptions left in this package' }, { status: 409 });
       }
       const slot = db.mentorSlots.find(
         (s) => s.id === slotId && s.mentorId === order.mentorId
       );
       if (!slot) {
-        return NextResponse.json({ error: '时段不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Slot not found' }, { status: 404 });
       }
       if (slot.status !== 'available') {
-        return NextResponse.json({ error: '该时段已被预约' }, { status: 409 });
+        return NextResponse.json({ error: 'This slot is already booked' }, { status: 409 });
       }
 
       slot.status = 'booked';
@@ -195,13 +195,13 @@ export async function POST(req: NextRequest) {
     case 'confirm': {
       const booking = db.bookings.find((b) => b.id === body.bookingId);
       if (!booking) {
-        return NextResponse.json({ error: '预约不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
       }
       if (mentorOwnerUid(db, booking.mentorId) !== uid) {
-        return NextResponse.json({ error: '只有导师可确认' }, { status: 403 });
+        return NextResponse.json({ error: 'Only the mentor can confirm' }, { status: 403 });
       }
       booking.status = 'confirmed';
-      // 导师确认后学员才可看到会议链接
+      // The coachee can only see the meeting link after the mentor confirms
       if (!booking.meetingLink) {
         booking.meetingLink = `https://meet.example.com/rebloom-${booking.id}`;
       }
@@ -212,10 +212,10 @@ export async function POST(req: NextRequest) {
     case 'reject': {
       const booking = db.bookings.find((b) => b.id === body.bookingId);
       if (!booking) {
-        return NextResponse.json({ error: '预约不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
       }
       if (mentorOwnerUid(db, booking.mentorId) !== uid) {
-        return NextResponse.json({ error: '只有导师可拒绝' }, { status: 403 });
+        return NextResponse.json({ error: 'Only the mentor can reject' }, { status: 403 });
       }
       booking.status = 'rejected';
       booking.updatedAt = nowIso();
@@ -236,12 +236,12 @@ export async function POST(req: NextRequest) {
     case 'complete': {
       const booking = db.bookings.find((b) => b.id === body.bookingId);
       if (!booking) {
-        return NextResponse.json({ error: '预约不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
       }
       const isParty =
         booking.coacheeId === uid || mentorOwnerUid(db, booking.mentorId) === uid;
       if (!isParty) {
-        return NextResponse.json({ error: '无权操作' }, { status: 403 });
+        return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
       }
       booking.status = 'completed';
       booking.updatedAt = nowIso();
@@ -251,10 +251,10 @@ export async function POST(req: NextRequest) {
     case 'release': {
       const booking = db.bookings.find((b) => b.id === body.bookingId);
       if (!booking) {
-        return NextResponse.json({ error: '预约不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
       }
       if (booking.coacheeId !== uid) {
-        return NextResponse.json({ error: '只有学员可确认完成' }, { status: 403 });
+        return NextResponse.json({ error: 'Only the coachee can confirm completion' }, { status: 403 });
       }
       booking.status = 'released';
       booking.updatedAt = nowIso();
@@ -264,17 +264,17 @@ export async function POST(req: NextRequest) {
     case 'endorse': {
       const booking = db.bookings.find((b) => b.id === body.bookingId);
       if (!booking) {
-        return NextResponse.json({ error: '预约不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
       }
       if (mentorOwnerUid(db, booking.mentorId) !== uid) {
-        return NextResponse.json({ error: '只有导师可背书' }, { status: 403 });
+        return NextResponse.json({ error: 'Only the mentor can endorse' }, { status: 403 });
       }
       if (booking.status !== 'released') {
-        return NextResponse.json({ error: '当前状态不可背书' }, { status: 409 });
+        return NextResponse.json({ error: 'Booking is not in a state that can be endorsed' }, { status: 409 });
       }
       const text = typeof body.text === 'string' ? body.text.trim() : '';
       if (!text) {
-        return NextResponse.json({ error: '背书内容不能为空' }, { status: 400 });
+        return NextResponse.json({ error: 'Endorsement text cannot be empty' }, { status: 400 });
       }
       booking.endorsement = text;
       booking.updatedAt = nowIso();
@@ -282,10 +282,10 @@ export async function POST(req: NextRequest) {
       const evidence = addEvidence(db, {
         uid: booking.coacheeId,
         type: 'mentor_endorsement',
-        title: `导师背书：${booking.mentorName}`,
+        title: `Mentor endorsement: ${booking.mentorName}`,
         detail: text,
         source: 'auto',
-        tags: ['导师背书', '已认证'],
+        tags: ['Mentor endorsement', 'Verified'],
         relatedType: 'booking',
         relatedId: booking.id,
         isPublic: true,
@@ -294,6 +294,6 @@ export async function POST(req: NextRequest) {
     }
 
     default:
-      return NextResponse.json({ error: '未知操作' }, { status: 400 });
+      return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   }
 }

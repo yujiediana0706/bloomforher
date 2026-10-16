@@ -1,5 +1,5 @@
 #!/bin/bash
-# ReBloom AI · 她径 — Cloud Run 一键部署脚本
+# ReBloom AI — one-command Cloud Run deploy script
 
 set -e
 
@@ -8,22 +8,22 @@ REGION="asia-southeast1"
 SERVICE_NAME="rebloom-ai"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
 
-echo "=== ReBloom AI Cloud Run 部署 ==="
+echo "=== ReBloom AI Cloud Run deploy ==="
 echo "Project: ${PROJECT_ID}"
 echo "Region: ${REGION}"
 echo "Service: ${SERVICE_NAME}"
 echo ""
 
-# 1. 构建 Docker 镜像
-echo "[1/4] 构建 Docker 镜像..."
+# 1. Build the Docker image
+echo "[1/4] Building the Docker image..."
 docker build -t ${IMAGE_NAME} .
 
-# 2. 推送镜像到 GCR
-echo "[2/4] 推送镜像到 GCR..."
+# 2. Push the image to GCR
+echo "[2/4] Pushing the image to GCR..."
 docker push ${IMAGE_NAME}
 
-# 3. 部署到 Cloud Run
-echo "[3/4] 部署到 Cloud Run..."
+# 3. Deploy to Cloud Run
+echo "[3/4] Deploying to Cloud Run..."
 gcloud run deploy ${SERVICE_NAME} \
   --image ${IMAGE_NAME} \
   --region ${REGION} \
@@ -39,18 +39,18 @@ gcloud run deploy ${SERVICE_NAME} \
   --cpu 1 \
   --timeout 300
 
-# 4. 获取服务 URL
-echo "[4/4] 获取服务 URL..."
+# 4. Get the service URL
+echo "[4/4] Fetching the service URL..."
 SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} --region ${REGION} --format 'value(status.url)')
 
 echo ""
-echo "=== 部署完成 ==="
-echo "服务 URL: ${SERVICE_URL}"
+echo "=== Deploy complete ==="
+echo "Service URL: ${SERVICE_URL}"
 echo ""
-echo "环境变量已配置:"
+echo "Environment variables configured:"
 echo "  GOOGLE_CLOUD_PROJECT=${PROJECT_ID}"
-echo "  AGENT_ENDPOINT_ASSESSMENT=${AGENT_ENDPOINT_ASSESSMENT:+已配置}"
-echo "  AGENT_ENDPOINT_COACH=${AGENT_ENDPOINT_COACH:+已配置}"
-echo "  AGENT_ENDPOINT_MEMORY=${AGENT_ENDPOINT_MEMORY:+已配置}"
-echo "  AGENT_ENDPOINT_PROACTIVE=${AGENT_ENDPOINT_PROACTIVE:+已配置}"
-echo "  AGENT_ENDPOINT_MENTOR_MATCH=${AGENT_ENDPOINT_MENTOR_MATCH:+已配置}"
+echo "  AGENT_ENDPOINT_ASSESSMENT=${AGENT_ENDPOINT_ASSESSMENT:+configured}"
+echo "  AGENT_ENDPOINT_COACH=${AGENT_ENDPOINT_COACH:+configured}"
+echo "  AGENT_ENDPOINT_MEMORY=${AGENT_ENDPOINT_MEMORY:+configured}"
+echo "  AGENT_ENDPOINT_PROACTIVE=${AGENT_ENDPOINT_PROACTIVE:+configured}"
+echo "  AGENT_ENDPOINT_MENTOR_MATCH=${AGENT_ENDPOINT_MENTOR_MATCH:+configured}"

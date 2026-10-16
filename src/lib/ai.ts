@@ -1,5 +1,5 @@
-// AI 层：优先调 Agent Platform / Gemini，失败时回退到占位逻辑（本地开发用）。
-// 所有函数均为异步，返回类型不变。
+// AI layer: prefers the Agent Platform / Gemini, falling back to placeholder logic (for local development).
+// All functions are async; return types are unchanged.
 
 import { LIFE_STAGE_LABELS } from './constants';
 import { callAgentEndpoint, callGemini, getAgentEndpoint, isAgentAvailable } from './agent-client';
@@ -18,7 +18,7 @@ import type {
   WomenFriendlyTrack,
 } from './types';
 
-// —— 工具：优先调 Agent Platform，失败则回退到 Vertex AI Gemini ——
+// —— Helper: prefer the Agent Platform, fall back to Vertex AI Gemini ——
 
 async function callModel(ep: string | null, req: AgentRequest): Promise<{ text: string } | null> {
   if (ep) {
@@ -28,10 +28,10 @@ async function callModel(ep: string | null, req: AgentRequest): Promise<{ text: 
   return callGemini(req);
 }
 
-// —— 工具：从 Agent 文本中提取 JSON ——
+// —— Helper: extract JSON from the Agent's text ——
 
 function extractJson<T>(text: string): T | null {
-  // 找第一个 { 和最后一个 }
+  // find the first { and the last }
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start === -1 || end === -1) return null;
@@ -42,28 +42,28 @@ function extractJson<T>(text: string): T | null {
   }
 }
 
-// —— 占位实现（本地开发回退）——
+// —— Placeholder implementations (local development fallback) ——
 
 function fallbackSkillProfile(user: UserProfile): Omit<SkillProfile, 'uid' | 'createdAt'> {
   const stage = LIFE_STAGE_LABELS[user.lifeStage];
   const skills: TransferableSkill[] = [
-    { id: 'ai_sk_1', name: '流程结构化与拆解', evidence: `你在「${user.currentRole}」的经历中，已经把复杂事务整理成可执行步骤`, aiRelevance: 90, narrative: '你在过往工作中已经做到了「把混乱信息拆成步骤」，这正是 AI 工作流设计需要的核心能力。' },
-    { id: 'ai_sk_2', name: '沟通与需求翻译', evidence: '你需要长期在不同角色之间对齐信息与预期', aiRelevance: 85, narrative: '你在协作中已经做到了「把不同人的话翻译成统一语言」，这是 AI 岗位的关键能力。' },
-    { id: 'ai_sk_3', name: '问题拆解与优先级判断', evidence: '你在真实工作中需要不断判断「先做什么、做到什么程度」', aiRelevance: 82, narrative: '你已经在真实场景里做到了问题拆解，这直接对应 AI 工作流中的问题定位能力。' },
-    { id: 'ai_sk_4', name: '内容表达与用户视角', evidence: '你的工作天然要求面向真实用户表达与交付', aiRelevance: 78, narrative: '你的表达与用户视角，可直接迁移为 AI 提示词设计与输出评估能力。' },
-    { id: 'ai_sk_5', name: '项目节奏与协作管理', evidence: '你需要在有限资源下保证事情推进完成', aiRelevance: 80, narrative: '你已经在真实项目中做到了「有限资源下保证交付」，这是 AI 运营落地时的项目能力。' },
+    { id: 'ai_sk_1', name: 'Structuring and breaking down processes', evidence: `In your experience as "${user.currentRole}", you have already turned complex matters into actionable steps`, aiRelevance: 90, narrative: 'In past work you have already broken messy information into steps—exactly the core capability that AI workflow design needs.' },
+    { id: 'ai_sk_2', name: 'Communication and requirement translation', evidence: 'You have long had to align information and expectations across different roles', aiRelevance: 85, narrative: 'In collaboration you have already translated different people\u2019s words into a shared language—a key capability for AI roles.' },
+    { id: 'ai_sk_3', name: 'Problem decomposition and prioritization', evidence: 'In real work you constantly have to judge what to do first and to what extent', aiRelevance: 82, narrative: 'You have already decomposed problems in real settings, which maps directly to problem scoping in AI workflows.' },
+    { id: 'ai_sk_4', name: 'Content expression and user perspective', evidence: 'Your work naturally requires communicating with and delivering to real users', aiRelevance: 78, narrative: 'Your expression and user perspective transfer directly into AI prompt design and output evaluation.' },
+    { id: 'ai_sk_5', name: 'Project rhythm and collaboration management', evidence: 'You have to keep things moving to completion under limited resources', aiRelevance: 80, narrative: 'You have already guaranteed delivery under limited resources in real projects—the project capability needed to land AI operations.' },
   ];
 
   return {
-    uniqueValue: `你当前处于「${stage}」阶段，${user.name}。你的独特价值在于把过去的真实经验翻译成 AI 工作流语言——这不是从零开始，而是把能力换个战场。`,
+    uniqueValue: `You are currently at the "${stage}" stage, ${user.name}. Your unique value lies in translating your real past experience into the language of AI workflows—this is not starting from zero, but moving your capabilities to a new arena.`,
     transferableSkills: skills,
     confidenceCalibration: [
-      { dimension: '技术自我效能感', selfScore: user.confidenceSelf, aiScore: Math.min(10, user.confidenceSelf + 4), evidenceRef: '你在真实项目中已经做到了系统化拆解与落地' },
-      { dimension: 'AI 工具就绪度', selfScore: Math.min(10, user.confidenceSelf + 1), aiScore: Math.min(10, user.confidenceSelf + 3), evidenceRef: '你愿意开始了解 AI 工具' },
-      { dimension: '职业空窗价值感', selfScore: Math.max(1, user.confidenceSelf - 1), aiScore: Math.min(10, user.confidenceSelf + 4), evidenceRef: '照护期本身就是高强度多任务协调训练' },
-      { dimension: '领域迁移能力', selfScore: Math.min(10, user.confidenceSelf + 1), aiScore: Math.min(10, user.confidenceSelf + 4), evidenceRef: '你能把原有行业经验迁移到 AI 场景' },
-      { dimension: '问题拆解能力', selfScore: Math.min(10, user.confidenceSelf + 1), aiScore: Math.min(10, user.confidenceSelf + 3), evidenceRef: '你处理真实问题与卡点的经验' },
-      { dimension: '伦理与质量判断', selfScore: user.confidenceSelf, aiScore: Math.min(10, user.confidenceSelf + 3), evidenceRef: '你在交付中的严谨性' },
+      { dimension: 'Technical self-efficacy', selfScore: user.confidenceSelf, aiScore: Math.min(10, user.confidenceSelf + 4), evidenceRef: 'You have already achieved systematic decomposition and delivery in real projects' },
+      { dimension: 'AI tool readiness', selfScore: Math.min(10, user.confidenceSelf + 1), aiScore: Math.min(10, user.confidenceSelf + 3), evidenceRef: 'You are willing to start learning about AI tools' },
+      { dimension: 'Sense of value during a career break', selfScore: Math.max(1, user.confidenceSelf - 1), aiScore: Math.min(10, user.confidenceSelf + 4), evidenceRef: 'The caregiving period itself is high-intensity multitasking coordination training' },
+      { dimension: 'Domain transferability', selfScore: Math.min(10, user.confidenceSelf + 1), aiScore: Math.min(10, user.confidenceSelf + 4), evidenceRef: 'You can transfer your original industry experience into AI contexts' },
+      { dimension: 'Problem decomposition', selfScore: Math.min(10, user.confidenceSelf + 1), aiScore: Math.min(10, user.confidenceSelf + 3), evidenceRef: 'Your experience handling real problems and blockers' },
+      { dimension: 'Ethics and quality judgment', selfScore: user.confidenceSelf, aiScore: Math.min(10, user.confidenceSelf + 3), evidenceRef: 'Your rigor in delivery' },
     ],
   };
 }
@@ -71,17 +71,17 @@ function fallbackSkillProfile(user: UserProfile): Omit<SkillProfile, 'uid' | 'cr
 function fallbackOpportunityReport(_user: UserProfile, _skills: SkillProfile): Omit<OpportunityReport, 'uid' | 'createdAt'> {
   return {
     roleMatches: [
-      { id: 'ai_role_ops', title: 'AI 运营', matchScore: 90, description: '把 AI 能力落到具体业务流程', whyFit: '你的结构化与协作能力高度匹配', requiredSkills: ['提示词设计', '工作流搭建'], typicalWorkflows: ['梳理场景 → 设计模板 → 试点 → 迭代'], realWorldExamples: ['教育公司用 AI 运营把答疑响应从 2 天缩短到 2 小时'], tradeoffs: '门槛低、需求大；代价：需持续跟进工具变化', category: 'AI 运营' },
-      { id: 'ai_role_product', title: 'AI 产品经理', matchScore: 84, description: '定义 AI 功能要解决的真实问题', whyFit: '你的用户视角与沟通能力是核心', requiredSkills: ['需求洞察', '场景定义'], typicalWorkflows: ['用户访谈 → 场景定义 → 对齐算法/工程'], realWorldExamples: ['非技术背景 PM 主导场景定义'], tradeoffs: '天花板高；代价：学习曲线陡', category: 'AI 产品' },
-      { id: 'ai_role_edu', title: 'AI 教育 / 应用推广', matchScore: 79, description: '面向企业或公众设计 AI 培训', whyFit: '你的表达与教学/内容经验可迁移', requiredSkills: ['培训设计', '内容表达'], typicalWorkflows: ['调研现状 → 设计路径 → 陪跑试点'], realWorldExamples: ['前教师转型 AI 培训师'], tradeoffs: '转型顺滑；代价：收入与项目资源相关', category: 'AI 教育' },
+      { id: 'ai_role_ops', title: 'AI Operations', matchScore: 90, description: 'Turning AI capabilities into concrete business processes', whyFit: 'Your structuring and collaboration skills are a strong match', requiredSkills: ['Prompt design', 'Workflow building'], typicalWorkflows: ['Map the scenario \u2192 design templates \u2192 pilot \u2192 iterate'], realWorldExamples: ['An education company used AI operations to cut its Q&A response time from 2 days to 2 hours'], tradeoffs: 'Low barrier, high demand; tradeoff: you must keep up with changing tools', category: 'AI Operations' },
+      { id: 'ai_role_product', title: 'AI Product Manager', matchScore: 84, description: 'Defining the real problems AI features should solve', whyFit: 'Your user perspective and communication skills are core', requiredSkills: ['Requirement insight', 'Scenario definition'], typicalWorkflows: ['User interviews \u2192 scenario definition \u2192 align with algorithms/engineering'], realWorldExamples: ['A non-technical PM led scenario definition'], tradeoffs: 'High ceiling; tradeoff: steep learning curve', category: 'AI Product' },
+      { id: 'ai_role_edu', title: 'AI Education / Adoption', matchScore: 79, description: 'Designing AI training for enterprises or the public', whyFit: 'Your expression and teaching/content experience transfer well', requiredSkills: ['Training design', 'Content expression'], typicalWorkflows: ['Research the current state \u2192 design the path \u2192 accompany the pilot'], realWorldExamples: ['A former teacher transitioned into an AI trainer'], tradeoffs: 'Smooth transition; tradeoff: income depends on projects and resources', category: 'AI Education' },
     ],
     womenFriendlyTracks: [
-      { title: 'AI 运营', reason: '门槛适中、需求大、支持灵活与远程。' },
-      { title: 'AI 教育', reason: '看重表达与教学，天然承接教育/内容背景。' },
+      { title: 'AI Operations', reason: 'Moderate barrier, high demand, and supports flexible and remote work.' },
+      { title: 'AI Education', reason: 'Values expression and teaching, naturally building on education/content backgrounds.' },
     ],
     genderRiskHints: [
-      { scenario: '担心生育/育儿断档被追问', gentleAdvice: '不必掩饰，把空窗期讲成「另一种场景的能力沉淀」。' },
-      { scenario: '信心低谷，觉得「不配」AI 岗位', gentleAdvice: '先用证据库里的真实成果给自己校准。' },
+      { scenario: 'Worrying about being questioned about fertility or a career gap', gentleAdvice: 'No need to hide it—frame the gap as capability built in another setting.' },
+      { scenario: 'Low confidence, feeling unworthy of AI roles', gentleAdvice: 'Calibrate yourself first with the real achievements in your evidence library.' },
     ],
   };
 }
@@ -93,14 +93,14 @@ function fallbackReturnPlan(user: UserProfile): Omit<ReturnPlan, 'uid' | 'create
     weeklyHours: hours,
     totalWeeks: 4,
     interruptibleStages: [1, 2, 3, 4],
-    returnPlaybook: '如需暂停，执行「8 周回归计划」：把 4 周任务按优先级拆成 8 周，每周只保留 1 个核心任务——暂停不等于淘汰。',
+    returnPlaybook: 'If you need to pause, run the "8-week return plan": split the 4-week tasks by priority into 8 weeks, keeping only one core task each week—pausing is not elimination.',
     weeks: [1, 2, 3, 4].map((week) => ({
       week,
-      theme: week === 1 ? '建立 AI 工具基本手感' : week === 2 ? '把过往经验翻译成 AI 语言' : week === 3 ? '产出第一个可展示的作品' : '进入真实对话与迭代',
+      theme: week === 1 ? 'Build basic familiarity with AI tools' : week === 2 ? 'Translate past experience into the language of AI' : week === 3 ? 'Produce your first showcaseable piece of work' : 'Enter real conversations and iterate',
       weeklyHours: hours,
-      learningResources: [`第 ${week} 周主题资料与案例清单`],
-      practiceTasks: [{ id: `ai_pt_${week}_1`, week, title: week === 1 ? '用 AI 完成一次资料整理' : week === 2 ? '重写简历' : week === 3 ? '完成一个 AI 工作流小 demo' : '约一次同辈 coffee chat', category: (week === 4 ? 'milestone' : 'practice') as 'practice' | 'milestone', estimatedHours: Math.max(1, Math.round(hours * 0.5)), completed: false }],
-      jobSearchMilestones: [week === 4 ? '完成一次模拟面试复盘' : `完成第 ${week} 周复盘`],
+      learningResources: [`Topic materials and case list for week ${week}`],
+      practiceTasks: [{ id: `ai_pt_${week}_1`, week, title: week === 1 ? 'Complete one document-organizing task with AI' : week === 2 ? 'Rewrite your resume' : week === 3 ? 'Build a small AI workflow demo' : 'Book one peer coffee chat', category: (week === 4 ? 'milestone' : 'practice') as 'practice' | 'milestone', estimatedHours: Math.max(1, Math.round(hours * 0.5)), completed: false }],
+      jobSearchMilestones: [week === 4 ? 'Complete one mock-interview review' : `Complete the review for week ${week}`],
       interruptible: true,
     })),
   };
@@ -108,75 +108,75 @@ function fallbackReturnPlan(user: UserProfile): Omit<ReturnPlan, 'uid' | 'create
 
 function fallbackLabTasks(_user: UserProfile): Omit<LabTask, 'id' | 'uid' | 'createdAt'>[] {
   return [
-    { taskKey: 'lesson-localization', title: '用 AI 为一篇英文教案生成 3 个本土化改写并说明取舍', scenario: '把英文教案改写为适合国内中学生使用的内容', toolHint: '任意通用大模型；重点观察「改写」与「保留原意」的取舍', rubric: ['产出 3 个版本且各有取舍理由', '保留原教学目标与知识结构'], estimatedMinutes: 30, status: 'todo', submissions: [] },
-    { taskKey: 'competitor-table', title: '用 AI 做一次竞品功能对比表', scenario: '选择 3 个同类 AI 工具，对比核心功能、定价与适用场景', toolHint: '大模型 + 表格整理；让 AI 标注信息的不确定来源', rubric: ['覆盖 3 个竞品且维度一致', '包含功能/定价/适用场景'], estimatedMinutes: 40, status: 'todo', submissions: [] },
-    { taskKey: 'faq-workflow', title: '用 AI 搭建一个答疑工作流并写出质量检查清单', scenario: '为真实业务场景设计 AI 答疑流程', toolHint: '大模型；关注提示词与人工复核的分工', rubric: ['有明确场景', '含提示词模板', '含复核清单'], estimatedMinutes: 35, status: 'todo', submissions: [] },
+    { taskKey: 'lesson-localization', title: 'Use AI to generate 3 localized rewrites of an English lesson plan and explain the tradeoffs', scenario: 'Rewrite an English lesson plan into content suitable for middle-school students', toolHint: 'Any general-purpose LLM; focus on the tradeoff between rewriting and preserving the original meaning', rubric: ['Produce 3 versions, each with its own rationale', 'Preserve the original teaching objectives and knowledge structure'], estimatedMinutes: 30, status: 'todo', submissions: [] },
+    { taskKey: 'competitor-table', title: 'Use AI to build a competitor feature comparison table', scenario: 'Pick 3 similar AI tools and compare their core features, pricing, and use cases', toolHint: 'LLM + table formatting; have the AI flag uncertain sources of information', rubric: ['Cover 3 competitors with consistent dimensions', 'Include features, pricing, and use cases'], estimatedMinutes: 40, status: 'todo', submissions: [] },
+    { taskKey: 'faq-workflow', title: 'Use AI to build a Q&A workflow and write a quality-check checklist', scenario: 'Design an AI Q&A process for a real business scenario', toolHint: 'LLM; focus on the division of labor between prompts and human review', rubric: ['Has a clear scenario', 'Includes a prompt template', 'Includes a review checklist'], estimatedMinutes: 35, status: 'todo', submissions: [] },
   ];
 }
 
 function fallbackEvaluateSubmission(_submissionText: string): LabFeedback {
   return {
-    highlights: ['你写出了具体的做法并给出判断依据', '你能把任务落到真实使用场景'],
-    actionableSuggestions: ['可以补充一个「若条件变化则改选哪种方案」的条件分支'],
-    skillGapAnalysis: ['已掌握：结构化拆解与取舍判断', '下一步微技能：为不同约束准备备选方案'],
+    highlights: ['You described concrete steps and gave a basis for your decisions', 'You grounded the task in a real usage scenario'],
+    actionableSuggestions: ['You could add a conditional branch for which option to switch to if conditions change'],
+    skillGapAnalysis: ['Mastered: structured decomposition and tradeoff judgment', 'Next micro-skill: preparing backup options for different constraints'],
     score: 4.5,
     evaluatedAt: new Date().toISOString(),
   };
 }
 
 function fallbackCoachReply(user: UserProfile, evidences: EvidenceItem[], userMessage: string, context: CoachContext): { content: string; microAction?: string } {
-  const negative = /不适合|不行|不会|怕|焦虑|配不上|跟不上|没经验|空窗/.test(userMessage);
-  const pause = /暂停|休息|生病|累|没时间/.test(userMessage);
-  const planTalk = /计划|任务|坚持|拖延|忘记|忘了|做不到|进度|下一步|先做|这周|今天/.test(userMessage);
+  const negative = /not fit|can't|don't know how|afraid|anxious|not good enough|can't keep up|no experience|career break/i.test(userMessage);
+  const pause = /pause|rest|sick|tired|no time/i.test(userMessage);
+  const planTalk = /plan|task|stick to|procrastinat|forget|forgot|can't do|progress|next step|do first|this week|today/i.test(userMessage);
   const evidence = evidences[0];
   const progress = context.planProgress;
   const nextTask = progress?.nextTaskTitle;
 
   let content: string;
   if (pause) {
-    content = `${user.name}，先照顾好自己。暂停不等于淘汰——把节奏调慢，不等于放弃目标。`;
+    content = `${user.name}, take care of yourself first. Pausing is not elimination—slowing the pace down is not giving up on your goal.`;
   } else if (planTalk && progress && progress.total > 0) {
     const parts: string[] = [];
-    if (nextTask) parts.push(`你的下一个任务是「${nextTask}」——先只做这一件，做完就算今天赢。`);
-    parts.push(`目前进度 ${progress.done}/${progress.total}，按你的节奏来就好。`);
-    if (typeof context.recentFeedbackScore === 'number') parts.push(`我记得你上次任务反馈拿了 ${context.recentFeedbackScore} 分——那不是运气，是你真的会做。`);
-    content = `${user.name}，${parts.join('')}`;
+    if (nextTask) parts.push(`Your next task is "${nextTask}"—just do this one first; finishing it means today is a win. `);
+    parts.push(`You are at ${progress.done}/${progress.total} right now—just follow your own pace. `);
+    if (typeof context.recentFeedbackScore === 'number') parts.push(`I remember your last task feedback scored ${context.recentFeedbackScore}—that was not luck, you really can do it. `);
+    content = `${user.name}, ${parts.join('')}`;
   } else if (negative) {
-    const ref = evidence ? `你已经有一份真实的证据：「${evidence.title}」——${evidence.detail}` : '你愿意走到这一步，本身就已经是证据。';
-    content = `${user.name}，我听到你的不安了。${ref} 这不是鸡汤，这是你自己做出来的事实。`;
+    const ref = evidence ? `You already have one piece of real evidence: "${evidence.title}"—${evidence.detail}.` : 'The fact that you are willing to get this far is itself evidence.';
+    content = `${user.name}, I hear your unease. ${ref} This is not a platitude—it is a fact you created yourself.`;
   } else {
-    const taskHint = nextTask ? `我看了你的计划，下一步是「${nextTask}」。` : '';
-    content = `${user.name}，我们一步一步来。基于你现在的档案与证据，我建议先把「${user.targetRole}」当作主线。${taskHint}`;
+    const taskHint = nextTask ? `I looked at your plan; the next step is "${nextTask}".` : '';
+    content = `${user.name}, let us take it one step at a time. Based on your current profile and evidence, I suggest treating "${user.targetRole}" as your main line for now. ${taskHint}`;
   }
 
   return {
     content,
-    microAction: '花 5 分钟，在你的「我可以」墙里挑一条证据，读一遍并写下一句感受。',
+    microAction: 'Take 5 minutes, pick one piece of evidence from your "I can" wall, read it, and write down one feeling.',
   };
 }
 
-// —— 公开 API（异步，双模式）——
+// —— Public API (async, dual mode) ——
 
-/** 分析可迁移技能 + 自信度校准 */
+/** Analyze transferable skills + calibrate confidence */
 export async function buildSkillProfile(user: UserProfile): Promise<Omit<SkillProfile, 'uid' | 'createdAt'>> {
   if (isAgentAvailable()) {
-    const prompt = `请分析以下用户的可迁移技能，并做自信度校准。
+    const prompt = `Analyze the following user's transferable skills and calibrate their confidence. Respond in English.
 
-用户档案：
-- 姓名：${user.name}
-- 当前角色：${user.currentRole}
-- 目标角色：${user.targetRole}
-- 生命阶段：${LIFE_STAGE_LABELS[user.lifeStage]}
-- 现有技能：${user.skills.join('、')}
-- 背景摘要：${user.backgroundSummary}
-- 自信度自评：${user.confidenceSelf}/10
+User profile:
+- Name: ${user.name}
+- Current role: ${user.currentRole}
+- Target role: ${user.targetRole}
+- Life stage: ${LIFE_STAGE_LABELS[user.lifeStage]}
+- Current skills: ${user.skills.join(', ')}
+- Background summary: ${user.backgroundSummary}
+- Self-rated confidence: ${user.confidenceSelf}/10
 
-要求：
-1. 找出 5 个可迁移技能，每个技能必须引用用户的真实经历作为证据
-2. 做 6 维自信度校准（AI 评分必须比用户自评高 2-4 分，体现女性系统性低估效应）
-3. 输出 uniqueValue（一段 80 字以内的个性化价值总结）
+Requirements:
+1. Identify 5 transferable skills; each skill must cite the user's real experience as evidence
+2. Perform a 6-dimension confidence calibration (the AI score must be 2-4 points higher than the user's self-rating, reflecting the systematic underrating effect among women)
+3. Output uniqueValue (a personalized value statement of no more than 80 words)
 
-输出格式：严格 JSON，字段名必须与以下完全一致：
+Output format: strict JSON, with field names exactly as follows:
 {
   "uniqueValue": "...",
   "transferableSkills": [{"id": "sk_1", "name": "...", "evidence": "...", "aiRelevance": 90, "narrative": "..."}],
@@ -193,30 +193,30 @@ export async function buildSkillProfile(user: UserProfile): Promise<Omit<SkillPr
   return fallbackSkillProfile(user);
 }
 
-/** 匹配 AI 岗位与女性友好赛道 */
+/** Match AI roles and women-friendly tracks */
 export async function buildOpportunityReport(user: UserProfile, skills: SkillProfile): Promise<Omit<OpportunityReport, 'uid' | 'createdAt'>> {
   if (isAgentAvailable()) {
-    const prompt = `基于用户的技能画像，推荐 3 个 AI 相关岗位，并给出女性友好赛道和性别风险提示。
+    const prompt = `Based on the user's skill profile, recommend 3 AI-related roles, along with women-friendly tracks and gender-risk hints. Respond in English.
 
-用户档案：
-- 姓名：${user.name}
-- 当前角色：${user.currentRole}
-- 目标角色：${user.targetRole}
-- 生命阶段：${LIFE_STAGE_LABELS[user.lifeStage]}
-- 自信度：${user.confidenceSelf}/10
+User profile:
+- Name: ${user.name}
+- Current role: ${user.currentRole}
+- Target role: ${user.targetRole}
+- Life stage: ${LIFE_STAGE_LABELS[user.lifeStage]}
+- Confidence: ${user.confidenceSelf}/10
 
-技能画像：
+Skill profile:
 ${skills.transferableSkills.map(s => `- ${s.name}: ${s.evidence}`).join('\n')}
 
-要求：
-1. 推荐 3 个岗位，每个包含：title, matchScore(80-95), description, whyFit, requiredSkills[], typicalWorkflows[], realWorldExamples[], tradeoffs, category
-2. category 只能是：'AI 产品' | 'AI 运营' | 'AI 教育' | 'AI 伦理' | '数据治理'
-3. 不用「推荐、最佳」判决式词汇
-4. 给出 2 个 womenFriendlyTracks 和 2 个 genderRiskHints
+Requirements:
+1. Recommend 3 roles, each containing: title, matchScore(80-95), description, whyFit, requiredSkills[], typicalWorkflows[], realWorldExamples[], tradeoffs, category
+2. category can only be one of: 'AI Product' | 'AI Operations' | 'AI Education' | 'AI Ethics' | 'Data Governance'
+3. Do not use verdict-style words such as "recommended" or "best"
+4. Provide 2 womenFriendlyTracks and 2 genderRiskHints
 
-输出格式：严格 JSON：
+Output format: strict JSON:
 {
-  "roleMatches": [{"id": "role_1", "title": "...", "matchScore": 90, "description": "...", "whyFit": "...", "requiredSkills": ["..."], "typicalWorkflows": ["..."], "realWorldExamples": ["..."], "tradeoffs": "...", "category": "AI 运营"}],
+  "roleMatches": [{"id": "role_1", "title": "...", "matchScore": 90, "description": "...", "whyFit": "...", "requiredSkills": ["..."], "typicalWorkflows": ["..."], "realWorldExamples": ["..."], "tradeoffs": "...", "category": "AI Operations"}],
   "womenFriendlyTracks": [{"title": "...", "reason": "..."}],
   "genderRiskHints": [{"scenario": "...", "gentleAdvice": "..."}]
 }`;
@@ -231,28 +231,28 @@ ${skills.transferableSkills.map(s => `- ${s.name}: ${s.evidence}`).join('\n')}
   return fallbackOpportunityReport(user, skills);
 }
 
-/** 生成 30 天回归计划 */
+/** Generate the 30-day return plan */
 export async function buildReturnPlan(user: UserProfile, adjustmentFeedback?: string): Promise<Omit<ReturnPlan, 'uid' | 'createdAt'>> {
   if (isAgentAvailable()) {
-    const prompt = `为用户生成 4 周回归计划。
+    const prompt = `Generate a 4-week return plan for the user. Respond in English.
 
-用户档案：
-- 姓名：${user.name}
-- 当前角色：${user.currentRole}
-- 目标角色：${user.targetRole}
-- 生命阶段：${LIFE_STAGE_LABELS[user.lifeStage]}
-- 每周可用时间：${user.constraints.weeklyHours} 小时
-${adjustmentFeedback ? `- 调整反馈：${adjustmentFeedback}` : ''}
+User profile:
+- Name: ${user.name}
+- Current role: ${user.currentRole}
+- Target role: ${user.targetRole}
+- Life stage: ${LIFE_STAGE_LABELS[user.lifeStage]}
+- Available time per week: ${user.constraints.weeklyHours} hours
+${adjustmentFeedback ? `- Adjustment feedback: ${adjustmentFeedback}` : ''}
 
-要求：
-1. 4 周主题递进：工具手感 → 经验翻译 → 作品产出 → 真实对话
-2. 每周 1 个核心任务，不超过每周可用时间
-3. 必须含「暂停不等于淘汰」的 returnPlaybook
+Requirements:
+1. A 4-week progression of themes: tool familiarity \u2192 experience translation \u2192 producing work \u2192 real conversations
+2. One core task per week, not exceeding the available weekly time
+3. Must include a returnPlaybook with the message "pausing is not elimination"
 4. interruptibleStages: [1,2,3,4]
 
-输出格式：严格 JSON：
+Output format: strict JSON:
 {
-  "paceLabel": "产后回归",
+  "paceLabel": "Returning parent",
   "weeklyHours": 6,
   "totalWeeks": 4,
   "interruptibleStages": [1,2,3,4],
@@ -270,17 +270,17 @@ ${adjustmentFeedback ? `- 调整反馈：${adjustmentFeedback}` : ''}
   return fallbackReturnPlan(user);
 }
 
-/** 按目标岗位推荐 3 个分级小任务 */
+/** Recommend 3 leveled micro-tasks for the target role */
 export async function buildLabTasks(user: UserProfile): Promise<Omit<LabTask, 'id' | 'uid' | 'createdAt'>[]> {
   if (isAgentAvailable()) {
-    const prompt = `为「${user.targetRole}」推荐 3 个 30-40 分钟可完成的实操小任务。
+    const prompt = `Recommend 3 hands-on micro-tasks that can be completed in 30-40 minutes for the "${user.targetRole}" role. Respond in English.
 
-要求：
-1. 任务必须真实可执行，产出可用于简历/作品集
-2. 每个任务包含：taskKey, title, scenario, toolHint, rubric[], estimatedMinutes
-3. rubric 是验收标准（3-4 条）
+Requirements:
+1. Tasks must be genuinely executable, and their output should be usable in a resume/portfolio
+2. Each task contains: taskKey, title, scenario, toolHint, rubric[], estimatedMinutes
+3. rubric is the acceptance criteria (3-4 items)
 
-输出格式：严格 JSON 数组：
+Output format: strict JSON array:
 [{"taskKey": "...", "title": "...", "scenario": "...", "toolHint": "...", "rubric": ["..."], "estimatedMinutes": 30, "status": "todo", "submissions": []}]`;
 
     const ep = getAgentEndpoint('assessment');
@@ -293,21 +293,21 @@ export async function buildLabTasks(user: UserProfile): Promise<Omit<LabTask, 'i
   return fallbackLabTasks(user);
 }
 
-/** 按 rubric 评估任务产出 */
+/** Evaluate the task output against the rubric */
 export async function evaluateSubmission(submissionText: string): Promise<LabFeedback> {
   if (isAgentAvailable()) {
-    const prompt = `请评估以下任务产出，按 rubric 打分。
+    const prompt = `Evaluate the following task output and score it against the rubric. Respond in English.
 
-任务产出：
+Task output:
 ${submissionText}
 
-要求：
-1. 先给 2 条 highlights（亮点，具体不空洞）
-2. 给 1 条 actionableSuggestions（可执行的改进建议）
-3. 给 2 条 skillGapAnalysis（已掌握的技能 + 下一步微技能）
-4. score 1-5 分
+Requirements:
+1. First give 2 highlights (specific, not generic)
+2. Give 1 actionableSuggestions (an executable improvement suggestion)
+3. Give 2 skillGapAnalysis entries (a skill already mastered + a next micro-skill)
+4. score from 1-5
 
-输出格式：严格 JSON：
+Output format: strict JSON:
 {"highlights": ["..."], "actionableSuggestions": ["..."], "skillGapAnalysis": ["..."], "score": 4.5, "evaluatedAt": "..."}`;
 
     const ep = getAgentEndpoint('assessment');
@@ -320,14 +320,14 @@ ${submissionText}
   return fallbackEvaluateSubmission(submissionText);
 }
 
-/** 反哺给 Agent 的上下文 */
+/** Context fed back to the Agent */
 export interface CoachContext {
   planProgress?: { done: number; total: number; nextTaskTitle?: string };
   recentFeedbackScore?: number;
   completedSessionCount?: number;
 }
 
-/** AI Mentor 回复（含计划陪伴提醒 / 证据重构法 / 微行动 / 暂停不等于淘汰 红线） */
+/** AI Mentor reply (with plan companionship reminders / evidence reframing / micro-actions / "pausing is not elimination" red line) */
 export async function coachReply(
   user: UserProfile,
   evidences: EvidenceItem[],
@@ -335,21 +335,21 @@ export async function coachReply(
   context: CoachContext = {}
 ): Promise<{ content: string; microAction?: string }> {
   if (isAgentAvailable()) {
-    const systemPrompt = `你是一位女性职业转型 AI Mentor，名叫「小径」。
+    const systemPrompt = `You are a career-transition AI Mentor for women, named "Pathlet". Always respond in English.
 
-你的三条铁律：
-1. 温柔但不说教，避免空洞鼓励。当用户说负面话时，先共情，再用证据重构法（引用她的真实证据）
-2. 每次回复必须给一个 10 分钟可完成的微行动建议
-3. 暂停不等于淘汰——当用户提到暂停/休息/累时，告诉她把节奏调慢不等于放弃目标
+Your three iron rules:
+1. Be gentle but not preachy, and avoid empty encouragement. When the user says something negative, empathize first, then use evidence reframing (cite her real evidence)
+2. Every reply must give one micro-action suggestion completable in 10 minutes
+3. Pausing is not elimination—when the user mentions pausing/resting/being tired, tell her that slowing the pace down is not giving up on her goal
 
-你记得用户的完整历史（诊断报告、证据库、导师会话、计划进度），用这些记忆给出个性化回复。但不要暴露"我记得你"这种表述——让用户感受到的是"被懂"，而不是被存档。
+You remember the user's full history (assessment report, evidence library, mentor sessions, plan progress) and use these memories to give personalized replies. But do not expose phrasing like "I remember you"—what the user should feel is being understood, not being archived.
 
-回复格式（严格遵守）：
-1. 正文：共情/分析 + 引用她的真实证据 + 建议，可以用小标题
-2. 正文最后必须另起一行，以「【微行动】」开头，写出一个 10 分钟可完成的具体行动
-3. 除「【微行动】」外，不要使用「行动步骤」「微行动」「下一步」等其它标题
+Reply format (follow strictly):
+1. Body: empathy/analysis + cite her real evidence + suggestions; subheadings are allowed
+2. The last line of the body must start on its own line with "[Micro-Action]" and describe one concrete action completable in 10 minutes
+3. Apart from "[Micro-Action]", do not use any other headings such as "action steps", "micro-action", or "next steps"
 
-当前用户：${user.name}，${LIFE_STAGE_LABELS[user.lifeStage]}，目标：${user.targetRole}`;
+Current user: ${user.name}, ${LIFE_STAGE_LABELS[user.lifeStage]}, goal: ${user.targetRole}`;
 
     const contextStr = {
       user: { name: user.name, lifeStage: LIFE_STAGE_LABELS[user.lifeStage], currentRole: user.currentRole, targetRole: user.targetRole },
@@ -367,16 +367,16 @@ export async function coachReply(
     });
 
     if (res) {
-      // 从回复中提取微行动：兼容 【微行动】、**微行动：**、### 10 分钟微行动： 等写法
-      const DEFAULT_MICRO = '花 5 分钟，在你的「我可以」墙里挑一条证据，读一遍并写下一句感受。';
+      // Extract the micro-action from the reply: accept "[Micro-Action]", "**Micro-action:**", "### 10-minute micro-action:" and similar
+      const DEFAULT_MICRO = 'Take 5 minutes, pick one piece of evidence from your "I can" wall, read it, and write down one feeling.';
       const markerRe =
-        /【微行动】|\*\*微行动\*\*\s*[:：]?|^#{0,6}\s*(?:\d{1,2}\s*分钟\s*)?微行动\s*[:：]?/m;
+        /\[Micro-Action\]|\*\*Micro-action\*\*\s*:?|^#{0,6}\s*(?:\d{1,2}\s*(?:minute|minutes)\s*)?micro-action\s*:?/im;
       const matched = res.text.match(markerRe);
       if (matched && matched.index !== undefined) {
         const idx = matched.index;
         const content = res.text.slice(0, idx).replace(/[\s\-—#*]+$/, '').trim();
         const microAction =
-          res.text.slice(idx + matched[0].length).split('\n')[0].replace(/^[\s:：*]+/, '').trim() ||
+          res.text.slice(idx + matched[0].length).split('\n')[0].replace(/^[\s:*]+/, '').trim() ||
           DEFAULT_MICRO;
         return { content, microAction };
       }
@@ -386,20 +386,20 @@ export async function coachReply(
   return fallbackCoachReply(user, evidences, userMessage, context);
 }
 
-/** AI 生成的本周自信总结（必须引用 ≥2 条具体证据） */
+/** AI-generated weekly confidence summary (must cite at least 2 specific pieces of evidence) */
 export async function buildWeeklyConfidenceSummary(user: UserProfile, evidences: EvidenceItem[]): Promise<string> {
   if (isAgentAvailable() && evidences.length >= 2) {
-    const prompt = `请为用户写一段本周自信总结，必须引用至少 2 条具体证据。
+    const prompt = `Write a weekly confidence summary for the user, citing at least 2 specific pieces of evidence. Respond in English.
 
-用户：${user.name}
-证据库：
+User: ${user.name}
+Evidence library:
 ${evidences.slice(0, 5).map((e, i) => `${i + 1}. ${e.title} — ${e.detail}`).join('\n')}
 
-要求：
-- 温柔但不说教
-- 必须引用具体证据标题
-- 80 字以内
-- 结尾给一个鼓励`;
+Requirements:
+- Gentle but not preachy
+- Must cite specific evidence titles
+- Within 80 words
+- End with an encouragement`;
 
     const ep = getAgentEndpoint('coach');
     const res = await callModel(ep, { input: prompt });
@@ -408,15 +408,15 @@ ${evidences.slice(0, 5).map((e, i) => `${i + 1}. ${e.title} — ${e.detail}`).jo
 
   const picks = evidences.slice(0, 2);
   if (picks.length < 2) {
-    return `${user.name}，这周你开始建立证据了。等再多积累几条，我就能为你写出更具体的自信总结。`;
+    return `${user.name}, this week you started building evidence. Once you have a few more entries, I can write a more specific confidence summary for you.`;
   }
-  return `${user.name}，这周我看到了两条具体证据：一是「${picks[0].title}」（${picks[0].detail}），二是「${picks[1].title}」（${picks[1].detail}）。它们不是空泛的鼓励，而是你真实做出来的事——请把它们记住。`;
+  return `${user.name}, this week I saw two specific pieces of evidence: first, "${picks[0].title}" (${picks[0].detail}); second, "${picks[1].title}" (${picks[1].detail}). These are not empty encouragement—they are things you actually did. Please hold on to them.`;
 }
 
-/** 内容安全审核（AI 守护者） */
+/** Content safety moderation (AI guardian) */
 export async function moderateContent(content: { title?: string; body?: string; images?: string[] }): Promise<{ pass: boolean; advice?: string }> {
   if (!isAgentAvailable()) {
-    // 本地开发无 Agent 时，默认通过
+    // No Agent in local development: pass by default
     return { pass: true };
   }
 
@@ -425,25 +425,25 @@ export async function moderateContent(content: { title?: string; body?: string; 
   const text = [content.title, content.body].filter(Boolean).join('\n\n');
   const hasImages = (content.images?.length ?? 0) > 0;
 
-  const prompt = `你是一位社区内容安全守护者，名字叫「小径」。你的任务是审核用户发布的社区内容，确保社区氛围温暖、支持、安全。
+  const prompt = `You are a community content safety guardian named "Pathlet". Your task is to review content posted by users to keep the community warm, supportive, and safe. Respond in English.
 
-请审核以下内容：
+Please review the following content:
 
 ${text}
-${hasImages ? `[包含 ${content.images!.length} 张图片]` : ''}
+${hasImages ? `[Contains ${content.images!.length} image(s)]` : ''}
 
-审核标准：
-1. 拦截：仇恨言论、暴力威胁、歧视性语言、色情内容、恶意攻击
-2. 放行：正常分享、求助、吐槽、情感表达（即使有些消极）
-3. 温和提醒：内容过于消极或可能引发不适时，给出温和建议
+Review criteria:
+1. Block: hate speech, violent threats, discriminatory language, pornographic content, malicious attacks
+2. Allow: normal sharing, asking for help, venting, emotional expression (even if somewhat negative)
+3. Gentle reminder: when content is overly negative or might cause discomfort, give gentle advice
 
-输出格式：严格 JSON
-{"pass": true/false, "advice": "温和的建议（仅当 pass 为 false 时提供）"}
+Output format: strict JSON
+{"pass": true/false, "advice": "gentle advice (provide only when pass is false)"}
 
-注意：
-- 只拦截明显违规内容，模糊地带放行
-- 建议要温柔，不说教，像朋友提醒一样
-- 如果内容只是消极但不违规，pass: true，advice 可以写「这里好像有点消极，要不要换个表述？」`;
+Notes:
+- Only block clearly violating content; let borderline cases through
+- Advice should be gentle, not preachy, like a friend's reminder
+- If the content is merely negative but not violating, pass: true, and advice can say "This looks a little down—would you like to rephrase it?"`;
 
   const res = await callModel(ep, { input: prompt });
   if (res) {
@@ -451,6 +451,6 @@ ${hasImages ? `[包含 ${content.images!.length} 张图片]` : ''}
     if (parsed) return parsed;
   }
 
-  // Agent 调用失败时，默认通过（不阻塞用户）
+  // If the Agent call fails, pass by default (do not block the user)
   return { pass: true };
 }

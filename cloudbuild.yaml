@@ -1,8 +1,8 @@
-# Cloud Build 配置：在 GCP 上构建并部署到 Cloud Run
-# 触发方式：push 到 main 分支时自动触发
+# Cloud Build configuration: build and deploy to Cloud Run on GCP.
+# Trigger: automatically runs on every push to the main branch.
 
 steps:
-  # 1. 构建 Docker 镜像
+  # 1. Build the Docker image.
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -10,13 +10,13 @@ steps:
       - 'gcr.io/$PROJECT_ID/rebloom-ai:$SHORT_SHA'
       - '.'
 
-  # 2. 推送到 Google Container Registry
+  # 2. Push the image to Google Container Registry.
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - 'gcr.io/$PROJECT_ID/rebloom-ai:$SHORT_SHA'
 
-  # 3. 部署到 Cloud Run（Agent endpoint 直接写死，无需触发器配置）
+  # 3. Deploy to Cloud Run (agent endpoints are inlined; no trigger config needed).
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -31,7 +31,7 @@ steps:
       - 'managed'
       - '--allow-unauthenticated'
       - '--set-env-vars'
-      - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,AGENT_ENDPOINT_ASSESSMENT=projects/107927033625/locations/us-west1/reasoningEngines/5963861020219801600,AGENT_ENDPOINT_COACH=projects/107927033625/locations/us-west1/reasoningEngines/3754845402994573312,AGENT_ENDPOINT_MEMORY=projects/107927033625/locations/us-west1/reasoningEngines/6254343196185198592,AGENT_ENDPOINT_PROACTIVE=projects/107927033625/locations/us-west1/reasoningEngines/7979221853468098560,AGENT_ENDPOINT_MENTOR_MATCH=projects/107927033625/locations/us-west1/reasoningEngines/8951999372980125696'
+      - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FIREBASE_PROJECT_ID=$PROJECT_ID,AUTH_SECRET=rebloom-cloud-run-auth-secret-2026,AGENT_ENDPOINT_ASSESSMENT=projects/107927033625/locations/us-west1/reasoningEngines/5963861020219801600,AGENT_ENDPOINT_COACH=projects/107927033625/locations/us-west1/reasoningEngines/3754845402994573312,AGENT_ENDPOINT_MEMORY=projects/107927033625/locations/us-west1/reasoningEngines/6254343196185198592,AGENT_ENDPOINT_PROACTIVE=projects/107927033625/locations/us-west1/reasoningEngines/7979221853468098560,AGENT_ENDPOINT_MENTOR_MATCH=projects/107927033625/locations/us-west1/reasoningEngines/8951999372980125696'
       - '--memory'
       - '512Mi'
       - '--cpu'

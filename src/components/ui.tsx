@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-// —— 卡片 ——
+// —— Card ——
 export function Card({
   className = '',
   children,
@@ -19,7 +19,7 @@ export function Card({
   );
 }
 
-// —— 按钮 ——
+// —— Button ——
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline';
 
 export function Button({
@@ -49,7 +49,7 @@ export function Button({
   );
 }
 
-// —— 徽标 ——
+// —— Badge ——
 export function Badge({
   children,
   tone = 'silver',
@@ -75,7 +75,7 @@ export function Badge({
   );
 }
 
-// —— 分区标题 ——
+// —— Section title ——
 export function SectionTitle({
   eyebrow,
   title,
@@ -102,7 +102,7 @@ export function SectionTitle({
   );
 }
 
-// —— 空态 ——
+// —— Empty state ——
 export function EmptyState({ text }: { text: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-silver-400 bg-silver-50 px-6 py-10 text-center text-sm text-slateblue-700">
@@ -111,7 +111,7 @@ export function EmptyState({ text }: { text: string }) {
   );
 }
 
-// —— 匹配度环形图 ——
+// —— Match-score ring ——
 export function ScoreRing({
   value,
   size = 96,
@@ -158,7 +158,7 @@ export function ScoreRing({
   );
 }
 
-// —— 复选 / 单选芯片 ——
+// —— Checkbox / radio chip ——
 export function Chip({
   active,
   children,
@@ -183,7 +183,7 @@ export function Chip({
   );
 }
 
-// —— 模态框 ——
+// —— Modal ——
 export function Modal({
   open,
   onClose,
@@ -208,7 +208,7 @@ export function Modal({
             onClick={onClose}
             className="rounded-lg px-2 py-1 text-sm font-bold text-slateblue-700 hover:bg-silver-100"
           >
-            关闭
+            Close
           </button>
         </div>
         <div className="max-h-[70vh] overflow-y-auto">{children}</div>
@@ -217,7 +217,7 @@ export function Modal({
   );
 }
 
-// —— 进度条 ——
+// —— Progress bar ——
 export function ProgressBar({ value }: { value: number }) {
   return (
     <div className="h-2.5 w-full overflow-hidden rounded-full border border-silver-300 bg-silver-100">

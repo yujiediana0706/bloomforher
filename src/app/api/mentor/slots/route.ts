@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
   const db = getDB();
   const mentor = db.mentors.find((m) => m.userId === uid);
   if (!mentor) return NextResponse.json({ slots: [] });
@@ -19,22 +19,22 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
   const body = (await req.json().catch(() => null)) as {
     startAt?: string;
     endAt?: string;
   } | null;
   if (!body?.startAt) {
-    return NextResponse.json({ error: '缺少开始时间' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing start time' }, { status: 400 });
   }
   const db = getDB();
   const mentor = db.mentors.find((m) => m.userId === uid);
   if (!mentor) {
-    return NextResponse.json({ error: '请先开通导师资料' }, { status: 400 });
+    return NextResponse.json({ error: 'Please create your mentor profile first' }, { status: 400 });
   }
   const start = new Date(body.startAt);
   if (Number.isNaN(start.getTime())) {
-    return NextResponse.json({ error: '时间格式错误' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid time format' }, { status: 400 });
   }
   const end = body.endAt
     ? new Date(body.endAt)
@@ -53,20 +53,20 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
   const body = (await req.json().catch(() => null)) as { slotId?: string } | null;
   if (!body?.slotId) {
-    return NextResponse.json({ error: '缺少 slotId' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing slotId' }, { status: 400 });
   }
   const db = getDB();
   const mentor = db.mentors.find((m) => m.userId === uid);
-  if (!mentor) return NextResponse.json({ error: '无权限' }, { status: 403 });
+  if (!mentor) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
   const slot = db.mentorSlots.find(
     (s) => s.id === body.slotId && s.mentorId === mentor.id
   );
-  if (!slot) return NextResponse.json({ error: '档期不存在' }, { status: 404 });
+  if (!slot) return NextResponse.json({ error: 'Slot not found' }, { status: 404 });
   if (slot.status === 'booked') {
-    return NextResponse.json({ error: '已被预约，无法删除' }, { status: 409 });
+    return NextResponse.json({ error: 'Already booked and cannot be deleted' }, { status: 409 });
   }
   db.mentorSlots = db.mentorSlots.filter((s) => s.id !== slot.id);
   return NextResponse.json({ ok: true });

@@ -12,12 +12,12 @@ interface PlanTaskBody {
 
 export async function PATCH(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const plan = db.returnPlans[uid];
   if (!plan) {
-    return NextResponse.json({ error: '尚未生成回归计划' }, { status: 404 });
+    return NextResponse.json({ error: 'No return plan has been generated yet' }, { status: 404 });
   }
 
   let body: PlanTaskBody = {};
@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest) {
 
   const { taskId, completed } = body;
   if (typeof taskId !== 'string' || typeof completed !== 'boolean') {
-    return NextResponse.json({ error: '参数不合法' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
   }
 
   let target: PlanTask | undefined;
@@ -41,7 +41,7 @@ export async function PATCH(req: NextRequest) {
     }
   }
   if (!target) {
-    return NextResponse.json({ error: '任务不存在' }, { status: 404 });
+    return NextResponse.json({ error: 'Task not found' }, { status: 404 });
   }
 
   const wasCompleted = target.completed;
@@ -52,10 +52,10 @@ export async function PATCH(req: NextRequest) {
     evidence = addEvidence(db, {
       uid,
       type: 'skill_progress',
-      title: `完成计划任务：${target.title}`,
-      detail: `你在第 ${target.week} 周完成了「${target.title}」，这是一次真实的学习进展。`,
+      title: `Completed plan task: ${target.title}`,
+      detail: `You completed "${target.title}" in week ${target.week}—this is real learning progress.`,
       source: 'auto',
-      tags: ['回归计划', '学习进展'],
+      tags: ['Return plan', 'Learning progress'],
       relatedType: 'plan_task',
       relatedId: target.id,
       isPublic: false,

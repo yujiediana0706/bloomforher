@@ -20,11 +20,11 @@ function sleep(ms: number): Promise<void> {
 
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   let body: ChatBody = {};
   try {
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   const message = typeof body.message === 'string' ? body.message.trim() : '';
   if (!message) {
-    return NextResponse.json({ error: '消息不能为空' }, { status: 400 });
+    return NextResponse.json({ error: 'Message cannot be empty' }, { status: 400 });
   }
 
   const recentEvidences = db.evidences
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5);
 
-  // —— 反哺上下文：计划进度 + 任务反馈 + 导师会话，让 Agent 越来越懂用户 ——
+  // —— Context fed back: plan progress + task feedback + mentor sessions, so the Agent understands the user better over time ——
   const plan = db.returnPlans[uid];
   let planProgress: CoachContext['planProgress'];
   if (plan) {
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 
   const { content, microAction } = await coachReply(user, recentEvidences, message, context);
 
-  // 写入对话历史
+  // Write the conversation history
   const messages = db.coachMessages[uid] ?? (db.coachMessages[uid] = []);
   const userMessage: CoachMessage = {
     id: newId('cm'),

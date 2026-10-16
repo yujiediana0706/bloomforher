@@ -26,11 +26,11 @@ interface CreateCircleBody {
 
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   let body: CreateCircleBody = {};
   try {
@@ -41,11 +41,11 @@ export async function POST(req: NextRequest) {
 
   const type = body.type as CirclePostType | undefined;
   if (!type || !CIRCLE_TYPES.includes(type)) {
-    return NextResponse.json({ error: '帖子类型不合法' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid post type' }, { status: 400 });
   }
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   if (!title) {
-    return NextResponse.json({ error: '标题不能为空' }, { status: 400 });
+    return NextResponse.json({ error: 'Title cannot be empty' }, { status: 400 });
   }
 
   const post: CirclePost = {

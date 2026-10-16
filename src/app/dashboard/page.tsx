@@ -65,40 +65,41 @@ export default function DashboardPage() {
   }, [user]);
 
   if (loading) {
-    return <p className="text-sm text-slateblue-700">加载中…</p>;
+    return <p className="text-sm text-slateblue-700">Loading…</p>;
   }
 
   if (!user) {
     return (
       <Card>
         <p className="text-sm text-slateblue-700">
-          请先登录（右上角可切换演示账号）
+          Please sign in first (you can switch demo accounts from the top-right
+          menu).
         </p>
       </Card>
     );
   }
 
   if (!data) {
-    return <p className="text-sm text-slateblue-700">加载中…</p>;
+    return <p className="text-sm text-slateblue-700">Loading…</p>;
   }
 
   const breakdown = data.breakdown;
   const maxWeight = breakdown.reduce((m, b) => Math.max(m, b.weight), 1);
 
   const impactItems: { label: string; value: number; icon: React.ReactNode }[] = [
-    { label: '入驻导师', value: data.impact.mentors, icon: <Award className="h-4 w-4" /> },
+    { label: 'Mentors onboard', value: data.impact.mentors, icon: <Award className="h-4 w-4" /> },
     {
-      label: '被支持女性',
+      label: 'Women supported',
       value: data.impact.womenSupported,
       icon: <Users className="h-4 w-4" />,
     },
     {
-      label: '沉淀证据',
+      label: 'Evidence collected',
       value: data.impact.evidences,
       icon: <Sparkles className="h-4 w-4" />,
     },
     {
-      label: '同辈连接',
+      label: 'Peer connections',
       value: data.impact.plazaConnections,
       icon: <Heart className="h-4 w-4" />,
     },
@@ -107,39 +108,39 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <SectionTitle
-        eyebrow="个人中心"
-        title={`你好，${data.user.name}`}
-        desc={data.user.backgroundSummary || '继续积累你的证据，让每一步都算数。'}
+        eyebrow="Profile"
+        title={`Hi, ${data.user.name}`}
+        desc={data.user.backgroundSummary || 'Keep building your evidence—every step counts.'}
       />
 
       <JourneyBanner currentStep={data.user.journeyStep} />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="flex items-center gap-4">
-          <ScoreRing value={data.confidence} size={104} label="自信度" />
+          <ScoreRing value={data.confidence} size={104} label="Confidence" />
           <div>
             <p className="text-sm font-extrabold text-slateblue-900">
-              自信度仪表
+              Confidence dashboard
             </p>
             <div className="mt-1 flex flex-wrap gap-2">
               <Badge tone="pink">
                 {LIFE_STAGE_LABELS[data.user.lifeStage]}
               </Badge>
-              <Badge tone="silver">站点阶段 {data.user.journeyStep}/6</Badge>
+              <Badge tone="silver">Journey step {data.user.journeyStep}/6</Badge>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slateblue-700">
-              由证据类型与数量加权计算，上限 100。
+              Weighted by evidence type and count, capped at 100.
             </p>
           </div>
         </Card>
 
         <Card className="lg:col-span-2">
           <p className="mb-3 text-sm font-extrabold text-slateblue-900">
-            自信度构成
+            Confidence breakdown
           </p>
           {breakdown.length === 0 ? (
             <p className="text-xs text-slateblue-700">
-              还没有证据，去完成一次技能发现吧。
+              No evidence yet—go complete a skill discovery.
             </p>
           ) : (
             <div className="space-y-3">
@@ -148,7 +149,7 @@ export default function DashboardPage() {
                   <div className="mb-1 flex items-center justify-between text-xs font-bold text-slateblue-900">
                     <span>{b.label}</span>
                     <span className="text-slateblue-700">
-                      {b.count} 条 · 权重 {b.weight}
+                      {b.count} entries · weight {b.weight}
                     </span>
                   </div>
                   <ProgressBar
@@ -163,10 +164,10 @@ export default function DashboardPage() {
 
       <div className="mt-4">
         <p className="mb-3 text-sm font-extrabold text-slateblue-900">
-          下一步任务 Top3
+          Top 3 next tasks
         </p>
         {data.nextTasks.length === 0 ? (
-          <EmptyState text="所有主线任务都已完成，去广场帮助其他同路人吧。" />
+          <EmptyState text="All main tasks are complete—head to the plaza and help others on the same journey." />
         ) : (
           <div className="grid gap-3 sm:grid-cols-3">
             {data.nextTasks.map((t) => (
@@ -187,18 +188,19 @@ export default function DashboardPage() {
         <Card>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-extrabold text-slateblue-900">
-              最近证据高光
+              Recent evidence highlights
             </p>
             <Link
               href="/evidence"
               className="text-xs font-bold text-coral-600 hover:underline"
             >
-              查看全部 →
+              View all →
             </Link>
           </div>
           {data.recentEvidence.length === 0 ? (
             <p className="text-xs text-slateblue-700">
-              还没有证据——完成一次技能发现，让第一份『我可以』自动出现
+              No evidence yet—complete a skill discovery to unlock your first
+              &quot;I can&quot; moment.
             </p>
           ) : (
             <ul className="space-y-2">
@@ -224,7 +226,7 @@ export default function DashboardPage() {
 
         <Card>
           <p className="mb-3 text-sm font-extrabold text-slateblue-900">
-            我的影响力
+            My impact
           </p>
           <div className="grid grid-cols-2 gap-3">
             {impactItems.map((it) => (
@@ -246,7 +248,7 @@ export default function DashboardPage() {
           </div>
           <div className="mt-3 rounded-xl border border-softpink-300 bg-softpink-100 px-3 py-2">
             <p className="text-xs font-bold text-slateblue-900">
-              社区平均自信度提升：+{data.impact.avgConfidenceLift}
+              Average community confidence lift: +{data.impact.avgConfidenceLift}
             </p>
           </div>
         </Card>

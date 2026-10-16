@@ -11,7 +11,7 @@ import type { Mentor, MentorSlot } from '@/lib/types';
 function fmtTime(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString('zh-CN', {
+  return d.toLocaleString('en-US', {
     month: 'numeric',
     day: 'numeric',
     weekday: 'short',
@@ -61,7 +61,7 @@ export default function MentorDetailPage({
       setMentor(d.mentor);
       setSlots(d.slots);
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '加载失败');
+      setNotice(e instanceof Error ? e.message : 'Failed to load');
     } finally {
       setLoading(false);
     }
@@ -73,15 +73,15 @@ export default function MentorDetailPage({
 
   const book = async (kind: 'single' | 'package') => {
     if (!user) {
-      setNotice('请先登录（右上角可切换演示账号）');
+      setNotice('Please sign in (switch demo accounts in the top-right corner)');
       return;
     }
     if (!selectedSlot) {
-      setNotice('请先选择一个可用时段');
+      setNotice('Please select an available slot first');
       return;
     }
     if (!topic.trim()) {
-      setNotice('请填写想和导师聊的话题');
+      setNotice('Please enter the topic you want to discuss with the mentor');
       return;
     }
     setSubmitting(true);
@@ -95,18 +95,18 @@ export default function MentorDetailPage({
       });
       setNotice(
         kind === 'package'
-          ? '套餐购买成功，费用已托管（演示环境 · 模拟扣款）。'
-          : '预约成功，费用已托管（演示环境 · 模拟扣款）。'
+          ? 'Package purchased — payment is held in escrow (demo environment, simulated charge).'
+          : 'Booking confirmed — payment is held in escrow (demo environment, simulated charge).'
       );
       setSelectedSlot('');
       setTopic('');
       await load();
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
-      if (msg.includes('时段') || msg.includes('冲突')) {
-        setNotice('档期冲突，该时段已被预约，请选择其他时段。');
+      if (msg.includes('slot') || msg.includes('conflict')) {
+        setNotice('Schedule conflict — that slot is already booked, please pick another slot.');
       } else {
-        setNotice(msg || '预约失败');
+        setNotice(msg || 'Booking failed');
       }
     } finally {
       setSubmitting(false);
@@ -115,7 +115,7 @@ export default function MentorDetailPage({
 
   if (loading) {
     return (
-      <p className="py-10 text-center text-sm text-slateblue-700">加载中…</p>
+      <p className="py-10 text-center text-sm text-slateblue-700">Loading…</p>
     );
   }
 
@@ -127,9 +127,9 @@ export default function MentorDetailPage({
           className="inline-flex items-center gap-1 text-sm font-bold text-coral-600"
         >
           <ArrowLeft className="h-4 w-4" />
-          返回导师社区
+          Back to mentor community
         </Link>
-        <EmptyState text={notice || '导师不存在'} />
+        <EmptyState text={notice || 'Mentor not found'} />
       </div>
     );
   }
@@ -143,7 +143,7 @@ export default function MentorDetailPage({
         className="inline-flex items-center gap-1 text-sm font-bold text-coral-600 hover:text-coral-700"
       >
         <ArrowLeft className="h-4 w-4" />
-        返回导师社区
+        Back to mentor community
       </Link>
 
       {notice ? (
@@ -152,7 +152,7 @@ export default function MentorDetailPage({
         </div>
       ) : null}
 
-      {/* 导师资料 */}
+      {/* Mentor profile */}
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
           {mentor.avatarUrl ? (
@@ -175,7 +175,7 @@ export default function MentorDetailPage({
               {mentor.verified ? (
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-slateblue-700">
                   <CheckCircle className="h-4 w-4" />
-                  平台认证
+                  Platform verified
                 </span>
               ) : null}
             </div>
@@ -218,35 +218,36 @@ export default function MentorDetailPage({
                 <Star className="h-3.5 w-3.5 text-coral-500" />
                 {mentor.rating.toFixed(1)}
               </span>
-              <span>{mentor.sessionsCount} 次会话</span>
-              <span>影响 {mentor.impactWomenCount} 位女性</span>
+              <span>{mentor.sessionsCount} sessions</span>
+              <span>Impacted {mentor.impactWomenCount} women</span>
             </div>
           </div>
 
           <div className="shrink-0 rounded-2xl border border-coral-100 bg-coral-50 p-3 text-center sm:min-w-[130px]">
             <p className="text-xl font-black text-slateblue-900">
               ¥{mentor.priceSingle}
-              <span className="text-xs font-bold text-slateblue-700"> / 次</span>
+              <span className="text-xs font-bold text-slateblue-700"> / session</span>
             </p>
             <p className="mt-0.5 text-[11px] font-bold text-slateblue-700">
-              5 次套餐 ¥{mentor.pricePackage5}
+              5-session package ¥{mentor.pricePackage5}
             </p>
           </div>
         </div>
       </Card>
 
-      {/* 预约 */}
+      {/* Booking */}
       <Card>
         <h2 className="text-base font-extrabold text-slateblue-900">
-          选择时段预约
+          Pick a slot to book
         </h2>
         <p className="mt-1 text-sm text-slateblue-700">
-          演示环境 · 模拟扣款。你确认会话完成后才会放款给导师。
+          Demo environment, simulated charge. Funds are released to the mentor
+          only after you confirm the session is complete.
         </p>
 
         {availableSlots.length === 0 ? (
           <div className="mt-3">
-            <EmptyState text="暂时没有可预约时段，请稍后再来看看。" />
+            <EmptyState text="No bookable slots right now — please check back later." />
           </div>
         ) : (
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -272,25 +273,25 @@ export default function MentorDetailPage({
 
         {slots.some((s) => s.status === 'booked') ? (
           <p className="mt-2 text-[11px] font-bold text-slateblue-700">
-            灰色时段已有人预约，暂不可选。
+            Greyed-out slots are already booked and not available.
           </p>
         ) : null}
 
         <label className="mt-4 block">
           <span className="mb-1.5 block text-xs font-bold text-slateblue-700">
-            想聊的话题
+            Topic to discuss
           </span>
           <input
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="如：产后回归的简历重构与 AI 运营定位"
+            placeholder="e.g. rebuilding my résumé after leave and positioning for AI operations"
             className="w-full rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
           />
         </label>
 
         {!authLoading && !user ? (
           <p className="mt-3 text-sm font-bold text-coral-700">
-            请先登录（右上角可切换演示账号）
+            Please sign in (switch demo accounts in the top-right corner)
           </p>
         ) : null}
 
@@ -299,25 +300,25 @@ export default function MentorDetailPage({
             onClick={() => void book('single')}
             disabled={submitting || availableSlots.length === 0}
           >
-            {submitting ? '处理中…' : '预约并托管费用'}
+            {submitting ? 'Processing…' : 'Book and hold payment in escrow'}
           </Button>
           <Button
             variant="outline"
             onClick={() => void book('package')}
             disabled={submitting || availableSlots.length === 0}
           >
-            购买 5 次套餐（¥{mentor.pricePackage5}）
+            Buy the 5-session package (¥{mentor.pricePackage5})
           </Button>
         </div>
       </Card>
 
-      {/* 历史评价 */}
+      {/* Past reviews */}
       <Card>
         <h2 className="mb-3 text-base font-extrabold text-slateblue-900">
-          历史评价（{mentor.reviews.length}）
+          Past reviews ({mentor.reviews.length})
         </h2>
         {mentor.reviews.length === 0 ? (
-          <EmptyState text="还没有评价，成为第一位分享体验的姐妹。" />
+          <EmptyState text="No reviews yet — be the first to share your experience." />
         ) : (
           <div className="space-y-3">
             {mentor.reviews.map((r) => (

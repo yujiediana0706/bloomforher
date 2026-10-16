@@ -14,7 +14,7 @@ function maskMeetingLink(booking: Booking, uid: string): Booking {
 
 export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const mentorIds = db.mentors

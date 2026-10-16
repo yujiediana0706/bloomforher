@@ -5,7 +5,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // 银灰金属底（科技 × 简约）
+        // Silver-gray metallic base (tech × minimal)
         silver: {
           50: '#FBFBFC',
           100: '#F5F6F8',
@@ -15,7 +15,7 @@ const config: Config = {
           500: '#A4ADB9',
           600: '#6C7789',
         },
-        // 暖珊瑚橘（主 CTA / 当前步高亮 / 加油态）
+        // Warm coral orange (primary CTA / current step highlight / encouragement state)
         coral: {
           50: '#FDF0EC',
           100: '#FBE0D8',
@@ -23,13 +23,13 @@ const config: Config = {
           600: '#D45D47',
           700: '#B84B37',
         },
-        // 柔粉 / 杏粉（证据墙 / 广场求助帖底色）
+        // Soft pink / apricot pink (evidence wall / plaza help-post background)
         softpink: {
           100: '#FDF1F4',
           200: '#F9E4E0',
           300: '#F3B8C8',
         },
-        // 深石板蓝灰（标题 / 正文）
+        // Deep slate blue-gray (headings / body text)
         slateblue: {
           700: '#5B6472',
           800: '#2A3446',

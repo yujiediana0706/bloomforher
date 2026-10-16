@@ -3,15 +3,16 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, Menu, Sparkles, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Menu, Sparkles, X } from 'lucide-react';
 import { NAV_ITEMS } from '@/lib/constants';
-import { useAuth, DEMO_ACCOUNTS } from './AuthProvider';
+import { useAuth } from './AuthProvider';
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user, switchAccount, logout } = useAuth();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -25,7 +26,7 @@ export function Navbar() {
               <Sparkles className="h-4 w-4" />
             </span>
             <span className="text-sm font-black leading-tight text-slateblue-900 sm:text-base">
-              ReBloom AI · 她径
+              ReBloom AI
             </span>
           </Link>
 
@@ -46,58 +47,47 @@ export function Navbar() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setAccountOpen((v) => !v)}
-                className="flex items-center gap-1.5 rounded-xl border border-silver-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slateblue-900 hover:bg-silver-100"
-              >
-                <span className="max-w-[80px] truncate">
-                  {user ? user.name : '未登录'}
-                </span>
-                <ChevronDown className="h-3.5 w-3.5" />
-              </button>
-              {accountOpen ? (
-                <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-silver-300 bg-white p-2 shadow-card">
-                  <p className="px-2 py-1 text-[11px] font-bold text-slateblue-700">
-                    演示账号切换（无需注册）
-                  </p>
-                  {DEMO_ACCOUNTS.map((acc) => (
-                    <button
-                      key={acc.uid}
-                      type="button"
-                      onClick={async () => {
-                        await switchAccount(acc.uid);
-                        setAccountOpen(false);
-                      }}
-                      className={`block w-full rounded-xl px-2 py-2 text-left text-xs font-bold hover:bg-silver-100 ${
-                        user?.uid === acc.uid
-                          ? 'bg-coral-50 text-coral-600'
-                          : 'text-slateblue-900'
-                      }`}
-                    >
-                      {acc.label}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await logout();
-                      setAccountOpen(false);
-                    }}
-                    className="mt-1 block w-full rounded-xl px-2 py-2 text-left text-xs font-bold text-slateblue-700 hover:bg-silver-100"
-                  >
-                    退出登录
-                  </button>
-                </div>
-              ) : null}
-            </div>
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="hidden max-w-[140px] truncate rounded-xl border border-silver-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slateblue-900 hover:bg-silver-100 sm:block"
+                >
+                  {user.name}
+                </Link>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await logout();
+                    router.push('/');
+                  }}
+                  className="rounded-xl border border-silver-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slateblue-700 hover:bg-silver-100"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="rounded-xl border border-silver-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slateblue-900 hover:bg-silver-100"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-xl bg-coral-500 px-2.5 py-1.5 text-xs font-bold text-white hover:bg-coral-600"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
 
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
               className="rounded-xl border border-silver-300 bg-white p-2 text-slateblue-900 lg:hidden"
-              aria-label="菜单"
+              aria-label="Menu"
             >
               {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>

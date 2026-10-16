@@ -13,7 +13,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { apiGet, apiSend } from '@/lib/client';
 import type { PlanTask, ReturnPlan } from '@/lib/types';
 
-const PAUSE_LINE = '暂停不等于淘汰';
+const PAUSE_LINE = 'A pause is not a failure';
 
 export default function PlanPage() {
   const { user, loading } = useAuth();
@@ -33,7 +33,7 @@ export default function PlanPage() {
       const data = await apiGet<{ plan: ReturnPlan | null }>('/api/plan');
       setPlan(data.plan);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
       setFetching(false);
     }
@@ -55,7 +55,7 @@ export default function PlanPage() {
       setPlan(data.plan);
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : '生成失败');
+      setError(e instanceof Error ? e.message : 'Failed to generate');
       return false;
     } finally {
       setGenerating(false);
@@ -70,7 +70,7 @@ export default function PlanPage() {
     const ok = await handleGenerate({ feedback: feedback.trim() });
     if (ok) {
       setPauseTip(
-        `AI 已按「${feedback.trim()}」重新生成计划：${PAUSE_LINE}，你已完成的任务进度都已保留。`
+        `The AI regenerated your plan based on "${feedback.trim()}": ${PAUSE_LINE}, and all your completed task progress is preserved.`
       );
       setFeedback('');
     }
@@ -88,36 +88,39 @@ export default function PlanPage() {
       );
       setPlan(data.plan);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '更新失败');
+      setError(e instanceof Error ? e.message : 'Failed to update');
     } finally {
       setPendingTaskId(null);
     }
   }
 
-  if (loading) return <EmptyState text="正在加载…" />;
+  if (loading) return <EmptyState text="Loading…" />;
   if (!user)
-    return <EmptyState text="请先登录（可用右上角切换演示账号）" />;
+    return (
+      <EmptyState text="Please sign in first (you can switch demo accounts from the top-right menu)." />
+    );
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      {/* 返回链接 */}
+      {/* Back link */}
       <Link
         href="/coach"
         className="inline-flex items-center gap-1 text-xs font-bold text-slateblue-700 underline underline-offset-4 hover:text-coral-600"
       >
         <ArrowLeft className="h-3 w-3" />
-        返回 AI Mentor 工作台
+        Back to AI Mentor workspace
       </Link>
 
       <div>
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-coral-500">
-          诊断详情 · 回归计划
+          Diagnostic details · Return plan
         </p>
         <h1 className="mt-1 text-2xl font-black text-slateblue-900">
-          你的 30 天回归计划
+          Your 30-day return plan
         </h1>
         <p className="mt-1 text-sm text-slateblue-700">
-          按你的人生阶段设计节奏：可中断、可调整，暂停不会清零你走过的路。
+          A pace designed around your life stage: interruptible and adjustable—a
+          pause never erases the progress you&apos;ve made.
         </p>
       </div>
 
@@ -127,12 +130,13 @@ export default function PlanPage() {
         </p>
       ) : null}
 
-      {fetching ? <EmptyState text="正在读取你的计划…" /> : null}
+      {fetching ? <EmptyState text="Loading your plan…" /> : null}
 
       {!fetching && !plan ? (
         <Card className="text-center">
           <p className="text-sm text-slateblue-700">
-            还没有你的回归计划。点击下方按钮，AI 会按你的阶段与每周可投入时间生成。
+            You don&apos;t have a return plan yet. Click the button below and the
+            AI will build one around your life stage and weekly availability.
           </p>
           <Button
             className="mt-4"
@@ -142,12 +146,12 @@ export default function PlanPage() {
             {generating ? (
               <>
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                正在生成…
+                Generating…
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                生成我的 30 天计划
+                Generate my 30-day plan
               </>
             )}
           </Button>
@@ -156,20 +160,20 @@ export default function PlanPage() {
 
       {plan ? (
         <>
-          {/* 节奏 + 断档预案 + 调整计划 — 三张紧凑卡 */}
+          {/* Pace + break-return playbook + plan adjustment — three compact cards */}
           <Card className="border-softpink-300 bg-gradient-to-br from-softpink-100 to-white">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-coral-500">
-                  你的节奏
+                  Your pace
                 </p>
                 <h3 className="mt-0.5 text-lg font-black text-slateblue-900">
                   {plan.paceLabel}
                 </h3>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Badge tone="coral">每周 {plan.weeklyHours}h</Badge>
-                <Badge tone="silver">{plan.totalWeeks} 周</Badge>
+                <Badge tone="coral">{plan.weeklyHours}h / week</Badge>
+                <Badge tone="silver">{plan.totalWeeks} weeks</Badge>
               </div>
             </div>
           </Card>
@@ -178,7 +182,7 @@ export default function PlanPage() {
             <div className="flex items-center gap-2">
               <PauseCircle className="h-4 w-4 text-coral-500" />
               <p className="text-xs font-extrabold text-slateblue-900">
-                断档回归预案
+                Career-break return playbook
               </p>
             </div>
             <p className="mt-1.5 text-xs leading-relaxed text-slateblue-800">
@@ -189,17 +193,20 @@ export default function PlanPage() {
           <Card>
             <div className="flex items-center gap-2">
               <Sliders className="h-4 w-4 text-coral-500" />
-              <p className="text-xs font-extrabold text-slateblue-900">调整计划</p>
+              <p className="text-xs font-extrabold text-slateblue-900">
+                Adjust plan
+              </p>
             </div>
             <p className="mt-0.5 text-xs text-slateblue-700">
-              用一句自然语言告诉我发生了什么，我来重新排布节奏。
+              Tell me in a sentence what happened and I&apos;ll rearrange your
+              pace.
             </p>
             <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
               <input
                 className="w-full rounded-xl border border-silver-300 bg-silver-50 px-3 py-2 text-sm text-slateblue-900 outline-none transition-colors focus:border-coral-500 focus:bg-white"
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                placeholder='示例："这周孩子生病了"'
+                placeholder='Example: "My child was sick this week"'
               />
               <Button
                 className="shrink-0"
@@ -209,12 +216,12 @@ export default function PlanPage() {
                 {adjusting ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    调整中…
+                    Adjusting…
                   </>
                 ) : (
                   <>
                     <Sliders className="h-4 w-4" />
-                    调整计划
+                    Adjust plan
                   </>
                 )}
               </Button>
@@ -226,10 +233,10 @@ export default function PlanPage() {
             ) : null}
           </Card>
 
-          {/* 周卡 */}
+          {/* Weekly cards */}
           <section>
             <h3 className="mb-2 text-sm font-extrabold text-slateblue-900">
-              每周安排
+              Weekly schedule
             </h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {plan.weeks.map((week) => (
@@ -237,19 +244,19 @@ export default function PlanPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-[11px] font-bold text-coral-500">
-                        第 {week.week} 周
+                        Week {week.week}
                       </p>
                       <h4 className="text-sm font-extrabold text-slateblue-900">
                         {week.theme}
                       </h4>
                     </div>
-                    <Badge tone="silver">{week.weeklyHours}h/周</Badge>
+                    <Badge tone="silver">{week.weeklyHours}h / week</Badge>
                   </div>
 
                   <div className="mt-2.5">
                     <p className="flex items-center gap-1 text-[11px] font-bold text-slateblue-900">
                       <BookOpen className="h-3 w-3" />
-                      学习资源
+                      Learning resources
                     </p>
                     <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-[11px] text-slateblue-700">
                       {week.learningResources.map((r) => (
@@ -260,7 +267,7 @@ export default function PlanPage() {
 
                   <div className="mt-2.5">
                     <p className="text-[11px] font-bold text-slateblue-900">
-                      实践任务
+                      Practice tasks
                     </p>
                     <div className="mt-0.5 space-y-1">
                       {week.practiceTasks.map((task) => (
@@ -303,7 +310,7 @@ export default function PlanPage() {
                   <div className="mt-2.5">
                     <p className="flex items-center gap-1 text-[11px] font-bold text-slateblue-900">
                       <Target className="h-3 w-3" />
-                      求职里程碑
+                      Job-search milestones
                     </p>
                     <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-[11px] text-slateblue-700">
                       {week.jobSearchMilestones.map((m) => (
@@ -319,7 +326,8 @@ export default function PlanPage() {
           <Card className="flex items-center gap-2">
             <PauseCircle className="h-4 w-4 shrink-0 text-coral-500" />
             <p className="text-[11px] text-slateblue-700">
-              勾选任务即完成，会自动生成证据。这周状态不好？{PAUSE_LINE}。
+              Check off a task to complete it and evidence is created
+              automatically. Having a rough week? {PAUSE_LINE}.
             </p>
           </Card>
         </>

@@ -37,17 +37,17 @@ interface DetailData {
 }
 
 const PEER_STATUS_LABELS: Record<PeerChat['status'], string> = {
-  requested: '待帮助者确认',
-  confirmed: '已确认',
-  completed: '已完成',
-  cancelled: '已取消',
+  requested: 'Awaiting helper confirmation',
+  confirmed: 'Confirmed',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
 };
 
 function fmtTime(iso?: string) {
-  if (!iso) return '待定';
+  if (!iso) return 'TBD';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString('zh-CN', {
+  return d.toLocaleString('en-US', {
     month: 'numeric',
     day: 'numeric',
     hour: '2-digit',
@@ -106,7 +106,7 @@ export default function PlazaDetailPage({
         setChat(null);
       }
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '加载失败');
+      setNotice(e instanceof Error ? e.message : 'Failed to load');
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,7 @@ export default function PlazaDetailPage({
 
   const sendAction = async (body: Record<string, unknown>) => {
     if (!user) {
-      setNotice('请先登录（右上角可切换演示账号）');
+      setNotice('Please sign in (switch demo accounts in the top-right corner)');
       return false;
     }
     try {
@@ -126,14 +126,14 @@ export default function PlazaDetailPage({
       await load();
       return true;
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '操作失败');
+      setNotice(e instanceof Error ? e.message : 'Action failed');
       return false;
     }
   };
 
   const handleComment = async () => {
     if (!commentText.trim()) {
-      setNotice('评论内容不能为空');
+      setNotice('Comment cannot be empty');
       return;
     }
     const ok = await sendAction({
@@ -144,13 +144,13 @@ export default function PlazaDetailPage({
     if (ok) {
       setCommentText('');
       setCommentAnonymous(false);
-      setNotice('评论已发布。');
+      setNotice('Comment posted.');
     }
   };
 
   const handleKudos = async () => {
     const ok = await sendAction({ action: 'kudos' });
-    if (ok) setNotice('你的加油已被收到。');
+    if (ok) setNotice('Your kudos has been received.');
   };
 
   const handleReport = async () => {
@@ -158,23 +158,23 @@ export default function PlazaDetailPage({
     if (ok) {
       setReportOpen(false);
       setReportReason('');
-      setNotice('已收到举报，我们会尽快核查。');
+      setNotice('Report received — we will review it soon.');
     }
   };
 
   const handleResolve = async () => {
     const ok = await sendAction({ action: 'resolve' });
-    if (ok) setNotice('已标记为「已解决」。');
+    if (ok) setNotice('Marked as resolved.');
   };
 
   const handleCreateChat = async () => {
     if (!user) {
-      setNotice('请先登录（右上角可切换演示账号）');
+      setNotice('Please sign in (switch demo accounts in the top-right corner)');
       return;
     }
     if (!selectedHelper) return;
     if (!proposedTime) {
-      setNotice('请先选择你方便的提议时间');
+      setNotice('Please pick a proposed time that works for you');
       return;
     }
     setBooking(true);
@@ -185,16 +185,16 @@ export default function PlazaDetailPage({
         helperUid: selectedHelper.helperUid,
         proposedTime: toIsoFromLocal(proposedTime),
       });
-      setNotice('已发出预约，等待帮助者确认。');
+      setNotice('Booking sent — waiting for the helper to confirm.');
       setSelectedHelper(null);
       setProposedTime('');
       await load();
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
-      if (msg.includes('已被预约') || msg.includes('被预约')) {
-        setNotice('该帮助者已被预约，请选择另一位姐妹。');
+      if (msg.includes('booked')) {
+        setNotice('That helper is already booked — please pick another peer.');
       } else {
-        setNotice(msg || '预约失败');
+        setNotice(msg || 'Booking failed');
       }
     } finally {
       setBooking(false);
@@ -203,21 +203,21 @@ export default function PlazaDetailPage({
 
   const handleChatAction = async (body: Record<string, unknown>) => {
     if (!user) {
-      setNotice('请先登录（右上角可切换演示账号）');
+      setNotice('Please sign in (switch demo accounts in the top-right corner)');
       return;
     }
     try {
       await apiSend('/api/peer-chats', 'POST', body);
-      setNotice('操作成功。');
+      setNotice('Done.');
       await load();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '操作失败');
+      setNotice(e instanceof Error ? e.message : 'Action failed');
     }
   };
 
   if (loading) {
     return (
-      <p className="py-10 text-center text-sm text-slateblue-700">加载中…</p>
+      <p className="py-10 text-center text-sm text-slateblue-700">Loading…</p>
     );
   }
 
@@ -229,9 +229,9 @@ export default function PlazaDetailPage({
           className="inline-flex items-center gap-1 text-sm font-bold text-coral-600"
         >
           <ArrowLeft className="h-4 w-4" />
-          返回广场
+          Back to plaza
         </Link>
-        <EmptyState text={notice || '帖子不存在或已被隐藏'} />
+        <EmptyState text={notice || 'This post does not exist or has been hidden'} />
       </div>
     );
   }
@@ -249,7 +249,7 @@ export default function PlazaDetailPage({
         className="inline-flex items-center gap-1 text-sm font-bold text-coral-600 hover:text-coral-700"
       >
         <ArrowLeft className="h-4 w-4" />
-        返回广场
+        Back to plaza
       </Link>
 
       {notice ? (
@@ -260,17 +260,17 @@ export default function PlazaDetailPage({
 
       {!authLoading && !user ? (
         <div className="rounded-2xl border border-coral-100 bg-coral-50 px-4 py-3 text-sm font-bold text-coral-700">
-          请先登录（右上角可切换演示账号）
+          Please sign in (switch demo accounts in the top-right corner)
         </div>
       ) : null}
 
-      {/* 帖子主体 */}
+      {/* Post body */}
       <Card>
         <div className="flex flex-wrap items-center gap-2">
           {post.status === 'resolved' ? (
-            <Badge tone="green">已解决</Badge>
+            <Badge tone="green">Resolved</Badge>
           ) : (
-            <Badge>进行中</Badge>
+            <Badge>Open</Badge>
           )}
           <span className="text-xs font-bold text-slateblue-900">
             {post.authorDisplay}
@@ -298,7 +298,7 @@ export default function PlazaDetailPage({
               <img
                 key={`${i}-${src.slice(-12)}`}
                 src={src}
-                alt={`帖子图片 ${i + 1}`}
+                alt={`Post image ${i + 1}`}
                 className="w-full rounded-xl border border-silver-200 object-cover"
               />
             ))}
@@ -321,71 +321,71 @@ export default function PlazaDetailPage({
         <div className="mt-3 flex flex-wrap items-center gap-4 text-xs font-bold text-slateblue-700">
           <span className="inline-flex items-center gap-1">
             <Users className="h-3.5 w-3.5" />
-            {post.willingToHelpCount} 人同行
+            {post.willingToHelpCount} willing to help
           </span>
           <span className="inline-flex items-center gap-1">
             <Heart className="h-3.5 w-3.5" />
-            {post.kudosCount} 加油
+            {post.kudosCount} kudos
           </span>
           <span className="inline-flex items-center gap-1">
             <MessageCircle className="h-3.5 w-3.5" />
-            {post.commentCount} 评论
+            {post.commentCount} comments
           </span>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => void handleKudos()}>
             <Heart className="h-4 w-4" />
-            加油
+            Kudos
           </Button>
           {myWilling ? (
             <span className="inline-flex items-center rounded-xl bg-coral-500 px-4 py-2 text-sm font-bold text-white">
-              ✓ 已同行
+              ✓ Willing to help
             </span>
           ) : (
             <Button
               variant="outline"
               onClick={async () => {
                 if (!user) {
-                  setNotice('请先登录（右上角可切换演示账号）');
+                  setNotice('Please sign in (switch demo accounts in the top-right corner)');
                   return;
                 }
                 try {
                   await apiSend(`/api/plaza/${id}/willing`, 'POST');
-                  setNotice('已同行：谢谢你愿意陪她走一段。');
+                  setNotice('Marked as willing to help — thank you for walking alongside her.');
                   await load();
                 } catch (e) {
                   const msg = e instanceof Error ? e.message : '';
                   setNotice(
-                    msg.includes('已经')
-                      ? '你已经报名同行。'
-                      : msg || '操作失败'
+                    msg.includes('already')
+                      ? 'You are already willing to help.'
+                      : msg || 'Action failed'
                   );
                 }
               }}
             >
-              我愿同行
+              I'm willing to help
             </Button>
           )}
           <Button variant="ghost" onClick={() => setReportOpen(true)}>
-            举报
+            Report
           </Button>
           {isAuthor ? (
             <Button variant="secondary" onClick={() => void handleResolve()}>
-              标记为已解决
+              Mark as resolved
             </Button>
           ) : null}
         </div>
       </Card>
 
-      {/* 同辈互助预约（仅作者可见帮助者列表） */}
+      {/* Peer coffee chat booking (helper list visible to the author only) */}
       {canBookWilling ? (
         <Card className="!bg-softpink-100">
           <div className="mb-3 flex items-center gap-2">
             <h2 className="text-base font-extrabold text-slateblue-900">
-              {helpers.length} 位姐妹愿同行
+              {helpers.length} peers willing to help
             </h2>
-            <Badge tone="green">公益 · 同辈互助</Badge>
+            <Badge tone="green">Free · peer support</Badge>
           </div>
           <div className="space-y-3">
             {helpers.map((w) => {
@@ -416,7 +416,7 @@ export default function PlazaDetailPage({
                         </span>
                         <Badge>{w.helperLifeStage}</Badge>
                         {w.status !== 'offered' ? (
-                          <Badge tone="coral">已被预约</Badge>
+                          <Badge tone="coral">Already booked</Badge>
                         ) : null}
                       </div>
                       {w.helperBio ? (
@@ -445,7 +445,7 @@ export default function PlazaDetailPage({
                         setProposedTime('');
                       }}
                     >
-                      {selected ? '已选择' : '免费预约同辈聊天'}
+                      {selected ? 'Selected' : 'Book a free peer coffee chat'}
                     </Button>
                   </div>
                 </div>
@@ -457,16 +457,16 @@ export default function PlazaDetailPage({
             <div className="mt-4 rounded-2xl border border-coral-100 bg-white p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-extrabold text-slateblue-900">
-                  与 {selectedHelper.helperName} 的免费同辈聊天
+                  Free peer coffee chat with {selectedHelper.helperName}
                 </span>
-                <Badge tone="green">公益 · 同辈互助</Badge>
+                <Badge tone="green">Free · peer support</Badge>
                 <span className="text-xs font-bold text-warmgreen">
-                  免费，不涉及任何费用
+                  Free — no cost involved
                 </span>
               </div>
               <label className="mt-3 block">
                 <span className="mb-1.5 block text-xs font-bold text-slateblue-700">
-                  提议时间
+                  Proposed time
                 </span>
                 <input
                   type="datetime-local"
@@ -480,7 +480,7 @@ export default function PlazaDetailPage({
                   onClick={() => void handleCreateChat()}
                   disabled={booking}
                 >
-                  {booking ? '预约中…' : '发送免费预约'}
+                  {booking ? 'Booking…' : 'Send free booking request'}
                 </Button>
               </div>
             </div>
@@ -488,14 +488,14 @@ export default function PlazaDetailPage({
         </Card>
       ) : null}
 
-      {/* 本次同辈互助进度（当前用户参与时） */}
+      {/* Peer support progress for this post (when the current user is involved) */}
       {chat ? (
         <Card>
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <h2 className="text-base font-extrabold text-slateblue-900">
-              本次同辈互助
+              This peer coffee chat
             </h2>
-            <Badge tone="green">免费 · 同辈互助</Badge>
+            <Badge tone="green">Free · peer support</Badge>
             <Badge tone={chat.status === 'completed' ? 'green' : 'coral'}>
               {PEER_STATUS_LABELS[chat.status]}
             </Badge>
@@ -503,20 +503,21 @@ export default function PlazaDetailPage({
 
           <div className="space-y-1 text-sm text-slateblue-700">
             <p>
-              发起人：<span className="font-bold">{chat.requesterName}</span>
-              {' · '}帮助者：
+              Requester: <span className="font-bold">{chat.requesterName}</span>
+              {' · '}Helper:
               <span className="font-bold">{chat.helperName}</span>
             </p>
             <p>
-              提议时间：<span className="font-bold">{fmtTime(chat.proposedTime)}</span>
+              Proposed time:{' '}
+              <span className="font-bold">{fmtTime(chat.proposedTime)}</span>
               {chat.confirmedTime
-                ? ` · 确认时间：${fmtTime(chat.confirmedTime)}`
+                ? ` · Confirmed time: ${fmtTime(chat.confirmedTime)}`
                 : ''}
             </p>
             {chat.chatLink &&
             (chat.status === 'confirmed' || chat.status === 'completed') ? (
               <p>
-                聊天链接：
+                Chat link:{' '}
                 <a
                   href={chat.chatLink}
                   className="font-bold text-coral-600 underline"
@@ -527,7 +528,7 @@ export default function PlazaDetailPage({
             ) : null}
             {chat.appreciation ? (
               <p className="rounded-xl bg-softpink-100 px-3 py-2 text-slateblue-900">
-                感谢：{chat.appreciation}
+                Appreciation: {chat.appreciation}
               </p>
             ) : null}
           </div>
@@ -538,7 +539,7 @@ export default function PlazaDetailPage({
                 <input
                   value={confirmLink}
                   onChange={(e) => setConfirmLink(e.target.value)}
-                  placeholder="聊天链接（可选）"
+                  placeholder="Chat link (optional)"
                   className="min-w-[180px] flex-1 rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
                 />
                 <Button
@@ -550,7 +551,7 @@ export default function PlazaDetailPage({
                     })
                   }
                 >
-                  确认
+                  Confirm
                 </Button>
               </>
             ) : null}
@@ -565,7 +566,7 @@ export default function PlazaDetailPage({
                   })
                 }
               >
-                标记完成
+                Mark complete
               </Button>
             ) : null}
 
@@ -577,7 +578,7 @@ export default function PlazaDetailPage({
                   value={appreciateText}
                   onChange={(e) => setAppreciateText(e.target.value)}
                   rows={2}
-                  placeholder="写一句感谢，会为对方生成一份同辈感谢证据"
+                  placeholder="Write a thank-you note — it creates a peer appreciation record for them"
                   className="w-full rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
                 />
                 <div className="mt-2 flex justify-end">
@@ -590,7 +591,7 @@ export default function PlazaDetailPage({
                       })
                     }
                   >
-                    发送感谢
+                    Send thanks
                   </Button>
                 </div>
               </div>
@@ -599,14 +600,14 @@ export default function PlazaDetailPage({
         </Card>
       ) : null}
 
-      {/* 评论 */}
+      {/* Comments */}
       <Card>
         <h2 className="mb-3 text-base font-extrabold text-slateblue-900">
-          评论（{comments.length}）
+          Comments ({comments.length})
         </h2>
 
         {comments.length === 0 ? (
-          <EmptyState text="还没有评论，来做第一个回应的人吧。" />
+          <EmptyState text="No comments yet — be the first to respond." />
         ) : (
           <div className="space-y-3">
             {comments.map((c) => (
@@ -635,7 +636,7 @@ export default function PlazaDetailPage({
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             rows={3}
-            placeholder="写下你的回应：先共情，再分享"
+            placeholder="Write your reply: empathize first, then share"
             className="w-full rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
           />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
@@ -646,31 +647,31 @@ export default function PlazaDetailPage({
                 onChange={(e) => setCommentAnonymous(e.target.checked)}
                 className="h-4 w-4 accent-coral-500"
               />
-              匿名评论
+              Comment anonymously
             </label>
-            <Button onClick={() => void handleComment()}>发表评论</Button>
+            <Button onClick={() => void handleComment()}>Post comment</Button>
           </div>
         </div>
       </Card>
 
-      {/* 举报 Modal */}
-      <Modal open={reportOpen} onClose={() => setReportOpen(false)} title="举报本帖">
+      {/* Report modal */}
+      <Modal open={reportOpen} onClose={() => setReportOpen(false)} title="Report this post">
         <div className="space-y-3">
           <p className="text-sm text-slateblue-700">
-            请描述你认为不合适的地方，我们会尽快核查。
+            Describe what you think is inappropriate — we will review it soon.
           </p>
           <textarea
             value={reportReason}
             onChange={(e) => setReportReason(e.target.value)}
             rows={3}
-            placeholder="举报理由"
+            placeholder="Reason for reporting"
             className="w-full rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
           />
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setReportOpen(false)}>
-              取消
+              Cancel
             </Button>
-            <Button onClick={() => void handleReport()}>提交举报</Button>
+            <Button onClick={() => void handleReport()}>Submit report</Button>
           </div>
         </div>
       </Modal>

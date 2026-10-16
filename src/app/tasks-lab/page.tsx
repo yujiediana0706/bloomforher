@@ -31,9 +31,9 @@ import { apiGet, apiSend } from '@/lib/client';
 import type { LabFeedback, LabTask } from '@/lib/types';
 
 const STATUS_LABELS: Record<LabTask['status'], string> = {
-  todo: '待开始',
-  in_progress: '进行中',
-  done: '已完成',
+  todo: 'Not started',
+  in_progress: 'In progress',
+  done: 'Completed',
 };
 
 const STATUS_TONES: Record<LabTask['status'], 'silver' | 'coral' | 'green'> = {
@@ -56,12 +56,12 @@ function FeedbackBlock({ feedback }: { feedback: LabFeedback }) {
     <div className="mt-3 space-y-3 rounded-2xl border border-softpink-300 bg-softpink-100 p-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-bold uppercase tracking-wider text-coral-500">
-          AI 反馈
+          AI feedback
         </span>
-        <Badge tone="coral">评分 {feedback.score} / 5</Badge>
+        <Badge tone="coral">Score {feedback.score} / 5</Badge>
       </div>
       <div>
-        <p className="text-xs font-bold text-slateblue-900">亮点</p>
+        <p className="text-xs font-bold text-slateblue-900">Highlights</p>
         <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-slateblue-800">
           {feedback.highlights.map((h) => (
             <li key={h}>{h}</li>
@@ -69,7 +69,9 @@ function FeedbackBlock({ feedback }: { feedback: LabFeedback }) {
         </ul>
       </div>
       <div>
-        <p className="text-xs font-bold text-slateblue-900">可执行建议</p>
+        <p className="text-xs font-bold text-slateblue-900">
+          Actionable suggestions
+        </p>
         <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-slateblue-800">
           {feedback.actionableSuggestions.map((s) => (
             <li key={s}>{s}</li>
@@ -77,7 +79,7 @@ function FeedbackBlock({ feedback }: { feedback: LabFeedback }) {
         </ul>
       </div>
       <div>
-        <p className="text-xs font-bold text-slateblue-900">技能差距分析</p>
+        <p className="text-xs font-bold text-slateblue-900">Skill gap analysis</p>
         <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-slateblue-800">
           {feedback.skillGapAnalysis.map((g) => (
             <li key={g}>{g}</li>
@@ -110,7 +112,7 @@ export default function TasksLabPage() {
         if (!cancelled) setTasks(data.tasks);
       } catch (e) {
         if (!cancelled)
-          setError(e instanceof Error ? e.message : '加载失败');
+          setError(e instanceof Error ? e.message : 'Failed to load');
       } finally {
         if (!cancelled) setFetching(false);
       }
@@ -141,17 +143,19 @@ export default function TasksLabPage() {
       setText('');
       setJustSubmitted(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '提交失败');
+      setError(e instanceof Error ? e.message : 'Submission failed');
     } finally {
       setSubmitting(false);
     }
   }
 
   if (loading) {
-    return <EmptyState text="正在加载…" />;
+    return <EmptyState text="Loading…" />;
   }
   if (!user) {
-    return <EmptyState text="请先登录（可用右上角切换演示账号）" />;
+    return (
+      <EmptyState text="Please sign in first (you can switch demo accounts from the top-right menu)." />
+    );
   }
 
   const sortedSubmissions = activeTask
@@ -160,16 +164,16 @@ export default function TasksLabPage() {
       )
     : [];
   const curve = sortedSubmissions.map((s, i) => ({
-    name: `第${i + 1}次`,
+    name: `Attempt ${i + 1}`,
     score: s.feedback.score,
   }));
 
   return (
     <div className="space-y-6">
       <SectionTitle
-        eyebrow="Journey ④ 实操任务"
-        title="实操任务实验室"
-        desc="用 AI 完成一个真实小任务，产出的就是你的作品证据；可反复提交、持续迭代。"
+        eyebrow="Journey ④ Hands-on tasks"
+        title="Hands-on Task Lab"
+        desc="Complete a small real-world task with AI—your output becomes portfolio evidence. Resubmit as often as you like and keep iterating."
       />
 
       {error ? (
@@ -178,13 +182,13 @@ export default function TasksLabPage() {
         </p>
       ) : null}
 
-      {fetching ? <EmptyState text="正在准备任务…" /> : null}
+      {fetching ? <EmptyState text="Preparing tasks…" /> : null}
 
       {!fetching && tasks.length === 0 ? (
-        <EmptyState text="暂时没有可用的任务，请稍后再试。" />
+        <EmptyState text="No tasks are available right now. Please try again later." />
       ) : null}
 
-      {/* 任务列表 */}
+      {/* Task list */}
       <div className="grid gap-4 lg:grid-cols-3">
         {tasks.map((task) => {
           const active = task.id === activeTaskId;
@@ -201,27 +205,27 @@ export default function TasksLabPage() {
                 </Badge>
                 <span className="flex items-center gap-1 text-xs font-bold text-slateblue-700">
                   <Clock className="h-3.5 w-3.5" />
-                  约 {task.estimatedMinutes} 分钟
+                  About {task.estimatedMinutes} min
                 </span>
               </div>
               <h3 className="mt-3 text-sm font-extrabold text-slateblue-900">
                 {task.title}
               </h3>
               <p className="mt-2 text-xs leading-relaxed text-slateblue-700">
-                <span className="font-bold">场景：</span>
+                <span className="font-bold">Scenario: </span>
                 {task.scenario}
               </p>
               <p className="mt-2 flex items-start gap-1 text-xs leading-relaxed text-slateblue-700">
                 <Wrench className="mt-0.5 h-3.5 w-3.5 shrink-0 text-coral-500" />
                 <span>
-                  <span className="font-bold">工具提示：</span>
+                  <span className="font-bold">Tool tip: </span>
                   {task.toolHint}
                 </span>
               </p>
               <div className="mt-3">
                 <p className="flex items-center gap-1 text-xs font-bold text-slateblue-900">
                   <ClipboardList className="h-3.5 w-3.5" />
-                  评分标准
+                  Rubric
                 </p>
                 <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-slateblue-700">
                   {task.rubric.map((r) => (
@@ -238,54 +242,57 @@ export default function TasksLabPage() {
                   setJustSubmitted(false);
                 }}
               >
-                {active ? '收起提交区' : '开始提交产出'}
+                {active ? 'Hide submission panel' : 'Submit your work'}
               </Button>
             </Card>
           );
         })}
       </div>
 
-      {/* 提交区 + 反馈 */}
+      {/* Submission panel + feedback */}
       {activeTask ? (
         <Card>
           <h3 className="text-sm font-extrabold text-slateblue-900">
-            提交产出 · {activeTask.title}
+            Submit your work · {activeTask.title}
           </h3>
           <p className="mt-1 text-xs text-slateblue-700">
-            把你的产出（粘贴文本）贴进来，AI 会按 rubric 给出具体反馈。
+            Paste your work here and the AI will give specific feedback based on
+            the rubric.
           </p>
           <textarea
             className="mt-3 min-h-[140px] w-full resize-y rounded-xl border border-silver-300 bg-silver-50 px-3 py-2 text-sm text-slateblue-900 outline-none transition-colors focus:border-coral-500 focus:bg-white"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="粘贴你的产出：例如 3 个改写版本 + 取舍理由 + 你认为最优的一版及原因……"
+            placeholder="Paste your work, e.g. three rewritten versions + your trade-off reasoning + the version you think is best and why…"
           />
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-xs text-slateblue-700">
-              提交后会自动生成一条「任务成果」证据。
+              Submitting automatically creates a &ldquo;task outcome&rdquo;
+              evidence entry.
             </p>
             <Button onClick={handleSubmit} disabled={submitting || !text.trim()}>
               <Send className="h-4 w-4" />
-              {submitting ? '评估中…' : '提交评估'}
+              {submitting ? 'Evaluating…' : 'Submit for review'}
             </Button>
           </div>
 
           {justSubmitted ? (
             <p className="mt-3 flex items-center gap-1.5 rounded-xl border border-warmgreen/40 bg-warmgreen/10 px-3 py-2 text-sm font-bold text-[#3f7a4a]">
               <Sparkles className="h-4 w-4" />
-              已生成证据：本次任务成果已记录到你的证据库。
+              Evidence created: this task outcome has been saved to your evidence
+              library.
             </p>
           ) : null}
 
-          {/* 多轮提交记录 */}
+          {/* Multi-round submission history */}
           {sortedSubmissions.length > 0 ? (
             <div className="mt-5">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <h4 className="text-sm font-extrabold text-slateblue-900">
-                  提交记录（{sortedSubmissions.length} 次）
+                  Submission history ({sortedSubmissions.length})
                 </h4>
                 {curve.length >= 2 ? (
-                  <Badge tone="green">评分在进步</Badge>
+                  <Badge tone="green">Your scores are improving</Badge>
                 ) : null}
               </div>
 
@@ -309,7 +316,7 @@ export default function TasksLabPage() {
                 </div>
               ) : (
                 <p className="mb-3 text-xs text-slateblue-700">
-                  再提交一次，就能看到你的评分曲线。
+                  Submit once more to see your score trend.
                 </p>
               )}
 
@@ -322,7 +329,7 @@ export default function TasksLabPage() {
                     <div className="flex items-center justify-between gap-2">
                       <span className="flex items-center gap-1.5 text-xs font-bold text-slateblue-900">
                         <CheckCircle2 className="h-3.5 w-3.5 text-warmgreen" />
-                        第 {idx + 1} 次提交 · {formatTime(sub.submittedAt)}
+                        Submission {idx + 1} · {formatTime(sub.submittedAt)}
                       </span>
                       <Badge tone="coral">{sub.feedback.score} / 5</Badge>
                     </div>
@@ -338,7 +345,7 @@ export default function TasksLabPage() {
             <div className="mt-5">
               <p className="flex items-center gap-1.5 text-xs text-slateblue-700">
                 <Lightbulb className="h-3.5 w-3.5 text-coral-500" />
-                还没有提交记录，完成第一个版本试试看。
+                No submissions yet—try completing your first version.
               </p>
             </div>
           )}

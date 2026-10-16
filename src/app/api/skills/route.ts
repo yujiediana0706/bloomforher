@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   return NextResponse.json({ skillProfile: db.skillProfiles[uid] ?? null });
@@ -16,11 +16,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const built = await buildSkillProfile(user);
   const skillProfile: SkillProfile = { uid, createdAt: nowIso(), ...built };
@@ -29,10 +29,10 @@ export async function POST(req: NextRequest) {
   addEvidence(db, {
     uid,
     type: 'assessment_result',
-    title: '完成技能发现测评',
-    detail: `AI 识别出 ${built.transferableSkills.length} 项可迁移技能，并完成 ${built.confidenceCalibration.length} 维自信度校准。`,
+    title: 'Completed the Skill Discovery assessment',
+    detail: `AI identified ${built.transferableSkills.length} transferable skills and completed confidence calibration across ${built.confidenceCalibration.length} dimensions.`,
     source: 'auto',
-    tags: ['技能发现', '校准'],
+    tags: ['Skill discovery', 'Calibration'],
     isPublic: true,
   });
 

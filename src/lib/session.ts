@@ -1,33 +1,37 @@
-// 轻量本地会话（原型阶段，替代 Firebase Auth）。
-// 通过 cookie 记录当前登录的演示账号 uid。
-// 注意：本模块含服务端依赖（next/headers），仅可在 server component / route handler 中导入；
-//      面向客户端的常量请从 '@/lib/accounts' 导入。
+// Lightweight signed-cookie sessions.
+// The cookie stores a signed token carrying the user id. Server-only module
+// (depends on next/headers); client components should import SESSION_COOKIE
+// from '@/lib/accounts' instead.
 
 import { cookies } from 'next/headers';
-import type { NextRequest } from 'next/server';
-import { DEMO_ACCOUNTS, SESSION_COOKIE } from './accounts';
+import type { NextRequest, NextResponse } from 'next/server';
+import { SESSION_COOKIE } from './accounts';
+import { SESSION_MAX_AGE, signToken, verifyToken } from './auth';
 
-export { DEMO_ACCOUNTS, SESSION_COOKIE };
+export { SESSION_COOKIE };
 
-/** 服务端组件/route 读取当前 uid */
+/** Read the current uid inside a server component / route handler. */
 export function getSessionUid(): string | null {
-  const value = cookies().get(SESSION_COOKIE)?.value;
-  return value || null;
+  return verifyToken(cookies().get(SESSION_COOKIE)?.value);
 }
 
-/** route handler 读取当前 uid */
+/** Read the current uid from a route handler request. */
 export function getUidFromRequest(req: NextRequest): string | null {
-  return req.cookies.get(SESSION_COOKIE)?.value || null;
+  return verifyToken(req.cookies.get(SESSION_COOKIE)?.value);
 }
 
-/** 演示密码校验 */
-export function verifyDemoLogin(
-  email: string,
-  password: string
-): string | null {
-  const account = DEMO_ACCOUNTS.find(
-    (a) => a.email.toLowerCase() === email.trim().toLowerCase()
-  );
-  if (account && account.password === password) return account.uid;
-  return null;
+/** Attach a signed session cookie to a response. */
+export function setSessionCookie(res: NextResponse, uid: string): void {
+  res.cookies.set(SESSION_COOKIE, signToken(uid), {
+    httpOnly: true,
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: SESSION_MAX_AGE,
+  });
+}
+
+/** Clear the session cookie. */
+export function clearSessionCookie(res: NextResponse): void {
+  res.cookies.set(SESSION_COOKIE, '', { path: '/', maxAge: 0 });
 }

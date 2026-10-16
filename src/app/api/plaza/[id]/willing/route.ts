@@ -11,15 +11,15 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const post = db.plazaPosts.find((p) => p.id === params.id);
   if (!post) {
-    return NextResponse.json({ error: '帖子不存在' }, { status: 404 });
+    return NextResponse.json({ error: 'Post not found' }, { status: 404 });
   }
   if (uid !== post.authorId) {
-    return NextResponse.json({ error: '只有作者可以查看' }, { status: 403 });
+    return NextResponse.json({ error: 'Only the author can view this' }, { status: 403 });
   }
 
   return NextResponse.json({ willing: db.willing[post.id] ?? [] });
@@ -30,20 +30,20 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const post = db.plazaPosts.find((p) => p.id === params.id);
   if (!post) {
-    return NextResponse.json({ error: '帖子不存在' }, { status: 404 });
+    return NextResponse.json({ error: 'Post not found' }, { status: 404 });
   }
 
   const list = db.willing[post.id] ?? (db.willing[post.id] = []);
   if (list.some((w) => w.helperUid === uid)) {
-    return NextResponse.json({ error: '你已经表示过愿意帮助' }, { status: 409 });
+    return NextResponse.json({ error: 'You have already offered to help' }, { status: 409 });
   }
 
   const willing: WillingToHelp = {

@@ -1,10 +1,10 @@
-// 测试 Agent Platform Reasoning Engine 调用
-// 用法：npx tsx scripts/test-agent.ts
+// Test the Agent Platform Reasoning Engine call
+// Usage: npx tsx scripts/test-agent.ts
 
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-// 手动加载 .env.local
+// Manually load .env.local
 const envPath = join(process.cwd(), '.env.local');
 try {
   const envContent = readFileSync(envPath, 'utf8');
@@ -18,29 +18,29 @@ try {
     }
   });
 } catch {
-  console.log('未找到 .env.local，使用系统环境变量');
+  console.log('.env.local not found; using system environment variables');
 }
 
 import { callAgentEndpoint } from '../src/lib/agent-client';
 
 async function testAgent(name: string, endpoint: string) {
-  console.log(`\n🧪 测试 Agent: ${name}`);
+  console.log(`\n🧪 Testing agent: ${name}`);
   console.log(`   Endpoint: ${endpoint.slice(0, 60)}...`);
 
   try {
     const res = await callAgentEndpoint(endpoint, {
-      input: '你好，请回复「Agent 连接正常」即可。',
+      input: 'Hello, please reply with "Agent connection OK" to confirm.',
     });
 
     if (res) {
-      console.log(`   ✅ 成功，返回: ${res.text.slice(0, 100)}${res.text.length > 100 ? '...' : ''}`);
+      console.log(`   ✅ Success, response: ${res.text.slice(0, 100)}${res.text.length > 100 ? '...' : ''}`);
       return true;
     } else {
-      console.log(`   ❌ 返回 null（Agent 调用失败）`);
+      console.log(`   ❌ Returned null (agent call failed)`);
       return false;
     }
   } catch (e: any) {
-    console.log(`   ❌ 异常: ${e.message}`);
+    console.log(`   ❌ Exception: ${e.message}`);
     return false;
   }
 }
@@ -54,7 +54,7 @@ async function main() {
     { name: 'rebloom-mentor-match', env: 'AGENT_ENDPOINT_MENTOR_MATCH' },
   ];
 
-  console.log('=== ReBloom AI Agent 连接测试 ===');
+  console.log('=== ReBloom AI agent connection test ===');
 
   let passed = 0;
   let failed = 0;
@@ -62,7 +62,7 @@ async function main() {
   for (const { name, env } of agents) {
     const endpoint = process.env[env];
     if (!endpoint) {
-      console.log(`\n⏭️  ${name}: 未配置 ${env}，跳过`);
+      console.log(`\n⏭️  ${name}: ${env} not configured, skipping`);
       continue;
     }
 
@@ -71,7 +71,7 @@ async function main() {
     else failed++;
   }
 
-  console.log(`\n=== 结果: ${passed} 通过, ${failed} 失败 ===`);
+  console.log(`\n=== Result: ${passed} passed, ${failed} failed ===`);
   process.exit(failed > 0 ? 1 : 0);
 }
 

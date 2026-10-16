@@ -10,7 +10,7 @@ export async function GET(
   const db = getDB();
   const mentor = db.mentors.find((m) => m.id === params.id);
   if (!mentor) {
-    return NextResponse.json({ error: '导师不存在' }, { status: 404 });
+    return NextResponse.json({ error: 'Mentor not found' }, { status: 404 });
   }
   const slots = db.mentorSlots.filter((s) => s.mentorId === mentor.id);
   return NextResponse.json({ mentor, slots });

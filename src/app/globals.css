@@ -27,7 +27,7 @@ body {
   color: #ffffff;
 }
 
-/* 抛光金属渐变条：用于导航下沿 / 分隔线 / 进度轨道 */
+/* Polished metal gradient bar: used for the navbar edge / dividers / progress track */
 .metal-bar {
   background-image: linear-gradient(90deg, #d7dbe2 0%, #f5f6f8 50%, #d7dbe2 100%);
 }
@@ -36,7 +36,7 @@ body {
   background-image: linear-gradient(180deg, #ffffff 0%, #f5f6f8 100%);
 }
 
-/* 首页暖色氛围渐变（米白 → 橘粉 → 银灰，柔光双光晕） */
+/* Homepage warm ambiance gradient (cream → coral pink → silver gray, with soft dual glow) */
 .hero-warm {
   background-image:
     radial-gradient(1100px 480px at 88% -8%, rgba(243, 184, 200, 0.4), transparent 62%),
@@ -44,7 +44,7 @@ body {
     linear-gradient(135deg, #fdfbf8 0%, #f7efe9 42%, #edeff3 100%);
 }
 
-/* 隐藏滚动条但保留滚动能力（横向芯片/旅程条） */
+/* Hide the scrollbar while keeping scroll (horizontal chips / journey bar) */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

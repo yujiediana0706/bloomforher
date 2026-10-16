@@ -43,19 +43,20 @@ interface ChatMsg {
   microAction?: string;
 }
 
-const OPENING = '我看过你的档案、计划和证据，今天想先聊聊哪一步？';
+const OPENING =
+  'I have looked at your profile, plan, and evidence. Which step would you like to talk about first today?';
 
 const QUICK_QUESTIONS = [
-  '这周我该先做哪一步？',
-  '我觉得我不适合做 AI',
-  '我不想执行计划了',
+  'Which step should I do first this week?',
+  "I feel I'm not cut out for AI",
+  "I don't want to follow the plan anymore",
 ];
 
 function buildRadarData(skill: SkillProfile | null) {
   if (!skill) return [];
   return skill.confidenceCalibration.map((c) => ({
     dim: c.dimension.slice(0, 4),
-    自评: c.selfScore,
+    Self: c.selfScore,
     AI: c.aiScore,
     fullMark: 10,
   }));
@@ -71,11 +72,11 @@ export default function CoachPage() {
   const [error, setError] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // —— 诊断摘要数据（右侧 dashboard 顶部）——
+  // —— Diagnosis summary data (top of the right dashboard) ——
   const [skill, setSkill] = useState<SkillProfile | null>(null);
   const [opp, setOpp] = useState<OpportunityReport | null>(null);
 
-  // —— 计划进度数据 ——
+  // —— Plan progress data ——
   const [plan, setPlan] = useState<ReturnPlan | null>(null);
   const [evidenceCount, setEvidenceCount] = useState<number | null>(null);
   const [sessionCount, setSessionCount] = useState<number | null>(null);
@@ -84,7 +85,7 @@ export default function CoachPage() {
   const done = tasks.filter((t) => t.completed).length;
   const nextTask = tasks.find((t) => !t.completed)?.title;
 
-  // 自信度校准平均分（AI 侧）
+  // Average confidence calibration score (AI side)
   const aiAvg =
     skill && skill.confidenceCalibration.length > 0
       ? Math.round(
@@ -145,7 +146,7 @@ export default function CoachPage() {
       setPlan(res.plan);
       if (res.evidence) setEvidenceCount((c) => (c ?? 0) + 1);
     } catch {
-      setError('更新任务状态失败，请稍后重试');
+      setError('Failed to update task status, please try again later');
     }
   };
 
@@ -169,7 +170,7 @@ export default function CoachPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, history }),
       });
-      if (!res.ok || !res.body) throw new Error('对话失败，请稍后重试');
+      if (!res.ok || !res.body) throw new Error('Chat failed, please try again later');
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -219,21 +220,21 @@ export default function CoachPage() {
         }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : '对话失败');
+      setError(e instanceof Error ? e.message : 'Chat failed');
     } finally {
       setSending(false);
     }
   };
 
   if (loading) {
-    return <p className="text-sm text-slateblue-700">加载中…</p>;
+    return <p className="text-sm text-slateblue-700">Loading…</p>;
   }
 
   if (!user) {
     return (
       <Card>
         <p className="text-sm text-slateblue-700">
-          请先登录（右上角可切换演示账号）
+          Please sign in first (switch demo accounts from the top-right corner)
         </p>
       </Card>
     );
@@ -245,19 +246,20 @@ export default function CoachPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      {/* 标题区（压缩） */}
+      {/* Header (compact) */}
       <div className="py-4">
         <h1 className="text-xl font-black text-slateblue-900">
-          AI Mentor · 你的专属陪伴
+          AI Mentor · Your personal companion
         </h1>
         <p className="mt-0.5 text-xs text-slateblue-700">
-          左边聊，右边看进度——计划和每一次真人交流，我都记着。
+          Chat on the left, track progress on the right—I remember your plan and
+          every real conversation.
         </p>
       </div>
 
-      {/* 双栏工作台 */}
+      {/* Two-column workspace */}
       <div className="grid gap-4 lg:h-[calc(100vh-140px)] lg:grid-cols-[1fr_1.2fr]">
-        {/* 左：AI 对话框 */}
+        {/* Left: AI chat window */}
         <Card className="flex min-h-[520px] flex-col p-0 lg:min-h-0">
           <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
             {messages.map((m, idx) => (
@@ -295,14 +297,14 @@ export default function CoachPage() {
                     {m.content || (
                       <span className="inline-flex items-center gap-1 text-slateblue-700">
                         <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-                        正在思考…
+                        Thinking…
                       </span>
                     )}
                   </div>
                   {m.microAction ? (
                     <div className="rounded-2xl border border-softpink-300 bg-softpink-100 px-3.5 py-2.5 text-left">
                       <p className="text-[11px] font-black uppercase tracking-wide text-coral-600">
-                        微行动建议 · 10 分钟内
+                        Micro-action · within 10 minutes
                       </p>
                       <p className="mt-1 text-sm font-bold text-slateblue-900">
                         {m.microAction}
@@ -315,7 +317,7 @@ export default function CoachPage() {
             <div ref={bottomRef} />
           </div>
 
-          {/* 输入区 */}
+          {/* Input area */}
           <div className="border-t border-silver-200 px-4 py-3 sm:px-5">
             {error ? (
               <p className="mb-2 rounded-xl border border-warmred/40 bg-warmred/10 px-3 py-2 text-xs font-bold text-warmred">
@@ -346,7 +348,7 @@ export default function CoachPage() {
                   }
                 }}
                 rows={2}
-                placeholder="说说你现在的处境或困惑…（Enter 发送）"
+                placeholder="Tell me your current situation or concern... (Enter to send)"
                 className="min-h-[44px] flex-1 resize-none rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
               />
               <Button
@@ -354,21 +356,21 @@ export default function CoachPage() {
                 disabled={sending || !input.trim()}
               >
                 <Send className="h-4 w-4" />
-                发送
+                Send
               </Button>
             </div>
           </div>
         </Card>
 
-        {/* 右：进度看板（从上到下：诊断摘要 → 今日提醒 → 进度总览 → 任务表） */}
+        {/* Right: progress board (top to bottom: diagnosis summary → today's reminder → progress overview → task list) */}
         <div className="min-h-0 space-y-4 overflow-y-auto pr-0.5">
-          {/* ① 诊断摘要（融合技能 + 机会） */}
+          {/* 1. Diagnosis summary (skills + opportunities combined) */}
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-coral-500" />
                 <p className="text-[11px] font-black uppercase tracking-wide text-coral-600">
-                  你的职业诊断
+                  Your career diagnosis
                 </p>
               </div>
               {hasDiagnosis ? (
@@ -376,7 +378,7 @@ export default function CoachPage() {
                   href="/skills"
                   className="text-[11px] font-bold text-slateblue-700 underline underline-offset-4 hover:text-coral-600"
                 >
-                  完整报告 →
+                  Full report →
                 </Link>
               ) : null}
             </div>
@@ -400,8 +402,8 @@ export default function CoachPage() {
                           tickCount={5}
                         />
                         <RechartsRadar
-                          name="自评"
-                          dataKey="自评"
+                          name="Self"
+                          dataKey="Self"
                           stroke="#94a3b8"
                           fill="#94a3b8"
                           fillOpacity={0.15}
@@ -419,12 +421,12 @@ export default function CoachPage() {
                     </ResponsiveContainer>
                   </div>
 
-                  {/* 右侧文字 */}
+                  {/* Right-side text */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-end gap-3">
                       <div>
                         <p className="text-[10px] font-bold text-slateblue-700">
-                          自信度校准（AI vs 自评）
+                          Confidence calibration (AI vs self)
                         </p>
                         <p className="mt-0.5 text-2xl font-black text-coral-600">
                           {aiAvg}
@@ -435,7 +437,7 @@ export default function CoachPage() {
                       </div>
                       <div className="pb-1">
                         <p className="text-[10px] font-bold text-slateblue-700">
-                          你给自己打
+                          Your self-rating
                         </p>
                         <p className="text-sm font-black text-slateblue-500">
                           {selfAvg}/10
@@ -449,11 +451,11 @@ export default function CoachPage() {
                   </div>
                 </div>
 
-                {/* Top 3 岗位 */}
+                {/* Top 3 roles */}
                 {topRoles.length > 0 ? (
                   <div className="mt-3 border-t border-silver-200 pt-3">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slateblue-700">
-                      你最匹配的方向
+                      Your best-fit directions
                     </p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {topRoles.map((r) => (
@@ -472,17 +474,18 @@ export default function CoachPage() {
             ) : (
               <Card className="mt-3 border-dashed border-silver-300 bg-silver-50 text-center">
                 <p className="text-xs text-slateblue-700">
-                  还没有你的职业诊断——
+                  No career diagnosis yet—
                   <Link href="/onboarding" className="text-coral-600 underline">
-                    去 onboarding
+                    go to onboarding
                   </Link>{' '}
-                  走完，AI 会生成技能画像 + 岗位匹配。
+                  to finish, and AI will generate your skill profile + role
+                  matches.
                 </p>
               </Card>
             )}
           </Card>
 
-          {/* ② 今日提醒 */}
+          {/* 2. Today's reminder */}
           <Card className="border-softpink-300 !bg-softpink-100 p-4">
             <div className="flex items-start gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-coral-500 text-white">
@@ -490,40 +493,40 @@ export default function CoachPage() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-black uppercase tracking-wide text-coral-600">
-                  今日提醒
+                  Today's reminder
                 </p>
                 {plan && tasks.length > 0 ? (
                   <>
                     <p className="mt-1 text-sm font-bold text-slateblue-900">
                       {nextTask
-                        ? `今天先只做这一件：「${nextTask}」，做完就算赢。`
-                        : '计划里的任务都完成了——我们聊聊下一步去哪？'}
+                        ? `Just do this one thing today: "${nextTask}". Finishing it is a win.`
+                        : "All tasks in the plan are done—let's talk about where to go next?"}
                     </p>
                     <p className="mt-0.5 text-xs font-bold text-slateblue-700">
-                      按你的节奏，可暂停
+                      At your own pace, pausable
                     </p>
                   </>
                 ) : (
                   <p className="mt-1 text-sm font-bold text-slateblue-900">
-                    你还没有 30 天回归计划——
+                    You don't have a 30-day return plan yet—
                     <Link href="/plan" className="text-coral-600 underline">
-                      去生成一份
+                      generate one
                     </Link>
-                    ，我来提醒你执行。
+                    , and I will remind you to follow through.
                   </p>
                 )}
               </div>
             </div>
           </Card>
 
-          {/* ③ 进度总览 + 记忆信号 */}
+          {/* 3. Progress overview + memory signals */}
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-black uppercase tracking-wide text-coral-600">
-                计划进度
+                Plan progress
               </p>
               <span className="text-xs font-black text-slateblue-900">
-                {done}/{tasks.length || '—'} 已完成
+                {done}/{tasks.length || '—'} completed
               </span>
             </div>
             <div className="mt-3">
@@ -533,32 +536,32 @@ export default function CoachPage() {
             </div>
             <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-slateblue-700">
               <BrainCog className="h-3.5 w-3.5 shrink-0 text-coral-500" />
-              <span className="text-slateblue-700/80">我越来越懂你：</span>
+              <span className="text-slateblue-700/80">I understand you better:</span>
             </div>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <span className="rounded-full border border-silver-300 bg-silver-50 px-2.5 py-0.5 text-[11px] font-bold text-slateblue-700">
-                诊断报告 ✓
+                Diagnosis report ✓
               </span>
               {typeof evidenceCount === 'number' ? (
                 <span className="rounded-full border border-silver-300 bg-silver-50 px-2.5 py-0.5 text-[11px] font-bold text-slateblue-700">
-                  任务证据 {evidenceCount} 条
+                  Task evidence: {evidenceCount}
                 </span>
               ) : null}
               {typeof sessionCount === 'number' && sessionCount > 0 ? (
                 <span className="rounded-full border border-silver-300 bg-silver-50 px-2.5 py-0.5 text-[11px] font-bold text-slateblue-700">
-                  导师会话 {sessionCount} 次
+                  Mentor sessions: {sessionCount}
                 </span>
               ) : null}
             </div>
           </Card>
 
-          {/* ④ 进度记录表 */}
+          {/* 4. Progress log */}
           {plan ? (
             <Card className="p-4">
               <div className="flex items-center gap-2">
                 <CalendarClock className="h-4 w-4 text-coral-500" />
                 <p className="text-[11px] font-black uppercase tracking-wide text-coral-600">
-                  进度记录 · {plan.paceLabel}
+                  Progress log · {plan.paceLabel}
                 </p>
               </div>
               <div className="mt-3 space-y-4">
@@ -566,10 +569,10 @@ export default function CoachPage() {
                   <div key={week.week}>
                     <div className="flex items-baseline justify-between border-b border-silver-200 pb-1.5">
                       <p className="text-xs font-black text-slateblue-900">
-                        第 {week.week} 周 · {week.theme}
+                        Week {week.week} · {week.theme}
                       </p>
                       <p className="text-[11px] font-bold text-slateblue-700/70">
-                        每周 {week.weeklyHours} 小时
+                        {week.weeklyHours} hours/week
                       </p>
                     </div>
                     <div className="mt-1.5 space-y-1">
@@ -605,7 +608,7 @@ export default function CoachPage() {
                                 : 'bg-silver-100 text-slateblue-700'
                             }`}
                           >
-                            {t.category === 'milestone' ? '里程碑' : '练习'}
+                            {t.category === 'milestone' ? 'Milestone' : 'Practice'}
                           </span>
                         </button>
                       ))}
@@ -614,15 +617,16 @@ export default function CoachPage() {
                 ))}
               </div>
               <p className="mt-4 text-[11px] leading-relaxed text-slateblue-700/70">
-                点任务即可标记完成，完成的任务会自动沉淀进你的证据库。
+                Click a task to mark it complete; completed tasks are
+                automatically added to your evidence library.
               </p>
             </Card>
           ) : null}
 
-          {/* ⑤ 更多功能入口 */}
+          {/* 5. More feature entries */}
           <Card className="p-4">
             <p className="text-[11px] font-black uppercase tracking-wide text-coral-600">
-              更多功能
+              More features
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {MENTOR_DASHBOARD_LINKS.map((item) => {

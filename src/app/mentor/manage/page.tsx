@@ -23,12 +23,12 @@ import {
 import type { Booking, BookingStatus, Mentor, MentorSlot } from '@/lib/types';
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
-  held: '待确认',
-  confirmed: '已确认',
-  completed: '已完成',
-  released: '已确认完成',
-  rejected: '已拒绝',
-  cancelled: '已取消',
+  held: 'Pending confirmation',
+  confirmed: 'Confirmed',
+  completed: 'Completed',
+  released: 'Confirmed complete',
+  rejected: 'Rejected',
+  cancelled: 'Cancelled',
 };
 
 const STATUS_TONES: Record<
@@ -46,16 +46,16 @@ const STATUS_TONES: Record<
 type Tab = 'bookings' | 'slots' | 'income' | 'endorse';
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'bookings', label: '预约' },
-  { key: 'slots', label: '档期' },
-  { key: 'income', label: '收入' },
-  { key: 'endorse', label: '写赠言' },
+  { key: 'bookings', label: 'Bookings' },
+  { key: 'slots', label: 'Slots' },
+  { key: 'income', label: 'Income' },
+  { key: 'endorse', label: 'Endorsement' },
 ];
 
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString('zh-CN', {
+  return d.toLocaleString('en-US', {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -86,7 +86,7 @@ export default function MentorManagePage() {
       setBookings(bookingsRes.bookings);
       setSlots(slotsRes.slots);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
       setProfileLoaded(true);
     }
@@ -109,26 +109,26 @@ export default function MentorManagePage() {
     setError('');
     try {
       await apiSend('/api/bookings', 'POST', { action, bookingId, text });
-      setNotice(action === 'endorse' ? '赠言已送出' : '操作成功');
+      setNotice(action === 'endorse' ? 'Endorsement sent' : 'Done');
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '操作失败');
+      setError(e instanceof Error ? e.message : 'Action failed');
     }
   };
 
   const addSlot = async () => {
     if (!newSlot) {
-      setError('请选择开始时间');
+      setError('Please choose a start time');
       return;
     }
     setError('');
     try {
       await apiSend('/api/mentor/slots', 'POST', { startAt: newSlot });
       setNewSlot('');
-      setNotice('档期已添加');
+      setNotice('Slot added');
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '添加失败');
+      setError(e instanceof Error ? e.message : 'Failed to add');
     }
   };
 
@@ -136,29 +136,29 @@ export default function MentorManagePage() {
     setError('');
     try {
       await apiSend('/api/mentor/slots', 'DELETE', { slotId });
-      setNotice('档期已删除');
+      setNotice('Slot deleted');
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '删除失败');
+      setError(e instanceof Error ? e.message : 'Failed to delete');
     }
   };
 
   if (loading) {
-    return <p className="text-sm text-slateblue-700">加载中…</p>;
+    return <p className="text-sm text-slateblue-700">Loading…</p>;
   }
 
   if (!user) {
     return (
       <Card>
         <p className="text-sm text-slateblue-700">
-          请先登录（右上角可切换演示账号）
+          Please sign in (switch demo accounts in the top-right corner)
         </p>
       </Card>
     );
   }
 
   if (!profileLoaded) {
-    return <p className="text-sm text-slateblue-700">加载中…</p>;
+    return <p className="text-sm text-slateblue-700">Loading…</p>;
   }
 
   if (!mentor) {
@@ -166,14 +166,14 @@ export default function MentorManagePage() {
       <div className="mx-auto w-full max-w-2xl">
         <Card>
           <SectionTitle
-            eyebrow="导师工作台"
-            title="你还不是导师"
-            desc="先开通导师资料，通过审核后即可管理预约、档期与赠言。"
+            eyebrow="Mentor dashboard"
+            title="You are not a mentor yet"
+            desc="Set up your mentor profile first — once approved, you can manage bookings, slots, and endorsements."
           />
           <Link href="/become-mentor">
             <Button>
               <MessageSquareHeart className="h-4 w-4" />
-              去开通导师资料
+              Set up mentor profile
             </Button>
           </Link>
         </Card>
@@ -194,17 +194,17 @@ export default function MentorManagePage() {
   return (
     <div className="mx-auto w-full max-w-4xl">
       <SectionTitle
-        eyebrow="导师工作台"
-        title={`${mentor.displayName} · 导师工作台`}
+        eyebrow="Mentor dashboard"
+        title={`${mentor.displayName} · Mentor dashboard`}
         desc={mentor.headline}
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Badge tone={mentor.verificationStatus === 'seed_approved' ? 'green' : 'coral'}>
-          {mentor.verificationStatus === 'pending' ? '审核中' : '已认证'}
+          {mentor.verificationStatus === 'pending' ? 'Under review' : 'Verified'}
         </Badge>
-        <Badge tone="silver">评分 {mentor.rating || '—'}</Badge>
-        <Badge tone="silver">已服务 {mentor.impactWomenCount} 位女性</Badge>
+        <Badge tone="silver">Rating {mentor.rating || '—'}</Badge>
+        <Badge tone="silver">Served {mentor.impactWomenCount} women</Badge>
       </div>
 
       <div className="no-scrollbar mb-4 inline-flex gap-1 rounded-xl border border-silver-300 bg-white p-1">
@@ -237,7 +237,7 @@ export default function MentorManagePage() {
 
       {tab === 'bookings' ? (
         myBookings.length === 0 ? (
-          <EmptyState text="还没有预约——完善档期后，学员就能预约你啦。" />
+          <EmptyState text="No bookings yet — add your slots and coachees will be able to book you." />
         ) : (
           <div className="space-y-3">
             {myBookings.map((b) => (
@@ -250,14 +250,14 @@ export default function MentorManagePage() {
                     {STATUS_LABELS[b.status]}
                   </Badge>
                   <Badge tone="silver">
-                    {b.kind === 'package' ? '5 次套餐' : '单次咨询'}
+                    {b.kind === 'package' ? '5-session package' : 'Single session'}
                   </Badge>
                   <span className="ml-auto text-xs font-bold text-slateblue-700">
                     {formatDateTime(b.scheduledTime)}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-slateblue-700">
-                  话题：{b.topic}
+                  Topic: {b.topic}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {b.status === 'held' ? (
@@ -267,7 +267,7 @@ export default function MentorManagePage() {
                         onClick={() => void runAction('confirm', b.id)}
                       >
                         <Check className="h-3.5 w-3.5" />
-                        确认
+                        Confirm
                       </Button>
                       <Button
                         variant="secondary"
@@ -275,7 +275,7 @@ export default function MentorManagePage() {
                         onClick={() => void runAction('reject', b.id)}
                       >
                         <X className="h-3.5 w-3.5" />
-                        拒绝
+                        Reject
                       </Button>
                     </>
                   ) : null}
@@ -286,7 +286,7 @@ export default function MentorManagePage() {
                       onClick={() => void runAction('complete', b.id)}
                     >
                       <Check className="h-3.5 w-3.5" />
-                      标记完成
+                      Mark complete
                     </Button>
                   ) : null}
                   {b.status === 'released' ? (
@@ -296,7 +296,7 @@ export default function MentorManagePage() {
                       onClick={() => setTab('endorse')}
                     >
                       <MessageSquareHeart className="h-3.5 w-3.5" />
-                      去写赠言
+                      Write endorsement
                     </Button>
                   ) : null}
                 </div>
@@ -310,7 +310,7 @@ export default function MentorManagePage() {
         <div className="space-y-4">
           <Card>
             <p className="mb-2 text-sm font-extrabold text-slateblue-900">
-              新增档期
+              Add a slot
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <input
@@ -321,16 +321,16 @@ export default function MentorManagePage() {
               />
               <Button onClick={() => void addSlot()}>
                 <Clock className="h-4 w-4" />
-                添加档期
+                Add slot
               </Button>
             </div>
             <p className="mt-1 text-[11px] text-slateblue-700">
-              未填写结束时间时，默认时长 1 小时。
+              If no end time is set, the default duration is 1 hour.
             </p>
           </Card>
 
           {slots.length === 0 ? (
-            <EmptyState text="还没有档期——添加可用时间，学员才能预约。" />
+            <EmptyState text="No slots yet — add available times so coachees can book you." />
           ) : (
             <div className="space-y-2">
               {slots.map((s) => (
@@ -340,7 +340,7 @@ export default function MentorManagePage() {
                     {formatDateTime(s.startAt)} — {formatDateTime(s.endAt)}
                   </span>
                   <Badge tone={s.status === 'available' ? 'green' : 'coral'}>
-                    {s.status === 'available' ? '可预约' : '已被预约'}
+                    {s.status === 'available' ? 'Available' : 'Booked'}
                   </Badge>
                   <div className="ml-auto">
                     <Button
@@ -350,7 +350,7 @@ export default function MentorManagePage() {
                       onClick={() => void removeSlot(s.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      删除
+                      Delete
                     </Button>
                   </div>
                 </Card>
@@ -363,9 +363,10 @@ export default function MentorManagePage() {
       {tab === 'income' ? (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Badge tone="silver">演示数据</Badge>
+            <Badge tone="silver">Demo data</Badge>
             <span className="text-xs text-slateblue-700">
-              基于当前预约状态简单聚合，非真实结算。
+              A simple aggregation of current booking statuses, not a real
+              settlement.
             </span>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -378,7 +379,7 @@ export default function MentorManagePage() {
                   ¥{settledAmount}
                 </p>
                 <p className="text-xs font-bold text-slateblue-700">
-                  已结算（{settled.length} 单）
+                  Settled ({settled.length} bookings)
                 </p>
               </div>
             </Card>
@@ -391,15 +392,15 @@ export default function MentorManagePage() {
                   ¥{pendingAmount}
                 </p>
                 <p className="text-xs font-bold text-slateblue-700">
-                  待结算（{pending.length} 单）
+                  Pending settlement ({pending.length} bookings)
                 </p>
               </div>
             </Card>
           </div>
           <Card>
             <p className="text-xs font-bold text-slateblue-700">
-              累计预约 {myBookings.length} 单 · 已完成 {settled.length} 单 ·
-              待处理 {pending.length} 单
+              {myBookings.length} bookings total · {settled.length} completed ·
+              {pending.length} pending
             </p>
           </Card>
         </div>
@@ -407,7 +408,7 @@ export default function MentorManagePage() {
 
       {tab === 'endorse' ? (
         releasedBookings.length === 0 ? (
-          <EmptyState text="暂无待写赠言的预约——学员确认完成后即可写下你的背书。" />
+          <EmptyState text="No bookings awaiting endorsement — once the coachee confirms completion, you can write your endorsement." />
         ) : (
           <div className="space-y-3">
             {releasedBookings.map((b) => (
@@ -421,12 +422,12 @@ export default function MentorManagePage() {
                   </Badge>
                 </div>
                 <p className="mt-1 text-xs text-slateblue-700">
-                  话题：{b.topic}
+                  Topic: {b.topic}
                 </p>
                 {b.endorsement ? (
                   <div className="mt-3 rounded-xl border border-softpink-300 bg-softpink-100 px-3 py-2">
                     <p className="text-[11px] font-black uppercase tracking-wide text-coral-600">
-                      已送出赠言
+                      Endorsement sent
                     </p>
                     <p className="mt-1 text-sm text-slateblue-900">
                       {b.endorsement}
@@ -443,7 +444,7 @@ export default function MentorManagePage() {
                           [b.id]: e.target.value,
                         })
                       }
-                      placeholder="写下你观察到她的成长与优势，这会成为她的导师背书证据…"
+                      placeholder="Describe the growth and strengths you observed — this becomes her mentor endorsement record…"
                       className="w-full resize-none rounded-xl border border-silver-300 px-3 py-2 text-sm outline-none focus:border-coral-500"
                     />
                     <div className="flex justify-end">
@@ -458,7 +459,7 @@ export default function MentorManagePage() {
                         disabled={!(endorseDraft[b.id] ?? '').trim()}
                       >
                         <MessageSquareHeart className="h-4 w-4" />
-                        送出赠言
+                        Send endorsement
                       </Button>
                     </div>
                   </div>

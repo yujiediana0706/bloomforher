@@ -15,15 +15,15 @@ async function main() {
       timestamp: new Date().toISOString(),
       message: 'Phase 1 Firestore connection test',
     });
-    console.log('✅ Firestore 写入成功');
+    console.log('✅ Firestore write succeeded');
 
     const doc = await db.collection('_test').doc('connection').get();
-    console.log('✅ Firestore 读取成功:', doc.data());
+    console.log('✅ Firestore read succeeded:', doc.data());
 
     await db.collection('_test').doc('connection').delete();
-    console.log('✅ Firestore 删除成功');
+    console.log('✅ Firestore delete succeeded');
   } catch (e) {
-    console.log('❌ Firestore 操作失败:', e.message);
+    console.log('❌ Firestore operation failed:', e.message);
   }
 }
 

@@ -8,14 +8,14 @@ import React, {
   useState,
 } from 'react';
 import type { UserProfile } from '@/lib/types';
-import { apiGet, apiSend } from '@/lib/client';
-import { DEMO_ACCOUNTS } from '@/lib/accounts';
+import { apiSend } from '@/lib/client';
 
 interface AuthContextValue {
   user: UserProfile | null;
   loading: boolean;
   refresh: () => Promise<void>;
-  switchAccount: (uid: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -23,7 +23,8 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
   refresh: async () => {},
-  switchAccount: async () => {},
+  login: async () => {},
+  register: async () => {},
   logout: async () => {},
 });
 
@@ -46,14 +47,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const switchAccount = useCallback(async (uid: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     const data = await apiSend<{ user: UserProfile }>(
       '/api/auth/session',
       'POST',
-      { action: 'login', uid }
+      { action: 'login', email, password }
     );
     setUser(data.user);
   }, []);
+
+  const register = useCallback(
+    async (name: string, email: string, password: string) => {
+      const data = await apiSend<{ user: UserProfile }>(
+        '/api/auth/session',
+        'POST',
+        { action: 'register', name, email, password }
+      );
+      setUser(data.user);
+    },
+    []
+  );
 
   const logout = useCallback(async () => {
     await apiSend('/api/auth/session', 'POST', { action: 'logout' });
@@ -66,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, refresh, switchAccount, logout }}
+      value={{ user, loading, refresh, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>
@@ -76,5 +89,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
-
-export { DEMO_ACCOUNTS };

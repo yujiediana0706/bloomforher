@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   return NextResponse.json({ plan: db.returnPlans[uid] ?? null });
@@ -16,11 +16,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   let feedback: string | undefined;
   try {
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   const built = await buildReturnPlan(user, feedback);
 
-  // 保留已完成任务状态：同名 taskId 沿用旧计划的 completed
+  // Preserve completed-task state: reuse the completed flag from the old plan for the same taskId
   const previous = db.returnPlans[uid];
   if (previous) {
     const completedMap = new Map<string, boolean>();

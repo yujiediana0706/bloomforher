@@ -20,14 +20,14 @@ function toPlazaPostView(
 ): PlazaPostView {
   const author = db.users.find((u) => u.uid === post.authorId);
   const authorDisplay = post.anonymous
-    ? post.anonymousHandle ?? '匿名用户'
-    : author?.name ?? '匿名用户';
+    ? post.anonymousHandle ?? 'Anonymous user'
+    : author?.name ?? 'Anonymous user';
   const { authorId: _authorId, ...rest } = post;
   return { ...rest, authorDisplay, viewerIsAuthor: viewerUid === post.authorId };
 }
 
 const MAX_IMAGES = 3;
-const MAX_IMAGE_CHARS = 1_500_000; // 单张 data URL 上限（约 1.1MB 图片）
+const MAX_IMAGE_CHARS = 1_500_000; // max size of a single data URL (about a 1.1MB image)
 
 export async function GET(req: NextRequest) {
   const db = getDB();
@@ -53,11 +53,11 @@ interface CreatePostBody {
 
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   let body: CreatePostBody = {};
   try {
@@ -76,22 +76,22 @@ export async function POST(req: NextRequest) {
     : [];
   if (!title && !text && images.length === 0) {
     return NextResponse.json(
-      { error: '标题、正文、图片至少填写一项' },
+      { error: 'Provide at least one of title, body, or image' },
       { status: 400 }
     );
   }
   if (images.length > MAX_IMAGES) {
     return NextResponse.json(
-      { error: `图片最多 ${MAX_IMAGES} 张` },
+      { error: `At most ${MAX_IMAGES} images` },
       { status: 400 }
     );
   }
 
-  // AI 内容安全审核（守护者）
+  // AI content safety moderation (guardian)
   const moderation = await moderateContent({ title, body: text, images });
   if (!moderation.pass) {
     return NextResponse.json(
-      { error: moderation.advice || '内容未通过审核，请调整后再试', code: 'CONTENT_REJECTED' },
+      { error: moderation.advice || 'Content did not pass review; please revise and try again', code: 'CONTENT_REJECTED' },
       { status: 400 }
     );
   }

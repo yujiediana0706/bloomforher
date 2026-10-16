@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
   const db = getDB();
   const mentor = db.mentors.find((m) => m.userId === uid) || null;
   return NextResponse.json({ mentor });
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
   const body = (await req.json().catch(() => null)) as Partial<{
     displayName: string;
     headline: string;
@@ -27,11 +27,11 @@ export async function POST(req: NextRequest) {
     pricePackage5: number;
   }> | null;
   if (!body || typeof body !== 'object') {
-    return NextResponse.json({ error: '参数错误' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid request parameters' }, { status: 400 });
   }
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   let mentor = db.mentors.find((m) => m.userId === uid);
   if (!mentor) {
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       userId: uid,
       displayName: body.displayName || user.name,
       avatarUrl: user.avatarUrl,
-      headline: body.headline || '新晋导师',
+      headline: body.headline || 'New mentor',
       bio: body.bio || '',
       companies: body.companies || [],
       schools: body.schools || [],

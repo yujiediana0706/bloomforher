@@ -1,36 +1,36 @@
 import type { EvidenceType, LifeStage } from './types';
 
-// —— 生活阶段文案（规范 §5.5 节奏标签）——
+// —— Life stage labels (spec §5.5 rhythm tags) ——
 export const LIFE_STAGE_LABELS: Record<LifeStage, string> = {
-  student: '在校探索',
-  early_career: '职场新人',
-  growth: '职场深耕',
-  pregnancy_planning: '孕前深耕',
-  parental_leave: '育儿期',
-  returning_parent: '产后回归',
-  parttime_transition: '兼职过渡',
+  student: 'Student explorer',
+  early_career: 'Early career',
+  growth: 'Deepening a career',
+  pregnancy_planning: 'Planning a pregnancy',
+  parental_leave: 'Parental leave',
+  returning_parent: 'Returning parent',
+  parttime_transition: 'Part-time transition',
 };
 
 export const LIFE_STAGE_DESCRIPTIONS: Record<LifeStage, string> = {
-  student: '在校大学生 / 研究生，正在探索 AI 职业方向',
-  early_career: '初入职场 1-3 年，希望尽早切入 AI',
-  growth: '已在职场深耕，寻求向 AI 岗位跃迁',
-  pregnancy_planning: '处于备孕阶段，希望提前布局 AI 能力',
-  parental_leave: '正在育儿/休假中，需要可中断的学习节奏',
-  returning_parent: '产后回归，1-3 年职业空窗后重返职场',
-  parttime_transition: '需要兼顾照护，寻求灵活/兼职的 AI 过渡',
+  student: 'University or graduate student exploring AI career paths',
+  early_career: '1-3 years into work, hoping to move into AI early',
+  growth: 'Established in a career, seeking a leap into an AI role',
+  pregnancy_planning: 'Planning a pregnancy, building AI skills in advance',
+  parental_leave: 'On leave or caregiving, needs an interruptible pace',
+  returning_parent: 'Returning after a 1-3 year career break',
+  parttime_transition: 'Balancing caregiving, looking for a flexible AI path',
 };
 
-// —— 证据类型文案与自信度权重（规范 §5.8）——
+// —— Evidence type labels and confidence weights (spec §5.8) ——
 export const EVIDENCE_TYPE_LABELS: Record<EvidenceType, string> = {
-  assessment_result: '测评结果',
-  skill_progress: '学习进展',
-  task_outcome: '任务成果',
-  project_work: '实操作品',
-  mentor_endorsement: '导师背书',
-  community_kudos: '同辈认可',
-  peer_appreciation: '同辈感谢',
-  milestone: '里程碑',
+  assessment_result: 'Assessment result',
+  skill_progress: 'Skill progress',
+  task_outcome: 'Task outcome',
+  project_work: 'Project work',
+  mentor_endorsement: 'Mentor endorsement',
+  community_kudos: 'Peer kudos',
+  peer_appreciation: 'Peer appreciation',
+  milestone: 'Milestone',
 };
 
 export const EVIDENCE_TYPE_WEIGHTS: Record<EvidenceType, number> = {
@@ -47,7 +47,7 @@ export const EVIDENCE_TYPE_WEIGHTS: Record<EvidenceType, number> = {
 export const CONFIDENCE_BASE = 40;
 export const CONFIDENCE_MAX = 100;
 
-/** 根据证据列表计算自信度分数（起始 40，上限 100） */
+/** Compute the confidence score from a list of evidence items (starts at 40, capped at 100). */
 export function computeConfidenceScore(
   evidences: { type: EvidenceType }[]
 ): number {
@@ -58,55 +58,55 @@ export function computeConfidenceScore(
   return Math.min(CONFIDENCE_MAX, score);
 }
 
-// —— 匿名花名池 ——
+// —— Anonymous handle pool ——
 export const ANONYMOUS_HANDLES = [
-  '山茶花',
-  '银杏叶',
-  '木棉',
-  '蒲公英',
-  '紫藤',
-  '玉兰',
-  '腊梅',
-  '芍药',
-  '铃兰',
-  '鸢尾',
-  '海棠',
-  '栀子',
+  'Camellia',
+  'Ginkgo',
+  'Kapok',
+  'Dandelion',
+  'Wisteria',
+  'Magnolia',
+  'Winter Plum',
+  'Peony',
+  'Lily of the Valley',
+  'Iris',
+  'Crabapple',
+  'Gardenia',
 ];
 
-/** 稳定地根据 (uid + postId) 生成同一花名 */
+/** Deterministically pick the same handle from (uid + salt). */
 export function pickAnonymousHandle(uid: string, salt: string): string {
   let hash = 0;
   const input = `${uid}::${salt}`;
   for (let i = 0; i < input.length; i++) {
     hash = (hash * 31 + input.charCodeAt(i)) % 100000;
   }
-  return `匿名·${ANONYMOUS_HANDLES[hash % ANONYMOUS_HANDLES.length]}`;
+  return `Anonymous · ${ANONYMOUS_HANDLES[hash % ANONYMOUS_HANDLES.length]}`;
 }
 
-// —— 旅程步骤定义 ——
+// —— Journey steps ——
 export const JOURNEY_STEPS = [
-  { step: 1, label: '注册与目标', href: '/onboarding' },
-  { step: 2, label: '技能发现', href: '/skills' },
-  { step: 3, label: 'AI 机会', href: '/opportunities' },
-  { step: 4, label: '实操任务', href: '/tasks-lab' },
-  { step: 5, label: '回归计划', href: '/plan' },
-  { step: 6, label: '加入社区', href: '/plaza' },
+  { step: 1, label: 'Sign up & goals', href: '/onboarding' },
+  { step: 2, label: 'Skill discovery', href: '/skills' },
+  { step: 3, label: 'AI opportunities', href: '/opportunities' },
+  { step: 4, label: 'Hands-on tasks', href: '/tasks-lab' },
+  { step: 5, label: 'Return plan', href: '/plan' },
+  { step: 6, label: 'Join the community', href: '/plaza' },
 ] as const;
 
-// —— 主导航（极简：核心三卡；其余功能全部从 AI Mentor dashboard 入口进）——
+// —— Main navigation (minimal: three core entries; everything else lives in the AI Mentor dashboard) ——
 export const NAV_ITEMS = [
-  { href: '/', label: '首页' },
+  { href: '/', label: 'Home' },
   { href: '/coach', label: 'AI Mentor' },
-  { href: '/plaza', label: '对话广场' },
+  { href: '/plaza', label: 'Community' },
 ] as const;
 
-/** 需要在 AI Mentor dashboard 展示入口的功能清单 */
+/** Feature entries shown in the AI Mentor dashboard */
 export const MENTOR_DASHBOARD_LINKS = [
-  { href: '/skills', label: '技能画像', desc: 'AI 校准过的六维自信度', icon: 'FileText' },
-  { href: '/opportunities', label: 'AI 机会', desc: '为你匹配的岗位方向', icon: 'Compass' },
-  { href: '/plan', label: '回归计划', desc: '30 天节奏，可暂停', icon: 'CalendarClock' },
-  { href: '/tasks-lab', label: '实操任务', desc: '30 分钟做出第一个作品', icon: 'Rocket' },
-  { href: '/community', label: '导师社区', desc: '认证教练，付费担保', icon: 'Users' },
-  { href: '/dashboard', label: '个人中心', desc: '档案、简历、账号', icon: 'UserCircle' },
+  { href: '/skills', label: 'Skill profile', desc: 'AI-calibrated confidence across six dimensions', icon: 'FileText' },
+  { href: '/opportunities', label: 'AI opportunities', desc: 'Roles matched to you', icon: 'Compass' },
+  { href: '/plan', label: 'Return plan', desc: 'A 30-day rhythm you can pause', icon: 'CalendarClock' },
+  { href: '/tasks-lab', label: 'Hands-on tasks', desc: 'Build your first portfolio piece in 30 minutes', icon: 'Rocket' },
+  { href: '/community', label: 'Mentor community', desc: 'Certified coaches, paid with escrow', icon: 'Users' },
+  { href: '/dashboard', label: 'My profile', desc: 'Profile, resumes, account', icon: 'UserCircle' },
 ] as const;

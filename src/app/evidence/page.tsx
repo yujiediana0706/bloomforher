@@ -31,7 +31,7 @@ import { EVIDENCE_TYPE_LABELS } from '@/lib/constants';
 import type { EvidenceItem, EvidenceType } from '@/lib/types';
 
 const EMPTY_TEXT =
-  '还没有证据——完成一次技能发现，让第一份『我可以』自动出现';
+  'No evidence yet—complete a skill discovery to unlock your first "I can" moment.';
 
 const TYPE_ICONS: Record<
   EvidenceType,
@@ -52,7 +52,7 @@ const ALL_TYPES = Object.keys(EVIDENCE_TYPE_LABELS) as EvidenceType[];
 function formatDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('zh-CN', {
+  return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -103,7 +103,7 @@ export default function EvidencePage() {
 
   const submitEvidence = async () => {
     if (!form.title.trim()) {
-      setFormError('请填写标题');
+      setFormError('Please enter a title');
       return;
     }
     setSaving(true);
@@ -120,10 +120,10 @@ export default function EvidencePage() {
       });
       setModalOpen(false);
       setForm({ title: '', detail: '', tags: '', isPublic: false });
-      setNotice('证据已添加');
+      setNotice('Evidence added');
       await load();
     } catch (e) {
-      setFormError(e instanceof Error ? e.message : '保存失败');
+      setFormError(e instanceof Error ? e.message : 'Failed to save');
     } finally {
       setSaving(false);
     }
@@ -133,26 +133,27 @@ export default function EvidencePage() {
     try {
       await apiSend('/api/plaza', 'POST', {
         type: 'win',
-        title: `分享我的成果：${ev.title}`,
+        title: `Sharing my win: ${ev.title}`,
         body: ev.detail,
-        tags: ['成果分享'],
+        tags: ['Win shared'],
         anonymous: false,
       });
-      setNotice('已分享到对话广场');
+      setNotice('Shared to the conversation plaza');
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '分享失败');
+      setNotice(e instanceof Error ? e.message : 'Failed to share');
     }
   };
 
   if (loading) {
-    return <p className="text-sm text-slateblue-700">加载中…</p>;
+    return <p className="text-sm text-slateblue-700">Loading…</p>;
   }
 
   if (!user) {
     return (
       <Card>
         <p className="text-sm text-slateblue-700">
-          请先登录（右上角可切换演示账号）
+          Please sign in first (you can switch demo accounts from the top-right
+          menu).
         </p>
       </Card>
     );
@@ -162,13 +163,13 @@ export default function EvidencePage() {
     <div className="mx-auto w-full max-w-5xl">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <SectionTitle
-          eyebrow="贯穿层 · 证据库"
-          title="我的『我可以』"
-          desc="每一次学习、任务、被认可，都会沉淀成一份证据，悄悄把自信度往上抬。"
+          eyebrow="Cross-cutting · Evidence library"
+          title='My "I can" moments'
+          desc="Every learning moment, task, and piece of recognition becomes evidence that quietly lifts your confidence."
         />
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4" />
-          添加证据
+          Add evidence
         </Button>
       </div>
 
@@ -176,7 +177,7 @@ export default function EvidencePage() {
         <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-warmgreen/40 bg-warmgreen/10 px-3 py-2 text-xs font-bold text-[#3f7a4a]">
           <span>{notice}</span>
           <Link href="/plaza" className="underline">
-            前往对话广场 →
+            Go to the conversation plaza →
           </Link>
         </div>
       ) : null}
@@ -191,7 +192,7 @@ export default function EvidencePage() {
               : 'text-slateblue-700 hover:bg-silver-100'
           }`}
         >
-          时间线
+          Timeline
         </button>
         <button
           type="button"
@@ -202,19 +203,19 @@ export default function EvidencePage() {
               : 'text-slateblue-700 hover:bg-silver-100'
           }`}
         >
-          我可以墙
+          &quot;I can&quot; wall
         </button>
       </div>
 
       {fetching && !data ? (
-        <p className="text-sm text-slateblue-700">加载中…</p>
+        <p className="text-sm text-slateblue-700">Loading…</p>
       ) : evidences.length === 0 ? (
         <EmptyState text={EMPTY_TEXT} />
       ) : view === 'timeline' ? (
         <div>
           <div className="no-scrollbar mb-4 flex flex-wrap gap-2">
             <Chip active={filter === 'all'} onClick={() => setFilter('all')}>
-              全部
+              All
             </Chip>
             {ALL_TYPES.map((t) => (
               <Chip key={t} active={filter === t} onClick={() => setFilter(t)}>
@@ -224,7 +225,7 @@ export default function EvidencePage() {
           </div>
 
           {filtered.length === 0 ? (
-            <EmptyState text="该类型下还没有证据。" />
+            <EmptyState text="No evidence of this type yet." />
           ) : (
             <div className="space-y-0">
               {filtered.map((ev, idx) => {
@@ -246,11 +247,11 @@ export default function EvidencePage() {
                             {EVIDENCE_TYPE_LABELS[ev.type]}
                           </Badge>
                           {ev.source === 'auto' ? (
-                            <Badge tone="silver">自动记录</Badge>
+                            <Badge tone="silver">Auto-recorded</Badge>
                           ) : (
-                            <Badge tone="silver">手动添加</Badge>
+                            <Badge tone="silver">Added manually</Badge>
                           )}
-                          {ev.isPublic ? <Badge tone="pink">公开</Badge> : null}
+                          {ev.isPublic ? <Badge tone="pink">Public</Badge> : null}
                           <span className="ml-auto text-[11px] font-bold text-slateblue-700">
                             {formatDate(ev.createdAt)}
                           </span>
@@ -270,7 +271,7 @@ export default function EvidencePage() {
                             onClick={() => void shareToPlaza(ev)}
                           >
                             <Share2 className="h-3.5 w-3.5" />
-                            分享到广场
+                            Share to plaza
                           </Button>
                         </div>
                       </Card>
@@ -285,13 +286,14 @@ export default function EvidencePage() {
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Card className="flex items-center gap-4">
-              <ScoreRing value={data?.confidence ?? 0} label="自信度" />
+              <ScoreRing value={data?.confidence ?? 0} label="Confidence" />
               <div>
                 <p className="text-sm font-extrabold text-slateblue-900">
-                  我的自信度
+                  My confidence
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-slateblue-700">
-                  每份证据都在为你加分，越积累越笃定。
+                  Each piece of evidence adds to your score—the more you
+                  collect, the more confident you become.
                 </p>
                 <div className="mt-2 w-32">
                   <ProgressBar value={data?.confidence ?? 0} />
@@ -300,10 +302,11 @@ export default function EvidencePage() {
             </Card>
             <Card className="border-softpink-300 bg-softpink-100">
               <p className="text-xs font-black uppercase tracking-wide text-coral-600">
-                本周自信总结
+                This week&apos;s confidence summary
               </p>
               <p className="mt-2 text-sm leading-relaxed text-slateblue-900">
-                {data?.weeklySummary || '这周还没有记录，去完成一个小任务吧。'}
+                {data?.weeklySummary ||
+                  'Nothing recorded this week yet—try completing a small task.'}
               </p>
             </Card>
           </div>
@@ -345,7 +348,7 @@ export default function EvidencePage() {
                       onClick={() => void shareToPlaza(ev)}
                     >
                       <Share2 className="h-3.5 w-3.5" />
-                      分享到广场
+                      Share to plaza
                     </Button>
                   </div>
                 </div>
@@ -358,36 +361,36 @@ export default function EvidencePage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="添加证据"
+        title="Add evidence"
       >
         <div className="space-y-3">
           <label className="block">
-            <span className="text-xs font-bold text-slateblue-900">标题</span>
+            <span className="text-xs font-bold text-slateblue-900">Title</span>
             <input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="例如：完成第一份竞品分析"
+              placeholder="e.g. Completed my first competitive analysis"
               className="mt-1 w-full rounded-xl border border-silver-300 px-3 py-2 text-sm outline-none focus:border-coral-500"
             />
           </label>
           <label className="block">
-            <span className="text-xs font-bold text-slateblue-900">详情</span>
+            <span className="text-xs font-bold text-slateblue-900">Details</span>
             <textarea
               value={form.detail}
               onChange={(e) => setForm({ ...form, detail: e.target.value })}
               rows={3}
-              placeholder="做了什么、产出了什么、被谁认可…"
+              placeholder="What you did, what you produced, who recognized it…"
               className="mt-1 w-full resize-none rounded-xl border border-silver-300 px-3 py-2 text-sm outline-none focus:border-coral-500"
             />
           </label>
           <label className="block">
             <span className="text-xs font-bold text-slateblue-900">
-              标签（逗号分隔）
+              Tags (comma-separated)
             </span>
             <input
               value={form.tags}
               onChange={(e) => setForm({ ...form, tags: e.target.value })}
-              placeholder="例如：AI 产品,运营"
+              placeholder="e.g. AI Product, AI Operations"
               className="mt-1 w-full rounded-xl border border-silver-300 px-3 py-2 text-sm outline-none focus:border-coral-500"
             />
           </label>
@@ -399,7 +402,7 @@ export default function EvidencePage() {
               className="h-4 w-4 rounded border-silver-400"
             />
             <span className="text-xs font-bold text-slateblue-900">
-              公开这份证据到我的『我可以』墙
+              Make this evidence public on my &quot;I can&quot; wall
             </span>
           </label>
           {formError ? (
@@ -407,10 +410,10 @@ export default function EvidencePage() {
           ) : null}
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="secondary" onClick={() => setModalOpen(false)}>
-              取消
+              Cancel
             </Button>
             <Button onClick={() => void submitEvidence()} disabled={saving}>
-              {saving ? '保存中…' : '保存证据'}
+              {saving ? 'Saving…' : 'Save evidence'}
             </Button>
           </div>
         </div>

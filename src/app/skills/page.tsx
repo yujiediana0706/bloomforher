@@ -43,7 +43,7 @@ export default function SkillsPage() {
       );
       setSkillProfile(data.skillProfile);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
       setFetching(false);
     }
@@ -63,36 +63,39 @@ export default function SkillsPage() {
       );
       setSkillProfile(data.skillProfile);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '生成失败');
+      setError(e instanceof Error ? e.message : 'Failed to generate');
     } finally {
       setGenerating(false);
     }
   }
 
-  if (loading) return <EmptyState text="正在加载…" />;
+  if (loading) return <EmptyState text="Loading…" />;
   if (!user)
-    return <EmptyState text="请先登录（可用右上角切换演示账号）" />;
+    return (
+      <EmptyState text="Please sign in first (you can switch demo accounts from the top-right menu)." />
+    );
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      {/* 返回链接 */}
+      {/* Back link */}
       <Link
         href="/coach"
         className="inline-flex items-center gap-1 text-xs font-bold text-slateblue-700 underline underline-offset-4 hover:text-coral-600"
       >
         <ArrowLeft className="h-3 w-3" />
-        返回 AI Mentor 工作台
+        Back to AI Mentor workspace
       </Link>
 
       <div>
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-coral-500">
-          诊断详情 · 技能发现
+          Diagnostic details · Skill discovery
         </p>
         <h1 className="mt-1 text-2xl font-black text-slateblue-900">
-          你的技能画像
+          Your skill profile
         </h1>
         <p className="mt-1 text-sm text-slateblue-700">
-          把过往经历翻译成 AI 工作流语言，并重新校准你的自信度。
+          Translate your past experience into the language of AI workflows, and
+          recalibrate your confidence.
         </p>
       </div>
 
@@ -102,23 +105,24 @@ export default function SkillsPage() {
         </p>
       ) : null}
 
-      {fetching ? <EmptyState text="正在读取你的技能画像…" /> : null}
+      {fetching ? <EmptyState text="Loading your skill profile…" /> : null}
 
       {!fetching && !skillProfile ? (
         <Card className="text-center">
           <p className="text-sm text-slateblue-700">
-            还没有你的技能画像。点击下方按钮，AI 会基于你的档案生成。
+            You don&apos;t have a skill profile yet. Click the button below and
+            the AI will generate one from your profile.
           </p>
           <Button className="mt-4" onClick={handleGenerate} disabled={generating}>
             {generating ? (
               <>
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                正在生成…
+                Generating…
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                生成我的技能画像
+                Generate my skill profile
               </>
             )}
           </Button>
@@ -127,20 +131,20 @@ export default function SkillsPage() {
 
       {skillProfile ? (
         <>
-          {/* 独特价值 */}
+          {/* Unique value */}
           <Card className="border-softpink-300 bg-gradient-to-br from-softpink-100 to-white">
             <p className="text-[11px] font-bold uppercase tracking-wider text-coral-500">
-              你的独特价值
+              Your unique value
             </p>
             <p className="mt-2 text-base font-extrabold leading-relaxed text-slateblue-900">
               {skillProfile.uniqueValue}
             </p>
           </Card>
 
-          {/* 可迁移技能 */}
+          {/* Transferable skills */}
           <section>
             <h3 className="mb-2 text-sm font-extrabold text-slateblue-900">
-              可迁移技能（{skillProfile.transferableSkills.length} 项）
+              Transferable skills ({skillProfile.transferableSkills.length})
             </h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {skillProfile.transferableSkills.map((skill) => (
@@ -150,14 +154,14 @@ export default function SkillsPage() {
                       {skill.name}
                     </h4>
                     <span className="shrink-0 rounded-full bg-coral-100 px-2 py-0.5 text-[11px] font-black text-coral-700">
-                      AI 相关度 {skill.aiRelevance}%
+                      AI relevance {skill.aiRelevance}%
                     </span>
                   </div>
                   <div className="mt-2">
                     <ProgressBar value={skill.aiRelevance} />
                   </div>
                   <p className="mt-2 text-xs font-bold text-coral-700">
-                    证据：{skill.evidence}
+                    Evidence: {skill.evidence}
                   </p>
                   <p className="mt-1.5 text-xs leading-relaxed text-slateblue-700">
                     {skill.narrative}
@@ -167,13 +171,14 @@ export default function SkillsPage() {
             </div>
           </section>
 
-          {/* 自信度矫正板 */}
+          {/* Confidence calibration board */}
           <section>
             <h3 className="mb-1 text-sm font-extrabold text-slateblue-900">
-              自信度矫正板
+              Confidence calibration board
             </h3>
             <p className="mb-2 text-xs text-slateblue-700">
-              灰条是你的自评，珊瑚色条是 AI 基于证据的客观评分。
+              The grey bar is your self-assessment; the coral bar is the AI&apos;s
+              evidence-based score.
             </p>
             <div className="space-y-2.5">
               {skillProfile.confidenceCalibration.map((item) => (
@@ -184,7 +189,7 @@ export default function SkillsPage() {
                     </h4>
                     <div className="flex items-center gap-3 text-xs font-bold">
                       <span className="text-slateblue-700">
-                        自评 {item.selfScore}/10
+                        Self {item.selfScore}/10
                       </span>
                       <span className="text-coral-600">
                         AI {item.aiScore}/10
@@ -194,7 +199,7 @@ export default function SkillsPage() {
                   <div className="mt-2 space-y-1.5">
                     <div className="flex items-center gap-2">
                       <span className="w-8 shrink-0 text-[10px] font-bold text-slateblue-700">
-                        自评
+                        Self
                       </span>
                       <ScoreBar value={item.selfScore} tone="self" />
                     </div>

@@ -1,26 +1,26 @@
-// 测试 Agent Platform Reasoning Engine 调用
-// 用法：node --env-file=.env.local scripts/test-agent.js
+// Test the Agent Platform Reasoning Engine call
+// Usage: node --env-file=.env.local scripts/test-agent.js
 
 const { callAgentEndpoint } = require('../src/lib/agent-client');
 
 async function testAgent(name, endpoint) {
-  console.log(`\n🧪 测试 Agent: ${name}`);
+  console.log(`\n🧪 Testing agent: ${name}`);
   console.log(`   Endpoint: ${endpoint.slice(0, 60)}...`);
 
   try {
     const res = await callAgentEndpoint(endpoint, {
-      input: '你好，请回复「Agent 连接正常」即可。',
+      input: 'Hello, please reply with "Agent connection OK" to confirm.',
     });
 
     if (res) {
-      console.log(`   ✅ 成功，返回: ${res.text.slice(0, 100)}${res.text.length > 100 ? '...' : ''}`);
+      console.log(`   ✅ Success, response: ${res.text.slice(0, 100)}${res.text.length > 100 ? '...' : ''}`);
       return true;
     } else {
-      console.log(`   ❌ 返回 null（Agent 调用失败）`);
+      console.log(`   ❌ Returned null (agent call failed)`);
       return false;
     }
   } catch (e) {
-    console.log(`   ❌ 异常: ${e.message}`);
+    console.log(`   ❌ Exception: ${e.message}`);
     return false;
   }
 }
@@ -34,7 +34,7 @@ async function main() {
     { name: 'rebloom-mentor-match', env: 'AGENT_ENDPOINT_MENTOR_MATCH' },
   ];
 
-  console.log('=== ReBloom AI Agent 连接测试 ===');
+  console.log('=== ReBloom AI agent connection test ===');
 
   let passed = 0;
   let failed = 0;
@@ -42,7 +42,7 @@ async function main() {
   for (const { name, env } of agents) {
     const endpoint = process.env[env];
     if (!endpoint) {
-      console.log(`\n⏭️  ${name}: 未配置 ${env}，跳过`);
+      console.log(`\n⏭️  ${name}: ${env} not configured, skipping`);
       continue;
     }
 
@@ -51,7 +51,7 @@ async function main() {
     else failed++;
   }
 
-  console.log(`\n=== 结果: ${passed} 通过, ${failed} 失败 ===`);
+  console.log(`\n=== Result: ${passed} passed, ${failed} failed ===`);
   process.exit(failed > 0 ? 1 : 0);
 }
 

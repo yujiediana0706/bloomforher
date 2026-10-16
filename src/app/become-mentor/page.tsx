@@ -54,9 +54,9 @@ export default function BecomeMentorPage() {
             displayName: res.mentor.displayName,
             headline: res.mentor.headline,
             bio: res.mentor.bio,
-            companies: res.mentor.companies.join('，'),
-            schools: res.mentor.schools.join('，'),
-            topicTags: res.mentor.topicTags.join('，'),
+            companies: res.mentor.companies.join(','),
+            schools: res.mentor.schools.join(','),
+            topicTags: res.mentor.topicTags.join(','),
             priceSingle: String(res.mentor.priceSingle),
             pricePackage5: String(res.mentor.pricePackage5),
           });
@@ -64,14 +64,14 @@ export default function BecomeMentorPage() {
           setForm({ ...EMPTY_FORM, displayName: user.name });
         }
       } catch {
-        // 忽略加载错误，保持空表单
+        // Ignore load errors and keep the form empty
       }
     })();
   }, [user]);
 
   const submit = async () => {
     if (!form.displayName.trim()) {
-      setError('请填写展示名称');
+      setError('Please enter a display name');
       return;
     }
     setSaving(true);
@@ -98,23 +98,23 @@ export default function BecomeMentorPage() {
         pricePackage5: Number(form.pricePackage5) || 0,
       });
       setExisting(res.mentor);
-      setSuccess('资料已提交，审核中');
+      setSuccess('Profile submitted — under review');
     } catch (e) {
-      setError(e instanceof Error ? e.message : '提交失败');
+      setError(e instanceof Error ? e.message : 'Submission failed');
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <p className="text-sm text-slateblue-700">加载中…</p>;
+    return <p className="text-sm text-slateblue-700">Loading…</p>;
   }
 
   if (!user) {
     return (
       <Card>
         <p className="text-sm text-slateblue-700">
-          请先登录（右上角可切换演示账号）
+          Please sign in (switch demo accounts in the top-right corner)
         </p>
       </Card>
     );
@@ -126,21 +126,21 @@ export default function BecomeMentorPage() {
   return (
     <div className="mx-auto w-full max-w-2xl">
       <SectionTitle
-        eyebrow="导师社区"
-        title={existing ? '更新导师资料' : '开通导师资料'}
-        desc="把你的经验变成可被预约的支持，帮助更多女性走通 AI 转型之路。"
+        eyebrow="Mentor community"
+        title={existing ? 'Update mentor profile' : 'Create mentor profile'}
+        desc="Turn your experience into bookable support and help more women navigate their AI career transition."
       />
 
       {existing ? (
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <BadgeCheck className="h-4 w-4 text-coral-500" />
           <span className="text-xs font-bold text-slateblue-900">
-            当前状态：
+            Current status:{' '}
             {existing.verificationStatus === 'pending'
-              ? '审核中'
+              ? 'Under review'
               : existing.verificationStatus === 'seed_approved'
-                ? '已认证'
-                : '未通过'}
+                ? 'Verified'
+                : 'Not approved'}
           </span>
         </div>
       ) : null}
@@ -148,72 +148,72 @@ export default function BecomeMentorPage() {
       <Card>
         <div className="space-y-4">
           <label className="block">
-            <span className="text-xs font-bold text-slateblue-900">展示名称</span>
+            <span className="text-xs font-bold text-slateblue-900">Display name</span>
             <input
               value={form.displayName}
               onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-              placeholder="例如：林知夏"
+              placeholder="e.g. Alex Chen"
               className={field}
             />
           </label>
           <label className="block">
-            <span className="text-xs font-bold text-slateblue-900">一句话头衔</span>
+            <span className="text-xs font-bold text-slateblue-900">One-line headline</span>
             <input
               value={form.headline}
               onChange={(e) => setForm({ ...form, headline: e.target.value })}
-              placeholder="例如：前电商运营，转型 AI 产品经理"
+              placeholder="e.g. Former e-commerce operations lead, now an AI product manager"
               className={field}
             />
           </label>
           <label className="block">
-            <span className="text-xs font-bold text-slateblue-900">个人简介</span>
+            <span className="text-xs font-bold text-slateblue-900">Bio</span>
             <textarea
               value={form.bio}
               onChange={(e) => setForm({ ...form, bio: e.target.value })}
               rows={4}
-              placeholder="你的经历、擅长的话题、能提供的帮助…"
+              placeholder="Your background, the topics you know well, the help you can offer…"
               className={`${field} resize-none`}
             />
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-xs font-bold text-slateblue-900">
-                就职公司（逗号分隔）
+                Companies (comma-separated)
               </span>
               <input
                 value={form.companies}
                 onChange={(e) => setForm({ ...form, companies: e.target.value })}
-                placeholder="例如：字节跳动，某电商平台"
+                placeholder="e.g. ByteDance, an e-commerce platform"
                 className={field}
               />
             </label>
             <label className="block">
               <span className="text-xs font-bold text-slateblue-900">
-                毕业院校（逗号分隔）
+                Schools (comma-separated)
               </span>
               <input
                 value={form.schools}
                 onChange={(e) => setForm({ ...form, schools: e.target.value })}
-                placeholder="例如：浙江大学"
+                placeholder="e.g. Zhejiang University"
                 className={field}
               />
             </label>
           </div>
           <label className="block">
             <span className="text-xs font-bold text-slateblue-900">
-              擅长话题（逗号分隔）
+              Topics you know well (comma-separated)
             </span>
             <input
               value={form.topicTags}
               onChange={(e) => setForm({ ...form, topicTags: e.target.value })}
-              placeholder="例如：AI 产品，转型简历，面试辅导"
+              placeholder="e.g. AI product, career-change résumé, interview coaching"
               className={field}
             />
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-xs font-bold text-slateblue-900">
-                单次咨询价（元）
+                Single-session price (CNY)
               </span>
               <input
                 type="number"
@@ -226,7 +226,7 @@ export default function BecomeMentorPage() {
             </label>
             <label className="block">
               <span className="text-xs font-bold text-slateblue-900">
-                5 次套餐价（元）
+                5-session package price (CNY)
               </span>
               <input
                 type="number"
@@ -240,11 +240,11 @@ export default function BecomeMentorPage() {
           </div>
 
           <div className="rounded-xl border border-dashed border-silver-400 bg-silver-50 px-3 py-3">
-            <p className="text-xs font-bold text-slateblue-900">上传资质证明</p>
+            <p className="text-xs font-bold text-slateblue-900">Upload credentials</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-silver-300 bg-white px-3 py-1.5 text-xs font-bold text-slateblue-700 hover:bg-silver-100">
                 <Upload className="h-3.5 w-3.5" />
-                选择文件
+                Choose file
                 <input
                   type="file"
                   className="hidden"
@@ -260,11 +260,12 @@ export default function BecomeMentorPage() {
                   {certName}
                 </span>
               ) : (
-                <span className="text-xs text-slateblue-700">尚未选择文件</span>
+                <span className="text-xs text-slateblue-700">No file selected</span>
               )}
             </div>
             <p className="mt-1 text-[11px] text-slateblue-700">
-              原型仅记录文件名，不会真正上传。
+              The prototype only records the file name; nothing is actually
+              uploaded.
             </p>
           </div>
 
@@ -275,14 +276,14 @@ export default function BecomeMentorPage() {
             <div className="rounded-xl border border-warmgreen/40 bg-warmgreen/10 px-3 py-2 text-xs font-bold text-[#3f7a4a]">
               {success}
               <Link href="/mentor/manage" className="ml-2 underline">
-                前往导师工作台 →
+                Go to mentor dashboard →
               </Link>
             </div>
           ) : null}
 
           <div className="flex justify-end">
             <Button onClick={() => void submit()} disabled={saving}>
-              {saving ? '提交中…' : existing ? '保存更新' : '提交资料'}
+              {saving ? 'Submitting…' : existing ? 'Save changes' : 'Submit profile'}
             </Button>
           </div>
         </div>

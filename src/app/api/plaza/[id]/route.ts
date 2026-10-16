@@ -23,8 +23,8 @@ function toPlazaPostView(
 ): PlazaPostView {
   const author = db.users.find((u) => u.uid === post.authorId);
   const authorDisplay = post.anonymous
-    ? post.anonymousHandle ?? '匿名用户'
-    : author?.name ?? '匿名用户';
+    ? post.anonymousHandle ?? 'Anonymous user'
+    : author?.name ?? 'Anonymous user';
   const { authorId: _authorId, ...rest } = post;
   return { ...rest, authorDisplay, viewerIsAuthor: viewerUid === post.authorId };
 }
@@ -32,13 +32,13 @@ function toPlazaPostView(
 function toPlazaCommentView(c: PlazaComment, db: DB): PlazaCommentView {
   const author = db.users.find((u) => u.uid === c.authorId);
   const authorDisplay = c.anonymous
-    ? c.anonymousHandle ?? '匿名用户'
-    : author?.name ?? '匿名用户';
+    ? c.anonymousHandle ?? 'Anonymous user'
+    : author?.name ?? 'Anonymous user';
   const { authorId: _authorId, ...rest } = c;
   return { ...rest, authorDisplay };
 }
 
-// 点赞去重：跨请求保留（模块级内存，globalThis 单例）
+// Kudos dedup: persists across requests (module-level memory, globalThis singleton)
 interface KudosRegistry {
   __rebloomKudosSeen?: Set<string>;
 }
@@ -58,7 +58,7 @@ export async function GET(
   const uid = getUidFromRequest(req);
   const post = db.plazaPosts.find((p) => p.id === params.id);
   if (!post) {
-    return NextResponse.json({ error: '帖子不存在' }, { status: 404 });
+    return NextResponse.json({ error: 'Post not found' }, { status: 404 });
   }
 
   const isAuthor = uid !== null && uid === post.authorId;
@@ -94,15 +94,15 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const post = db.plazaPosts.find((p) => p.id === params.id);
   if (!post) {
-    return NextResponse.json({ error: '帖子不存在' }, { status: 404 });
+    return NextResponse.json({ error: 'Post not found' }, { status: 404 });
   }
 
   let body: ActionBody = {};
@@ -116,7 +116,7 @@ export async function POST(
     case 'comment': {
       const text = typeof body.text === 'string' ? body.text.trim() : '';
       if (!text) {
-        return NextResponse.json({ error: '评论内容不能为空' }, { status: 400 });
+        return NextResponse.json({ error: 'Comment text cannot be empty' }, { status: 400 });
       }
       const anonymous = Boolean(body.anonymous);
       const commentId = newId('pc');
@@ -164,7 +164,7 @@ export async function POST(
 
     case 'resolve': {
       if (uid !== post.authorId) {
-        return NextResponse.json({ error: '只有作者可以标记解决' }, { status: 403 });
+        return NextResponse.json({ error: 'Only the author can mark it resolved' }, { status: 403 });
       }
       post.status = 'resolved';
       post.updatedAt = nowIso();
@@ -172,6 +172,6 @@ export async function POST(
     }
 
     default:
-      return NextResponse.json({ error: '未知操作' }, { status: 400 });
+      return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   }
 }

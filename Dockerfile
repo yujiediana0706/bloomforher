@@ -1,14 +1,14 @@
-# ReBloom AI · 她径 — Cloud Run 部署镜像
+# ReBloom AI — Cloud Run deployment image
 
 FROM node:20-alpine AS base
 
-# 安装依赖（包含 devDependencies，构建需要）
+# Install dependencies (including devDependencies, needed for the build)
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-# 构建
+# Build
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -16,7 +16,7 @@ COPY . .
 RUN mkdir -p public
 RUN npm run build
 
-# 生产运行
+# Production runtime
 FROM base AS runner
 WORKDIR /app
 

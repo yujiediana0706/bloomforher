@@ -12,7 +12,7 @@ async function test() {
     const auth = new GoogleAuth({ credentials: key, scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
     const client = await auth.getClient();
     const token = (await client.getAccessToken()).token;
-    console.log('Token 获取成功');
+    console.log('Token acquired successfully');
 
     const url = 'https://us-west1-aiplatform.googleapis.com/v1/projects/107927033625/locations/us-west1/reasoningEngines';
     console.log('Fetching:', url);

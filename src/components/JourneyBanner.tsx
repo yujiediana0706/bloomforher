@@ -51,8 +51,8 @@ export function JourneyBanner({ currentStep }: { currentStep: number }) {
         })}
       </div>
       <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-silver-200 pt-2 text-[11px] font-bold text-slateblue-700">
-        <span>🤖 AI Coach 全程陪伴</span>
-        <span>💗 Community 持续支持（同辈互助免费）</span>
+        <span>🤖 AI Coach with you all the way</span>
+        <span>💗 Community support (peer support is free)</span>
       </div>
     </div>
   );

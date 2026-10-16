@@ -15,11 +15,11 @@ interface EvidenceBody {
 
 export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const evidences = db.evidences
     .filter((e) => e.uid === uid)
@@ -33,11 +33,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   let body: EvidenceBody = {};
   try {
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   const detail = typeof body.detail === 'string' ? body.detail : '';
   if (!title) {
-    return NextResponse.json({ error: '标题不能为空' }, { status: 400 });
+    return NextResponse.json({ error: 'Title cannot be empty' }, { status: 400 });
   }
 
   const tags = Array.isArray(body.tags)

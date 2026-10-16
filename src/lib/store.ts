@@ -1,5 +1,7 @@
-// 服务端数据层。优先使用 Firestore（有 GCP 凭据时），否则回退到内存（本地开发）。
-// 内存模式下用 globalThis 单例，保证同一 Node 进程中跨请求/热更新保留状态。
+// Server-side data layer. Prefers Firestore when a GCP project is configured,
+// and falls back to an in-memory store for local development.
+// In memory mode a globalThis singleton keeps state across requests and hot
+// reloads within the same Node process.
 
 import type {
   Booking,
@@ -23,28 +25,23 @@ import type {
 } from './types';
 import {
   COMMUNITY_USERS,
-  DEMO_EXPLORER,
-  DEMO_RETURNER,
   MENTORS,
   MENTOR_SLOTS,
   MENTOR_USERS,
-  SEED_BOOKINGS,
   SEED_CIRCLE_POSTS,
-  SEED_EVIDENCES,
-  SEED_LAB_TASKS,
-  SEED_OPPORTUNITY_REPORT,
-  SEED_PACKAGE_ORDERS,
-  SEED_PEER_CHATS,
   SEED_PLAZA_COMMENTS,
   SEED_PLAZA_POSTS,
-  SEED_RETURN_PLAN,
-  SEED_SKILL_PROFILE,
-  SEED_WILLING,
 } from './mockData';
 import { getFirestoreDb, useFirestore } from './firestore';
 
+export interface Credential {
+  salt: string;
+  hash: string;
+}
+
 export interface DB {
   users: UserProfile[];
+  credentials: Record<string, Credential>;
   skillProfiles: Record<string, SkillProfile>;
   opportunityReports: Record<string, OpportunityReport>;
   returnPlans: Record<string, ReturnPlan>;
@@ -73,20 +70,23 @@ declare global {
 
 function initDB(): DB {
   return {
-    users: [DEMO_RETURNER, DEMO_EXPLORER, ...COMMUNITY_USERS, ...MENTOR_USERS],
-    skillProfiles: { demo_returner: SEED_SKILL_PROFILE },
-    opportunityReports: { demo_returner: SEED_OPPORTUNITY_REPORT },
-    returnPlans: { demo_returner: SEED_RETURN_PLAN },
-    labTasks: [...SEED_LAB_TASKS],
-    evidences: [...SEED_EVIDENCES],
+    // Only platform content is seeded. Real end users start from an empty
+    // account and build their journey from scratch.
+    users: [...COMMUNITY_USERS, ...MENTOR_USERS],
+    credentials: {},
+    skillProfiles: {},
+    opportunityReports: {},
+    returnPlans: {},
+    labTasks: [],
+    evidences: [],
     plazaPosts: [...SEED_PLAZA_POSTS],
     plazaComments: [...SEED_PLAZA_COMMENTS],
-    willing: { ...SEED_WILLING },
-    peerChats: [...SEED_PEER_CHATS],
+    willing: {},
+    peerChats: [],
     mentors: [...MENTORS],
     mentorSlots: [...MENTOR_SLOTS],
-    bookings: [...SEED_BOOKINGS],
-    packageOrders: [...SEED_PACKAGE_ORDERS],
+    bookings: [],
+    packageOrders: [],
     circlePosts: [...SEED_CIRCLE_POSTS],
     circleComments: [],
     reports: [],
@@ -97,15 +97,15 @@ function initDB(): DB {
 export function getDB(): DB {
   if (!globalThis.__rebloomDB) {
     globalThis.__rebloomDB = initDB();
-    // 首次调用时异步从 Firestore 加载（fire-and-forget）
+    // Load from Firestore asynchronously on first call (fire-and-forget).
     loadFromFirestore().catch((e) => {
-      console.error('[Firestore] 初始化加载失败:', (e as Error).message);
+      console.error('[Firestore] initial load failed:', (e as Error).message);
     });
   }
   return globalThis.__rebloomDB;
 }
 
-/** 确保 Firestore 数据已加载（API routes 在写操作前调用） */
+/** Ensure Firestore data is loaded (called by API routes before writes). */
 export async function ensureLoaded(): Promise<DB> {
   const db = getDB();
   if (!globalThis.__rebloomFirestoreLoaded) {
@@ -114,10 +114,11 @@ export async function ensureLoaded(): Promise<DB> {
   return db;
 }
 
-// —— Firestore 同步层 ——
+// —— Firestore sync layer ——
 
 const COLLECTION_MAP: Record<string, keyof DB> = {
   users: 'users',
+  credentials: 'credentials',
   skillProfiles: 'skillProfiles',
   opportunityReports: 'opportunityReports',
   returnPlans: 'returnPlans',
@@ -134,61 +135,72 @@ const COLLECTION_MAP: Record<string, keyof DB> = {
   circleComments: 'circleComments',
 };
 
-/** 从 Firestore 加载数据到内存（幂等，只执行一次） */
+/** Load Firestore data into memory (idempotent, runs once). */
 export async function loadFromFirestore(): Promise<void> {
   if (globalThis.__rebloomFirestoreLoaded) return;
   const fs = getFirestoreDb();
   if (!fs) return;
 
   const db = getDB();
-  console.log('[Firestore] 开始从 Firestore 加载数据...');
+  console.log('[Firestore] loading data from Firestore...');
 
-  // 网络受限环境下设置超时，避免卡住
-  const timeout = <T>(p: Promise<T>, ms = 8000): Promise<T> =>
+  // Timeout for restricted-network environments to avoid hanging.
+  const timeout = <T>(p: Promise<T>, ms = 5000): Promise<T> =>
     Promise.race([
       p,
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), ms)),
     ]);
 
-  for (const [collection, dbKey] of Object.entries(COLLECTION_MAP)) {
-    try {
-      const snapshot = await timeout(fs.collection(collection).get());
-      if (snapshot.empty) continue;
+  const isRecordCollection = (dbKey: keyof DB) =>
+    dbKey === 'skillProfiles' ||
+    dbKey === 'opportunityReports' ||
+    dbKey === 'returnPlans' ||
+    dbKey === 'credentials';
 
-      if (dbKey === 'skillProfiles' || dbKey === 'opportunityReports' || dbKey === 'returnPlans') {
-        // Record 类型：用 uid 作为 key
-        const record: Record<string, unknown> = {};
-        snapshot.docs.forEach((doc) => {
-          const data = doc.data() as Record<string, unknown>;
-          if (data.uid) record[data.uid as string] = data;
-        });
-        (db as unknown as Record<string, unknown>)[dbKey] = record;
-      } else {
-        // 数组类型
-        const items = snapshot.docs.map((doc) => doc.data());
-        (db as unknown as Record<string, unknown>)[dbKey] = items;
+  // Load every collection in parallel so the first request is not serialized
+  // across ~17 round-trips.
+  await Promise.all(
+    Object.entries(COLLECTION_MAP).map(async ([collection, dbKey]) => {
+      try {
+        const snapshot = await timeout(fs.collection(collection).get());
+        if (snapshot.empty) return;
+
+        if (isRecordCollection(dbKey)) {
+          // Record type: keyed by uid.
+          const record: Record<string, unknown> = {};
+          snapshot.docs.forEach((doc) => {
+            const data = doc.data() as Record<string, unknown>;
+            const key = (data.uid as string) || doc.id;
+            if (key) record[key] = data;
+          });
+          (db as unknown as Record<string, unknown>)[dbKey] = record;
+        } else {
+          // Array type.
+          const items = snapshot.docs.map((doc) => doc.data());
+          (db as unknown as Record<string, unknown>)[dbKey] = items;
+        }
+      } catch (e) {
+        console.error(`[Firestore] failed to load ${collection}:`, (e as Error).message);
       }
-    } catch (e) {
-      console.error(`[Firestore] 加载 ${collection} 失败:`, (e as Error).message);
-    }
-  }
+    })
+  );
 
   globalThis.__rebloomFirestoreLoaded = true;
-  console.log('[Firestore] 数据加载完成');
+  console.log('[Firestore] data loaded');
 }
 
-/** 同步单个文档到 Firestore（异步，不阻塞） */
+/** Sync a single document to Firestore (async, non-blocking). */
 export function syncToFirestore(collection: string, docId: string, data: unknown): void {
   const fs = getFirestoreDb();
   if (!fs) return;
 
   const docRef = fs.collection(collection).doc(docId);
   docRef.set(data as Record<string, unknown>, { merge: true }).catch((e) => {
-    console.error(`[Firestore] 同步 ${collection}/${docId} 失败:`, (e as Error).message);
+    console.error(`[Firestore] failed to sync ${collection}/${docId}:`, (e as Error).message);
   });
 }
 
-/** 同步数组中的一批文档到 Firestore */
+/** Sync a batch of array documents to Firestore. */
 export function syncBatchToFirestore<T extends { id: string }>(collection: string, items: T[]): void {
   const fs = getFirestoreDb();
   if (!fs) return;
@@ -199,26 +211,26 @@ export function syncBatchToFirestore<T extends { id: string }>(collection: strin
     batch.set(ref, item as Record<string, unknown>, { merge: true });
   });
   batch.commit().catch((e) => {
-    console.error(`[Firestore] 批量同步 ${collection} 失败:`, (e as Error).message);
+    console.error(`[Firestore] failed to batch sync ${collection}:`, (e as Error).message);
   });
 }
 
-/** 删除 Firestore 中的文档 */
+/** Delete a document from Firestore. */
 export function deleteFromFirestore(collection: string, docId: string): void {
   const fs = getFirestoreDb();
   if (!fs) return;
 
   fs.collection(collection).doc(docId).delete().catch((e) => {
-    console.error(`[Firestore] 删除 ${collection}/${docId} 失败:`, (e as Error).message);
+    console.error(`[Firestore] failed to delete ${collection}/${docId}:`, (e as Error).message);
   });
 }
 
-/** 判断当前是否使用 Firestore */
+/** Whether Firestore is currently in use. */
 export function isFirestoreMode(): boolean {
   return useFirestore();
 }
 
-// —— 便于路由使用的查询助手 ——
+// —— Query helpers used by routes ——
 
 let counter = 0;
 export function newId(prefix: string): string {
@@ -234,6 +246,11 @@ export function findUser(db: DB, uid: string): UserProfile | undefined {
   return db.users.find((u) => u.uid === uid);
 }
 
+export function findUserByEmail(db: DB, email: string): UserProfile | undefined {
+  const target = email.trim().toLowerCase();
+  return db.users.find((u) => u.email.toLowerCase() === target);
+}
+
 export function addEvidence(
   db: DB,
   ev: Omit<EvidenceItem, 'id' | 'createdAt'>
@@ -244,7 +261,8 @@ export function addEvidence(
   return item;
 }
 
-/** 任务/成果里程碑：完成数达到 1/5/10 时生成里程碑证据（同类型里程碑只生成一次） */
+/** Task/outcome milestone: generates milestone evidence at 1/5/10 completed
+ *  tasks (each milestone type is generated only once). */
 export function checkTaskMilestones(db: DB, uid: string): EvidenceItem | null {
   const doneCount = db.labTasks.filter(
     (t) => t.uid === uid && t.status === 'done'
@@ -255,16 +273,16 @@ export function checkTaskMilestones(db: DB, uid: string): EvidenceItem | null {
         (e) =>
           e.uid === uid &&
           e.type === 'milestone' &&
-          e.tags.includes(`里程碑${threshold}`)
+          e.tags.includes(`Milestone ${threshold}`)
       );
       if (!exists) {
         return addEvidence(db, {
           uid,
           type: 'milestone',
-          title: `里程碑：完成 ${threshold} 个实操任务`,
-          detail: `你已经完成 ${threshold} 个真实 AI 任务，继续保持。`,
+          title: `Milestone: ${threshold} hands-on tasks completed`,
+          detail: `You have completed ${threshold} real AI task(s). Keep going.`,
           source: 'auto',
-          tags: ['里程碑', `里程碑${threshold}`],
+          tags: ['Milestone', `Milestone ${threshold}`],
           isPublic: true,
         });
       }

@@ -18,11 +18,11 @@ interface NextTask {
 
 export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const evidences = db.evidences
     .filter((e) => e.uid === uid)
@@ -43,25 +43,25 @@ export async function GET(req: NextRequest) {
 
   const nextTasks: NextTask[] = [];
   if (user.journeyStep < 2) {
-    nextTasks.push({ title: '完成注册与目标设置', href: '/onboarding' });
+    nextTasks.push({ title: 'Complete sign-up and goal setting', href: '/onboarding' });
   }
   if (!db.skillProfiles[uid]) {
-    nextTasks.push({ title: '完成技能发现，生成可迁移技能画像', href: '/skills' });
+    nextTasks.push({ title: 'Complete Skill Discovery and generate your transferable-skills profile', href: '/skills' });
   }
   if (!db.opportunityReports[uid]) {
-    nextTasks.push({ title: '探索与你匹配的 AI 机会', href: '/opportunities' });
+    nextTasks.push({ title: 'Explore AI opportunities matched to you', href: '/opportunities' });
   }
   const doneTasks = db.labTasks.filter(
     (t) => t.uid === uid && t.status === 'done'
   ).length;
   if (doneTasks === 0) {
-    nextTasks.push({ title: '完成第一个实操任务', href: '/tasks-lab' });
+    nextTasks.push({ title: 'Complete your first hands-on task', href: '/tasks-lab' });
   }
   if (!db.returnPlans[uid]) {
-    nextTasks.push({ title: '生成你的 30 天回归计划', href: '/plan' });
+    nextTasks.push({ title: 'Generate your 30-day return plan', href: '/plan' });
   }
   if (user.journeyStep < 6) {
-    nextTasks.push({ title: '加入对话广场，认识同路人', href: '/plaza' });
+    nextTasks.push({ title: 'Join the Plaza to meet fellow travelers', href: '/plaza' });
   }
 
   const lifts = db.users.map((u) =>

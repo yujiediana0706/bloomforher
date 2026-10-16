@@ -14,19 +14,19 @@ import type {
 } from '@/lib/types';
 
 const PEER_STATUS_LABELS: Record<PeerChat['status'], string> = {
-  requested: '待帮助者确认',
-  confirmed: '已确认',
-  completed: '已完成',
-  cancelled: '已取消',
+  requested: 'Awaiting helper confirmation',
+  confirmed: 'Confirmed',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
 };
 
 const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
-  held: '费用托管中',
-  confirmed: '已确认',
-  completed: '待学员确认完成',
-  released: '已完成 · 已放款',
-  rejected: '已拒绝',
-  cancelled: '已取消',
+  held: 'Payment held in escrow',
+  confirmed: 'Confirmed',
+  completed: 'Awaiting student confirmation',
+  released: 'Completed · funds released',
+  rejected: 'Rejected',
+  cancelled: 'Cancelled',
 };
 
 const BOOKING_STATUS_TONES: Record<
@@ -42,10 +42,10 @@ const BOOKING_STATUS_TONES: Record<
 };
 
 function fmtTime(iso?: string) {
-  if (!iso) return '待定';
+  if (!iso) return 'TBD';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString('zh-CN', {
+  return d.toLocaleString('en-US', {
     month: 'numeric',
     day: 'numeric',
     hour: '2-digit',
@@ -101,7 +101,7 @@ export default function MySessionsPage() {
         setMentorOwnedIds(new Set());
       }
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '加载失败');
+      setNotice(e instanceof Error ? e.message : 'Failed to load');
     } finally {
       setLoading(false);
     }
@@ -114,20 +114,20 @@ export default function MySessionsPage() {
   const peerAction = async (body: Record<string, unknown>) => {
     try {
       await apiSend('/api/peer-chats', 'POST', body);
-      setNotice('操作成功。');
+      setNotice('Done.');
       await load();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '操作失败');
+      setNotice(e instanceof Error ? e.message : 'Action failed');
     }
   };
 
   const bookingAction = async (body: Record<string, unknown>) => {
     try {
       await apiSend('/api/bookings', 'POST', body);
-      setNotice('操作成功。');
+      setNotice('Done.');
       await load();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '操作失败');
+      setNotice(e instanceof Error ? e.message : 'Action failed');
     }
   };
 
@@ -135,11 +135,11 @@ export default function MySessionsPage() {
     const form = reviewForm[bookingId];
     if (!form) return;
     if (!form.rating) {
-      setNotice('请选择评分');
+      setNotice('Please select a rating');
       return;
     }
     if (form.comment.trim().length < 5) {
-      setNotice('评价内容至少 5 个字');
+      setNotice('Your review must be at least 5 characters.');
       return;
     }
     try {
@@ -148,24 +148,24 @@ export default function MySessionsPage() {
         rating: form.rating,
         comment: form.comment.trim(),
       });
-      setNotice('评价已提交，谢谢你帮助其他姐妹。');
+      setNotice('Review submitted—thank you for helping other women.');
       await load();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : '评价失败');
+      setNotice(e instanceof Error ? e.message : 'Failed to submit review');
     }
   };
 
   if (authLoading) {
     return (
-      <p className="py-10 text-center text-sm text-slateblue-700">加载中…</p>
+      <p className="py-10 text-center text-sm text-slateblue-700">Loading…</p>
     );
   }
 
   if (!user) {
     return (
       <div className="space-y-4">
-        <h1 className="text-lg font-black text-slateblue-900">我的预约</h1>
-        <EmptyState text="请先登录（右上角可切换演示账号）" />
+        <h1 className="text-lg font-black text-slateblue-900">My sessions</h1>
+        <EmptyState text="Please sign in first (you can switch demo accounts from the top-right menu)." />
       </div>
     );
   }
@@ -174,19 +174,19 @@ export default function MySessionsPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-lg font-black text-slateblue-900 sm:text-xl">
-          我的预约
+          My sessions
         </h1>
         <p className="mt-1 text-sm text-slateblue-700">
-          同辈互助 100% 免费 · 专业导师付费支持
+          Peer support is 100% free · professional mentors are paid
         </p>
       </div>
 
       <div className="flex gap-2">
         <Chip active={tab === 'peer'} onClick={() => setTab('peer')}>
-          同辈互助（免费）
+          Peer support (free)
         </Chip>
         <Chip active={tab === 'mentor'} onClick={() => setTab('mentor')}>
-          导师会话（付费）
+          Mentor sessions (paid)
         </Chip>
       </div>
 
@@ -197,11 +197,11 @@ export default function MySessionsPage() {
       ) : null}
 
       {loading ? (
-        <p className="py-8 text-center text-sm text-slateblue-700">加载中…</p>
+        <p className="py-8 text-center text-sm text-slateblue-700">Loading…</p>
       ) : tab === 'peer' ? (
-        /* —— 同辈互助（免费）—— */
+        /* —— Peer support (free) —— */
         peerChats.length === 0 ? (
-          <EmptyState text="还没有同辈互助记录。去对话广场回应一位姐妹吧。" />
+          <EmptyState text="No peer support records yet. Head to the conversation plaza and reply to someone." />
         ) : (
           <div className="space-y-4">
             {peerChats.map((c) => {
@@ -214,28 +214,29 @@ export default function MySessionsPage() {
               return (
                 <Card key={c.id}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone="green">免费 · 同辈互助</Badge>
+                    <Badge tone="green">Free · Peer support</Badge>
                     <Badge tone={c.status === 'completed' ? 'green' : 'coral'}>
                       {PEER_STATUS_LABELS[c.status]}
                     </Badge>
                     <span className="text-xs font-bold text-slateblue-700">
-                      {isHelper ? '你是帮助者' : '你是发起人'} · 对象：{counterpart}
+                      {isHelper ? "You're the helper" : "You're the requester"} ·
+                      With: {counterpart}
                     </span>
                   </div>
 
                   <div className="mt-2 space-y-1 text-sm text-slateblue-700">
                     <p>
-                      提议时间：
+                      Proposed time:{' '}
                       <span className="font-bold">
                         {fmtTime(c.proposedTime)}
                       </span>
                       {c.confirmedTime
-                        ? ` · 确认：${fmtTime(c.confirmedTime)}`
+                        ? ` · Confirmed: ${fmtTime(c.confirmedTime)}`
                         : ''}
                     </p>
                     {linkVisible ? (
                       <p>
-                        聊天链接：
+                        Chat link:{' '}
                         <a
                           href={c.chatLink}
                           className="font-bold text-coral-600 underline"
@@ -246,7 +247,7 @@ export default function MySessionsPage() {
                     ) : null}
                     {c.appreciation ? (
                       <p className="rounded-xl bg-softpink-100 px-3 py-2 text-slateblue-900">
-                        感谢：{c.appreciation}
+                        Thanks: {c.appreciation}
                       </p>
                     ) : null}
                   </div>
@@ -262,7 +263,7 @@ export default function MySessionsPage() {
                               [c.id]: e.target.value,
                             }))
                           }
-                          placeholder="聊天链接（可选）"
+                          placeholder="Chat link (optional)"
                           className="min-w-[180px] flex-1 rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
                         />
                         <Button
@@ -274,7 +275,7 @@ export default function MySessionsPage() {
                             })
                           }
                         >
-                          确认
+                          Confirm
                         </Button>
                       </>
                     ) : null}
@@ -287,7 +288,7 @@ export default function MySessionsPage() {
                           void peerAction({ action: 'complete', chatId: c.id })
                         }
                       >
-                        标记完成
+                        Mark as complete
                       </Button>
                     ) : null}
 
@@ -304,7 +305,7 @@ export default function MySessionsPage() {
                             }))
                           }
                           rows={2}
-                          placeholder="写一句感谢，会为对方生成一份同辈感谢证据"
+                          placeholder="Write a short thank-you—it creates a peer-appreciation evidence entry for them."
                           className="w-full rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
                         />
                         <div className="mt-2 flex justify-end">
@@ -317,7 +318,7 @@ export default function MySessionsPage() {
                               })
                             }
                           >
-                            发送感谢
+                            Send thanks
                           </Button>
                         </div>
                       </div>
@@ -328,9 +329,9 @@ export default function MySessionsPage() {
             })}
           </div>
         )
-      ) : /* —— 导师会话（付费）—— */
+      ) : /* —— Mentor sessions (paid) —— */
       bookings.length === 0 ? (
-        <EmptyState text="还没有导师会话记录。去导师社区找一位懂你的导师吧。" />
+        <EmptyState text="No mentor sessions yet. Visit the mentor community to find a mentor who understands you." />
       ) : (
         <div className="space-y-4">
           {bookings.map((b) => {
@@ -351,8 +352,9 @@ export default function MySessionsPage() {
                     {BOOKING_STATUS_LABELS[b.status]}
                   </Badge>
                   <span className="text-xs font-bold text-slateblue-700">
-                    {b.kind === 'package' ? '5 次套餐' : '单次'} ·{' '}
-                    {isStudent ? '你是学员' : isMentorRole ? '你是导师' : ''}
+                    {b.kind === 'package' ? '5-session package' : 'Single session'}{' '}
+                    ·{' '}
+                    {isStudent ? "You're the student" : isMentorRole ? "You're the mentor" : ''}
                   </span>
                 </div>
 
@@ -362,21 +364,21 @@ export default function MySessionsPage() {
 
                 <div className="mt-2 space-y-1 text-sm text-slateblue-700">
                   <p>
-                    时间：
+                    Time:{' '}
                     <span className="font-bold">
                       {fmtTime(b.scheduledTime)}
                     </span>
                   </p>
                   <p>
-                    金额：
+                    Amount:{' '}
                     <span className="font-bold">¥{b.amount}</span>
                     <span className="ml-2 text-[11px] font-bold text-slateblue-700">
-                      演示环境 · 模拟扣款/放款
+                      Demo environment · simulated charge/release
                     </span>
                   </p>
                   {linkVisible ? (
                     <p>
-                      会议链接：
+                      Meeting link:{' '}
                       <a
                         href={b.meetingLink}
                         className="font-bold text-coral-600 underline"
@@ -387,17 +389,17 @@ export default function MySessionsPage() {
                   ) : null}
                   {b.review ? (
                     <p className="rounded-xl bg-softpink-100 px-3 py-2 text-slateblue-900">
-                      你的评价：{b.review.rating} 星 · {b.review.comment}
+                      Your review: {b.review.rating} stars · {b.review.comment}
                     </p>
                   ) : null}
                   {b.endorsement ? (
                     <p className="rounded-xl bg-warmgreen/15 px-3 py-2 text-slateblue-900">
-                      导师背书：{b.endorsement}
+                      Mentor endorsement: {b.endorsement}
                     </p>
                   ) : null}
                 </div>
 
-                {/* 导师视角操作 */}
+                {/* Mentor actions */}
                 {isMentorRole ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {b.status === 'held' ? (
@@ -410,7 +412,7 @@ export default function MySessionsPage() {
                             })
                           }
                         >
-                          确认预约
+                          Confirm booking
                         </Button>
                         <Button
                           variant="secondary"
@@ -421,7 +423,7 @@ export default function MySessionsPage() {
                             })
                           }
                         >
-                          拒绝
+                          Reject
                         </Button>
                       </>
                     ) : null}
@@ -434,7 +436,7 @@ export default function MySessionsPage() {
                           })
                         }
                       >
-                        标记完成
+                        Mark as complete
                       </Button>
                     ) : null}
                     {b.status === 'released' && !b.endorsement ? (
@@ -448,7 +450,7 @@ export default function MySessionsPage() {
                             }))
                           }
                           rows={2}
-                          placeholder="给学员写一句导师背书，会生成一份导师背书证据"
+                          placeholder="Write a short endorsement for the student—it creates a mentor-endorsement evidence entry."
                           className="w-full rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
                         />
                         <div className="mt-2 flex justify-end">
@@ -461,7 +463,7 @@ export default function MySessionsPage() {
                               })
                             }
                           >
-                            提交背书
+                            Submit endorsement
                           </Button>
                         </div>
                       </div>
@@ -469,7 +471,7 @@ export default function MySessionsPage() {
                   </div>
                 ) : null}
 
-                {/* 学员视角操作 */}
+                {/* Student actions */}
                 {isStudent ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {b.status === 'completed' ? (
@@ -481,14 +483,14 @@ export default function MySessionsPage() {
                           })
                         }
                       >
-                        确认完成（放款给导师）
+                        Confirm completion (release funds to mentor)
                       </Button>
                     ) : null}
                     {canReview ? (
                       <div className="w-full rounded-2xl border border-silver-300 bg-silver-50 p-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs font-bold text-slateblue-700">
-                            评分
+                            Rating
                           </span>
                           <select
                             value={form?.rating ?? 0}
@@ -503,10 +505,10 @@ export default function MySessionsPage() {
                             }
                             className="rounded-xl border border-silver-300 bg-white px-2 py-1.5 text-sm font-bold text-slateblue-900 outline-none focus:border-coral-500"
                           >
-                            <option value={0}>请选择</option>
+                            <option value={0}>Select</option>
                             {[1, 2, 3, 4, 5].map((n) => (
                               <option key={n} value={n}>
-                                {n} 星
+                                {n} stars
                               </option>
                             ))}
                           </select>
@@ -523,12 +525,12 @@ export default function MySessionsPage() {
                             }))
                           }
                           rows={2}
-                          placeholder="写下你的真实体验（至少 5 个字）"
+                          placeholder="Share your honest experience (at least 5 characters)"
                           className="mt-2 w-full rounded-xl border border-silver-300 bg-white px-3 py-2 text-sm text-slateblue-900 outline-none focus:border-coral-500"
                         />
                         <div className="mt-2 flex justify-end">
                           <Button onClick={() => void submitReview(b.id)}>
-                            提交评价
+                            Submit review
                           </Button>
                         </div>
                       </div>
@@ -542,18 +544,18 @@ export default function MySessionsPage() {
           {packageOrders.length > 0 ? (
             <Card>
               <h3 className="text-base font-extrabold text-slateblue-900">
-                套餐订单
+                Package orders
               </h3>
               <div className="mt-2 space-y-2">
                 {packageOrders.map((o) => (
                   <p key={o.id} className="text-sm text-slateblue-700">
-                    {o.totalSessions} 次套餐 · 剩余 {o.remainingRedemptions} 次
-                    · ¥{o.amount} ·{' '}
+                    {o.totalSessions}-session package · {o.remainingRedemptions}{' '}
+                    remaining · ¥{o.amount} ·{' '}
                     <span className="font-bold">
-                      {o.status === 'active' ? '使用中' : '已用完'}
+                      {o.status === 'active' ? 'Active' : 'Used up'}
                     </span>
                     <span className="ml-2 text-[11px] font-bold">
-                      演示环境 · 模拟扣款
+                      Demo environment · simulated charge
                     </span>
                   </p>
                 ))}
@@ -562,9 +564,9 @@ export default function MySessionsPage() {
           ) : null}
 
           <p className="text-center text-xs font-bold text-slateblue-700">
-            想看更多导师？
+            Want to see more mentors?
             <Link href="/community" className="ml-1 text-coral-600 underline">
-              去导师社区
+              Go to the mentor community
             </Link>
           </p>
         </div>

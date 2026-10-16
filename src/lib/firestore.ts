@@ -1,5 +1,6 @@
-// Firestore 客户端（懒加载）。有 GCP 凭据时返回 Firestore 实例，否则返回 null。
-// 仅服务端使用，客户端组件不得引入。
+// Firestore client (lazy-loaded). Returns a Firestore instance when a GCP
+// project is configured, otherwise returns null.
+// Server-side only; must not be imported by client components.
 
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
@@ -13,24 +14,34 @@ export function getFirestoreDb(): Firestore | null {
   if (_initFailed) return null;
 
   const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-  if (!keyPath || !projectId) return null;
+  const projectId =
+    process.env.GOOGLE_CLOUD_PROJECT || process.env.FIREBASE_PROJECT_ID;
+
+  // Without a project id there is nothing to talk to.
+  if (!projectId) return null;
 
   try {
-    const key = JSON.parse(readFileSync(keyPath, 'utf8'));
     if (getApps().length === 0) {
-      initializeApp({ credential: cert(key), projectId });
+      if (keyPath) {
+        // Local development: explicit service account key file.
+        const key = JSON.parse(readFileSync(keyPath, 'utf8'));
+        initializeApp({ credential: cert(key), projectId });
+      } else {
+        // Cloud Run: use Application Default Credentials from the runtime
+        // service account (same pattern as the Agent client).
+        initializeApp({ projectId });
+      }
     }
     _db = getFirestore();
     return _db;
   } catch (e) {
-    console.error('[Firestore] 初始化失败:', (e as Error).message);
+    console.error('[Firestore] init failed:', (e as Error).message);
     _initFailed = true;
     return null;
   }
 }
 
-/** 判断当前是否使用 Firestore 后端 */
+/** Whether the Firestore backend is currently in use. */
 export function useFirestore(): boolean {
   return getFirestoreDb() !== null;
 }

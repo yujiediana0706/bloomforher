@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const peerChats = db.peerChats
@@ -29,11 +29,11 @@ interface PeerBody {
 
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   let body: PeerBody = {};
   try {
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         typeof helperUid !== 'string' ||
         typeof proposedTime !== 'string'
       ) {
-        return NextResponse.json({ error: '参数不合法' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
       }
       const list = db.willing[postId] ?? [];
       const willing = list.find(
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       );
       if (!willing) {
         return NextResponse.json(
-          { error: '该用户未表示愿意帮助或已被预约' },
+          { error: 'This user has not offered to help, or is already booked' },
           { status: 409 }
         );
       }
@@ -84,10 +84,10 @@ export async function POST(req: NextRequest) {
     case 'confirm': {
       const chat = db.peerChats.find((c) => c.id === body.chatId);
       if (!chat) {
-        return NextResponse.json({ error: '会话不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
       }
       if (chat.helperId !== uid) {
-        return NextResponse.json({ error: '只有帮助者可确认' }, { status: 403 });
+        return NextResponse.json({ error: 'Only the helper can confirm' }, { status: 403 });
       }
       chat.status = 'confirmed';
       chat.confirmedTime = nowIso();
@@ -101,10 +101,10 @@ export async function POST(req: NextRequest) {
     case 'complete': {
       const chat = db.peerChats.find((c) => c.id === body.chatId);
       if (!chat) {
-        return NextResponse.json({ error: '会话不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
       }
       if (chat.requesterId !== uid && chat.helperId !== uid) {
-        return NextResponse.json({ error: '无权操作' }, { status: 403 });
+        return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
       }
       chat.status = 'completed';
       chat.updatedAt = nowIso();
@@ -117,10 +117,10 @@ export async function POST(req: NextRequest) {
     case 'cancel': {
       const chat = db.peerChats.find((c) => c.id === body.chatId);
       if (!chat) {
-        return NextResponse.json({ error: '会话不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
       }
       if (chat.requesterId !== uid && chat.helperId !== uid) {
-        return NextResponse.json({ error: '无权操作' }, { status: 403 });
+        return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
       }
       chat.status = 'cancelled';
       chat.updatedAt = nowIso();
@@ -133,14 +133,14 @@ export async function POST(req: NextRequest) {
     case 'appreciate': {
       const chat = db.peerChats.find((c) => c.id === body.chatId);
       if (!chat) {
-        return NextResponse.json({ error: '会话不存在' }, { status: 404 });
+        return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
       }
       if (chat.requesterId !== uid) {
-        return NextResponse.json({ error: '只有发起者可感谢' }, { status: 403 });
+        return NextResponse.json({ error: 'Only the requester can express appreciation' }, { status: 403 });
       }
       const text = typeof body.text === 'string' ? body.text.trim() : '';
       if (!text) {
-        return NextResponse.json({ error: '感谢内容不能为空' }, { status: 400 });
+        return NextResponse.json({ error: 'Appreciation text cannot be empty' }, { status: 400 });
       }
       chat.appreciation = text;
       chat.updatedAt = nowIso();
@@ -148,10 +148,10 @@ export async function POST(req: NextRequest) {
       const evidence = addEvidence(db, {
         uid: chat.helperId,
         type: 'peer_appreciation',
-        title: `同辈感谢：${chat.requesterName}`,
+        title: `Peer appreciation: ${chat.requesterName}`,
         detail: text,
         source: 'auto',
-        tags: ['同辈感谢'],
+        tags: ['Peer appreciation'],
         relatedType: 'peer_chat',
         relatedId: chat.id,
         isPublic: true,
@@ -160,6 +160,6 @@ export async function POST(req: NextRequest) {
     }
 
     default:
-      return NextResponse.json({ error: '未知操作' }, { status: 400 });
+      return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   }
 }

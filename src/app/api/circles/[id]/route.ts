@@ -16,15 +16,15 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const uid = getUidFromRequest(req);
-  if (!uid) return NextResponse.json({ error: '未登录' }, { status: 401 });
+  if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = getDB();
   const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const post = db.circlePosts.find((p) => p.id === params.id);
   if (!post) {
-    return NextResponse.json({ error: '帖子不存在' }, { status: 404 });
+    return NextResponse.json({ error: 'Post not found' }, { status: 404 });
   }
 
   let body: CircleActionBody = {};
@@ -38,7 +38,7 @@ export async function POST(
     case 'comment': {
       const text = typeof body.text === 'string' ? body.text.trim() : '';
       if (!text) {
-        return NextResponse.json({ error: '评论内容不能为空' }, { status: 400 });
+        return NextResponse.json({ error: 'Comment text cannot be empty' }, { status: 400 });
       }
       const comment: CircleComment = {
         id: newId('cc'),
@@ -69,10 +69,10 @@ export async function POST(
           evidence = addEvidence(db, {
             uid: post.authorId,
             type: 'community_kudos',
-            title: `同辈认可：帖子获得 ${post.kudosCount} 个加油`,
-            detail: `「${post.title}」获得 ${post.kudosCount} 个同辈加油。`,
+            title: `Peer recognition: the post received ${post.kudosCount} kudos`,
+            detail: `"${post.title}" received ${post.kudosCount} peer kudos.`,
             source: 'auto',
-            tags: ['圈子', '同辈认可'],
+            tags: ['Circle', 'Peer recognition'],
             relatedType: 'circle_post',
             relatedId: post.id,
             isPublic: true,
@@ -97,6 +97,6 @@ export async function POST(
     }
 
     default:
-      return NextResponse.json({ error: '未知操作' }, { status: 400 });
+      return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   }
 }

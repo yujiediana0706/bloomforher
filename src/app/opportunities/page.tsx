@@ -30,9 +30,9 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 function RoleDetails({ role }: { role: RoleMatch }) {
   return (
     <div className="mt-3 border-t border-silver-200 pt-2">
-      <DetailRow label="岗位说明">{role.description}</DetailRow>
-      <DetailRow label="为什么适合你">{role.whyFit}</DetailRow>
-      <DetailRow label="所需技能">
+      <DetailRow label="Role overview">{role.description}</DetailRow>
+      <DetailRow label="Why it suits you">{role.whyFit}</DetailRow>
+      <DetailRow label="Skills needed">
         <div className="flex flex-wrap gap-1">
           {role.requiredSkills.map((s) => (
             <Badge key={s} tone="silver">
@@ -41,14 +41,14 @@ function RoleDetails({ role }: { role: RoleMatch }) {
           ))}
         </div>
       </DetailRow>
-      <DetailRow label="典型工作流">
+      <DetailRow label="Typical workflows">
         <ul className="list-disc space-y-0.5 pl-4">
           {role.typicalWorkflows.map((w) => (
             <li key={w}>{w}</li>
           ))}
         </ul>
       </DetailRow>
-      <DetailRow label="取舍">
+      <DetailRow label="Trade-offs">
         <span className="text-slateblue-700">{role.tradeoffs}</span>
       </DetailRow>
     </div>
@@ -72,7 +72,7 @@ export default function OpportunitiesPage() {
       );
       setReport(data.opportunityReport);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
       setFetching(false);
     }
@@ -92,36 +92,39 @@ export default function OpportunitiesPage() {
       );
       setReport(data.opportunityReport);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '生成失败');
+      setError(e instanceof Error ? e.message : 'Failed to generate');
     } finally {
       setGenerating(false);
     }
   }
 
-  if (loading) return <EmptyState text="正在加载…" />;
+  if (loading) return <EmptyState text="Loading…" />;
   if (!user)
-    return <EmptyState text="请先登录（可用右上角切换演示账号）" />;
+    return (
+      <EmptyState text="Please sign in first (you can switch demo accounts from the top-right menu)." />
+    );
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      {/* 返回链接 */}
+      {/* Back link */}
       <Link
         href="/coach"
         className="inline-flex items-center gap-1 text-xs font-bold text-slateblue-700 underline underline-offset-4 hover:text-coral-600"
       >
         <ArrowLeft className="h-3 w-3" />
-        返回 AI Mentor 工作台
+        Back to AI Mentor workspace
       </Link>
 
       <div>
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-coral-500">
-          诊断详情 · AI 机会
+          Diagnostic details · AI opportunities
         </p>
         <h1 className="mt-1 text-2xl font-black text-slateblue-900">
-          为你匹配的 AI 岗位
+          AI roles matched to you
         </h1>
         <p className="mt-1 text-sm text-slateblue-700">
-          匹配度是参考，不是判决——你永远可以探索更多方向。
+          Match scores are a guide, not a verdict—you can always explore more
+          directions.
         </p>
       </div>
 
@@ -131,23 +134,24 @@ export default function OpportunitiesPage() {
         </p>
       ) : null}
 
-      {fetching ? <EmptyState text="正在匹配 AI 机会…" /> : null}
+      {fetching ? <EmptyState text="Matching AI opportunities…" /> : null}
 
       {!fetching && !report ? (
         <Card className="text-center">
           <p className="text-sm text-slateblue-700">
-            还没有你的机会报告。点击下方按钮，AI 会基于技能画像生成岗位匹配。
+            You don&apos;t have an opportunity report yet. Click the button below
+            and the AI will match roles based on your skill profile.
           </p>
           <Button className="mt-4" onClick={handleGenerate} disabled={generating}>
             {generating ? (
               <>
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                正在生成…
+                Generating…
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                生成我的 AI 机会
+                Generate my AI opportunities
               </>
             )}
           </Button>
@@ -156,10 +160,10 @@ export default function OpportunitiesPage() {
 
       {report ? (
         <>
-          {/* 岗位推荐 */}
+          {/* Role recommendations */}
           <section>
             <h3 className="mb-2 text-sm font-extrabold text-slateblue-900">
-              岗位推荐（{report.roleMatches.length}）
+              Role recommendations ({report.roleMatches.length})
             </h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {report.roleMatches.map((role) => {
@@ -167,7 +171,7 @@ export default function OpportunitiesPage() {
                 return (
                   <Card key={role.id} className="flex flex-col">
                     <div className="flex items-start gap-3">
-                      <ScoreRing value={role.matchScore} label="匹配度" />
+                      <ScoreRing value={role.matchScore} label="Match" />
                       <div className="min-w-0 flex-1">
                         <h4 className="text-sm font-extrabold text-slateblue-900">
                           {role.title}
@@ -185,7 +189,7 @@ export default function OpportunitiesPage() {
                       }
                       className="mt-3 flex items-center justify-center gap-1 rounded-xl border border-silver-300 bg-white px-3 py-1.5 text-xs font-bold text-slateblue-700 transition-colors hover:bg-silver-100"
                     >
-                      {isOpen ? '收起详情' : '查看详情'}
+                      {isOpen ? 'Hide details' : 'View details'}
                       <ChevronDown
                         className={`h-3.5 w-3.5 transition-transform ${
                           isOpen ? 'rotate-180' : ''
@@ -199,12 +203,12 @@ export default function OpportunitiesPage() {
             </div>
           </section>
 
-          {/* 女性友好赛道 */}
+          {/* Women-friendly tracks */}
           <section>
             <div className="mb-2 flex items-center gap-2">
               <Heart className="h-4 w-4 text-coral-500" />
               <h3 className="text-sm font-extrabold text-slateblue-900">
-                女性友好赛道
+                Women-friendly tracks
               </h3>
             </div>
             <div className="grid gap-2.5 sm:grid-cols-2">
@@ -226,12 +230,12 @@ export default function OpportunitiesPage() {
             </div>
           </section>
 
-          {/* 温和提示 */}
+          {/* Gentle guidance */}
           <section>
             <div className="mb-2 flex items-center gap-2">
               <Lightbulb className="h-4 w-4 text-coral-500" />
               <h3 className="text-sm font-extrabold text-slateblue-900">
-                温和提示：可能遇到的顾虑
+                Gentle guidance: concerns you may encounter
               </h3>
             </div>
             <div className="space-y-2.5">

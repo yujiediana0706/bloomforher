@@ -47,45 +47,45 @@ interface ConfidenceQuestion {
 const CONFIDENCE_QUESTIONS: ConfidenceQuestion[] = [
   {
     key: 'techSelfEfficacy',
-    label: '技术自我效能感',
-    desc: '我对自己学习和使用 AI / 技术工具的能力有信心。',
+    label: 'Tech self-efficacy',
+    desc: 'I feel confident in my ability to learn and use AI / tech tools.',
   },
   {
     key: 'aiToolReadiness',
-    label: 'AI 工具就绪度',
-    desc: '我能够把 AI 工具真正用进日常工作与场景。',
+    label: 'AI tool readiness',
+    desc: 'I can genuinely bring AI tools into my daily work and scenarios.',
   },
   {
     key: 'gapValue',
-    label: '职业空窗价值感',
-    desc: '我相信空窗 / 照护期也沉淀了可迁移的能力。',
+    label: 'Value of career gaps',
+    desc: 'I believe career gaps or caregiving periods also build transferable skills.',
   },
   {
     key: 'domainTransfer',
-    label: '领域迁移能力',
-    desc: '我能把原有行业经验迁移到 AI 相关场景。',
+    label: 'Cross-domain transfer',
+    desc: 'I can transfer my existing industry experience into AI-related scenarios.',
   },
   {
     key: 'problemDecompose',
-    label: '问题拆解',
-    desc: '我能把复杂问题拆成可执行的步骤。',
+    label: 'Problem decomposition',
+    desc: 'I can break complex problems into actionable steps.',
   },
   {
     key: 'ethicsJudgment',
-    label: '伦理判断',
-    desc: '我能判断 AI 输出是否可靠、是否符合伦理。',
+    label: 'Ethical judgment',
+    desc: 'I can judge whether AI output is reliable and ethical.',
   },
 ];
 
 const COACH_LINES: Record<number, string> = {
-  1: '你好呀，我是你的 AI Coach。先认识一下你——这些信息会帮我把后面的画像做得更贴合你，不着急，慢慢填。',
-  2: '把你走过的路写下来就好，不用「润色」成漂亮的简历。真实经历里藏着很多可迁移的能力。',
-  3: '目标可以同时有几个，方向也可以中途调整。告诉我你现在的约束，我来帮你设计一个能做到的节奏。',
-  4: '简历是可选的。原型阶段我们只记录文件名，真正的解析会在接入 AI 后完成。',
-  5: '你现在所处的人生阶段会直接影响计划节奏——它没有好坏，只有不同的安排方式。',
-  6: '接下来是自信度自评。请凭直觉打分，没有标准答案；我稍后会基于你的证据做客观校准。',
-  7: '最后三题啦。记住：女性常常系统性低估自己，你打的分可能比真实能力要低。',
-  8: '确认一下信息，我这就为你生成技能画像、AI 机会与 30 天回归计划。你只需要点一下「完成」。',
+  1: "Hi there, I'm your AI Coach. Let me get to know you first—this information helps me build a profile that fits you better. No rush, take your time.",
+  2: 'Just write down the path you have traveled; no need to polish it into a pretty resume. Real experiences hold many transferable skills.',
+  3: 'You can have several goals at once, and adjust direction along the way. Tell me your current constraints, and I will help you design a pace you can actually keep.',
+  4: 'The resume is optional. In this prototype we only record the file name; real parsing will come once AI is integrated.',
+  5: 'Your current life stage directly shapes the pace of the plan—none is better or worse, just different ways to arrange things.',
+  6: 'Next is a self-rated confidence check. Go with your gut—there are no right answers; I will later calibrate objectively based on your evidence.',
+  7: 'Just three questions left. Remember: women often underestimate themselves systematically, so your scores may be lower than your real ability.',
+  8: 'Confirm your information and I will generate your skill profile, AI opportunities, and a 30-day return plan. You just need to click "Finish".',
 };
 
 const inputCls =
@@ -115,7 +115,7 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // 登录后预填已有档案
+  // Pre-fill the existing profile after login
   React.useEffect(() => {
     if (!user) return;
     setName((v) => v || user.name);
@@ -142,7 +142,7 @@ export default function OnboardingPage() {
   async function handleFinish() {
     if (!user) return;
     if (!name.trim()) {
-      setError('请先填写你的姓名');
+      setError('Please enter your name first');
       setStep(1);
       return;
     }
@@ -154,9 +154,9 @@ export default function OnboardingPage() {
       const confidenceSelf = Math.max(1, Math.min(10, Math.round(avg)));
 
       const goals: string[] = [];
-      if (constraints.returnToWork) goals.push('重返职场');
-      if (constraints.newIndustry) goals.push('换行业');
-      if (constraints.flexibility) goals.push('灵活办公');
+      if (constraints.returnToWork) goals.push('Return to work');
+      if (constraints.newIndustry) goals.push('Switch industries');
+      if (constraints.flexibility) goals.push('Flexible work');
 
       const segment: Segment =
         constraints.returnToWork ||
@@ -190,7 +190,7 @@ export default function OnboardingPage() {
       await refresh();
       router.push('/coach');
     } catch (e) {
-      setError(e instanceof Error ? e.message : '保存失败，请重试');
+      setError(e instanceof Error ? e.message : 'Save failed, please try again');
     } finally {
       setSaving(false);
     }
@@ -199,7 +199,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-2xl">
-        <EmptyState text="正在加载你的档案…" />
+        <EmptyState text="Loading your profile…" />
       </div>
     );
   }
@@ -207,7 +207,7 @@ export default function OnboardingPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl">
-        <EmptyState text="请先登录（可用右上角切换演示账号）" />
+        <EmptyState text="Please sign in first (use the top-right corner to switch demo accounts)" />
       </div>
     );
   }
@@ -219,15 +219,15 @@ export default function OnboardingPage() {
     <div className="mx-auto max-w-2xl">
       <SectionTitle
         eyebrow={`Step ${step} / ${TOTAL_STEPS}`}
-        title="建立你的专属档案"
-        desc="约 8 屏，几分钟就能完成；中途退出也没关系，信息会随账号保存。"
+        title="Build your personal profile"
+        desc="About 8 screens, done in a few minutes; feel free to exit midway—your info is saved with your account."
       />
 
       <div className="mb-4">
         <ProgressBar value={(step / TOTAL_STEPS) * 100} />
       </div>
 
-      {/* AI Coach 气泡引导语 */}
+      {/* AI Coach bubble prompt */}
       <div className="mb-4 rounded-2xl border border-softpink-300 bg-softpink-100 p-3">
         <div className="flex items-start gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-coral-500 text-white">
@@ -240,94 +240,96 @@ export default function OnboardingPage() {
       </div>
 
       <Card>
-        {/* ① 姓名 + 岗位 */}
+        {/* 1. Name + role */}
         {step === 1 ? (
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-bold text-slateblue-900">
-                你的姓名
+                Your name
               </label>
               <input
                 className={inputCls}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="如：林薇"
+                placeholder="e.g. Wei Lin"
               />
             </div>
             <div>
               <label className="mb-1 block text-sm font-bold text-slateblue-900">
-                当前岗位
+                Current role
               </label>
               <input
                 className={inputCls}
                 value={currentRole}
                 onChange={(e) => setCurrentRole(e.target.value)}
-                placeholder="如：小学数学老师 / 全职妈妈"
+                placeholder="e.g. Primary school math teacher / Full-time mom"
               />
             </div>
             <div>
               <label className="mb-1 block text-sm font-bold text-slateblue-900">
-                目标岗位
+                Target role
               </label>
               <input
                 className={inputCls}
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
-                placeholder="如：AI 运营 / AI 产品经理"
+                placeholder="e.g. AI Operations / AI Product Manager"
               />
             </div>
           </div>
         ) : null}
 
-        {/* ② 过往经历 */}
+        {/* 2. Past experience */}
         {step === 2 ? (
           <div>
             <label className="mb-1 block text-sm font-bold text-slateblue-900">
-              过往经历（背景总结）
+              Past experience (background summary)
             </label>
             <p className="mb-2 text-xs text-slateblue-700">
-              写下你做过的项目、承担的角色、解决过的问题——越具体，画像越准。
+              Write down the projects you have done, the roles you have held,
+              and the problems you have solved—the more specific, the more
+              accurate your profile.
             </p>
             <textarea
               className={`${inputCls} min-h-[160px] resize-y`}
               value={backgroundSummary}
               onChange={(e) => setBackgroundSummary(e.target.value)}
-              placeholder="示例：带过 6 个班级的数学课，主导过校内线上答疑群，把家长常见问题整理成可复用的问答模板……"
+              placeholder="Example: taught math to 6 classes, led an online school Q&A group, turned common parent questions into reusable answer templates..."
             />
           </div>
         ) : null}
 
-        {/* ③ 目标与约束 */}
+        {/* 3. Goals and constraints */}
         {step === 3 ? (
           <div className="space-y-4">
             <div>
               <p className="mb-2 text-sm font-bold text-slateblue-900">
-                职业目标与约束（可多选）
+                Career goals and constraints (multiple choice)
               </p>
               <div className="flex flex-wrap gap-2">
                 <Chip
                   active={constraints.returnToWork}
                   onClick={() => toggleConstraint('returnToWork')}
                 >
-                  重返职场
+                  Return to work
                 </Chip>
                 <Chip
                   active={constraints.newIndustry}
                   onClick={() => toggleConstraint('newIndustry')}
                 >
-                  换行业
+                  Switch industries
                 </Chip>
                 <Chip
                   active={constraints.flexibility}
                   onClick={() => toggleConstraint('flexibility')}
                 >
-                  灵活办公
+                  Flexible work
                 </Chip>
               </div>
             </div>
             <div>
               <label className="mb-1 block text-sm font-bold text-slateblue-900">
-                每周可投入小时数
+                Hours you can commit per week
               </label>
               <input
                 type="number"
@@ -340,25 +342,27 @@ export default function OnboardingPage() {
                 }
               />
               <p className="mt-1 text-xs text-slateblue-700">
-                AI 会按这个时长安排可中断的节奏，不必勉强。
+                AI will plan an interruptible pace around this many hours—no
+                need to push yourself.
               </p>
             </div>
           </div>
         ) : null}
 
-        {/* ④ 简历上传 */}
+        {/* 4. Resume upload */}
         {step === 4 ? (
           <div className="space-y-3">
             <p className="text-sm font-bold text-slateblue-900">
-              上传简历（可选）
+              Upload resume (optional)
             </p>
             <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-silver-400 bg-silver-50 px-6 py-8 text-center transition-colors hover:border-coral-500 hover:bg-coral-50">
               <Upload className="h-5 w-5 text-coral-500" />
               <span className="text-sm font-bold text-slateblue-900">
-                点击选择文件
+                Click to choose a file
               </span>
               <span className="text-xs text-slateblue-700">
-                原型阶段仅记录文件名，不会真正上传
+                Prototype only records the file name; nothing is actually
+                uploaded
               </span>
               <input
                 type="file"
@@ -378,18 +382,18 @@ export default function OnboardingPage() {
                   onClick={() => setResumeName('')}
                   className="ml-auto text-xs font-bold text-slateblue-700 hover:text-coral-600"
                 >
-                  移除
+                  Remove
                 </button>
               </div>
             ) : null}
           </div>
         ) : null}
 
-        {/* ⑤ 人生阶段 */}
+        {/* 5. Life stage */}
         {step === 5 ? (
           <div>
             <p className="mb-3 text-sm font-bold text-slateblue-900">
-              你当前所处的人生阶段
+              Your current life stage
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {LIFE_STAGE_ORDER.map((stage) => {
@@ -429,11 +433,11 @@ export default function OnboardingPage() {
           </div>
         ) : null}
 
-        {/* ⑥ AI 自信度量表（分两屏） */}
+        {/* 6. AI confidence scale (split across two screens) */}
         {step === 6 || step === 7 ? (
           <div className="space-y-5">
             <p className="text-sm font-bold text-slateblue-900">
-              AI 自信度自评（1-10 分，凭直觉）
+              AI confidence self-assessment (1-10, go with your gut)
             </p>
             {confidenceSlice.map((q) => (
               <div key={q.key}>
@@ -460,33 +464,33 @@ export default function OnboardingPage() {
           </div>
         ) : null}
 
-        {/* ⑧ 确认与完成 */}
+        {/* 8. Confirm and finish */}
         {step === 8 ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-coral-500" />
               <p className="text-sm font-bold text-slateblue-900">
-                确认你的信息
+                Confirm your information
               </p>
             </div>
             <dl className="space-y-2 text-sm">
               {[
-                ['姓名', name || '—'],
-                ['当前岗位', currentRole || '—'],
-                ['目标岗位', targetRole || '—'],
-                ['人生阶段', lifeStage ? LIFE_STAGE_LABELS[lifeStage] : '—'],
-                ['每周可投入', `${weeklyHours} 小时`],
+                ['Name', name || '—'],
+                ['Current role', currentRole || '—'],
+                ['Target role', targetRole || '—'],
+                ['Life stage', lifeStage ? LIFE_STAGE_LABELS[lifeStage] : '—'],
+                ['Weekly commitment', `${weeklyHours} hours`],
                 [
-                  '职业目标',
+                  'Career goals',
                   [
-                    constraints.returnToWork ? '重返职场' : '',
-                    constraints.newIndustry ? '换行业' : '',
-                    constraints.flexibility ? '灵活办公' : '',
+                    constraints.returnToWork ? 'Return to work' : '',
+                    constraints.newIndustry ? 'Switch industries' : '',
+                    constraints.flexibility ? 'Flexible work' : '',
                   ]
                     .filter(Boolean)
-                    .join('、') || '—',
+                    .join(', ') || '—',
                 ],
-                ['简历', resumeName || '未上传（可选）'],
+                ['Resume', resumeName || 'Not uploaded (optional)'],
               ].map(([k, v]) => (
                 <div
                   key={k}
@@ -511,7 +515,7 @@ export default function OnboardingPage() {
           </p>
         ) : null}
 
-        {/* 导航 */}
+        {/* Navigation */}
         <div className="mt-6 flex items-center justify-between gap-3">
           <Button
             variant="secondary"
@@ -522,7 +526,7 @@ export default function OnboardingPage() {
             }}
           >
             <ChevronLeft className="h-4 w-4" />
-            上一步
+            Previous
           </Button>
 
           {step < TOTAL_STEPS ? (
@@ -532,7 +536,7 @@ export default function OnboardingPage() {
                 setStep((s) => Math.min(TOTAL_STEPS, s + 1));
               }}
             >
-              下一步
+              Next
               <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
@@ -540,10 +544,10 @@ export default function OnboardingPage() {
               {saving ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />
-                  正在生成…
+                  Generating…
                 </>
               ) : (
-                '完成，生成我的画像'
+                'Finish and generate my profile'
               )}
             </Button>
           )}
