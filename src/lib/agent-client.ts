@@ -136,17 +136,6 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
     // 构建 contents（各模型复用）
     const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
-    if (req.systemInstruction) {
-      contents.push({
-        role: 'user',
-        parts: [{ text: `[系统设定] ${req.systemInstruction}` }],
-      });
-      contents.push({
-        role: 'model',
-        parts: [{ text: '我已理解上述设定，将严格遵循。' }],
-      });
-    }
-
     if (req.context) {
       contents.push({
         role: 'user',
@@ -180,7 +169,11 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ contents }),
+        body: JSON.stringify(
+          req.systemInstruction
+            ? { systemInstruction: { parts: [{ text: req.systemInstruction }] }, contents }
+            : { contents }
+        ),
       });
 
       if (!res.ok) {
