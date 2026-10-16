@@ -3,6 +3,7 @@ import {
   callAgentEndpoint,
   callGemini,
   getAgentEndpoint,
+  getGeminiAttempts,
   getLastAgentError,
   getLastGeminiError,
   getLastGeminiModel,
@@ -47,6 +48,7 @@ export async function GET() {
       Object.entries(endpoints).map(([k, v]) => [k, !!v])
     ),
     gemini: gemini ? { ok: true, model: getLastGeminiModel(), sample: gemini.text.slice(0, 120) } : { ok: false, error: geminiError },
+    geminiAttempts: getGeminiAttempts(),
     agent: agent ? { ok: true, sample: agent.text.slice(0, 120) } : { ok: false, error: agentError },
     engines: { 'us-west1': enginesUsWest1, 'us-central1': enginesUsCentral1 },
   });

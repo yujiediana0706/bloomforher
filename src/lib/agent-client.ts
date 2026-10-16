@@ -13,6 +13,11 @@ let _initFailed = false;
 let _lastAgentError: string | null = null;
 let _lastGeminiError: string | null = null;
 let _lastGeminiModel: string | null = null;
+let _geminiAttempts: Array<{ model: string; location: string; ok: boolean; error?: string }> = [];
+
+export function getGeminiAttempts() {
+  return _geminiAttempts;
+}
 
 export function getLastAgentError(): string | null {
   return _lastAgentError;
@@ -182,6 +187,8 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
 
     contents.push({ role: 'user', parts: [{ text: req.input }] });
 
+    _geminiAttempts = [];
+
     for (const { model, location } of MODEL_CANDIDATES) {
       const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
 
@@ -198,6 +205,7 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
         const err = await res.text();
         _lastGeminiError = `HTTP ${res.status} (${model}): ${err.slice(0, 200)}`;
         console.error('[Gemini] 调用失败:', _lastGeminiError);
+        _geminiAttempts.push({ model, location, ok: false, error: _lastGeminiError });
         continue;
       }
 
@@ -206,10 +214,12 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
       if (!text) {
         _lastGeminiError = `empty output (${model}); raw=${JSON.stringify(data).slice(0, 200)}`;
         console.error('[Gemini] 空输出:', _lastGeminiError);
+        _geminiAttempts.push({ model, location, ok: false, error: _lastGeminiError });
         continue;
       }
       _lastGeminiError = null;
       _lastGeminiModel = model;
+      _geminiAttempts.push({ model, location, ok: true });
       return { text };
     }
     return null;
