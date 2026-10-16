@@ -10,6 +10,16 @@ const SCOPES = ['https://www.googleapis.com/auth/cloud-platform'];
 
 let _auth: GoogleAuth | null = null;
 let _initFailed = false;
+let _lastAgentError: string | null = null;
+let _lastGeminiError: string | null = null;
+
+export function getLastAgentError(): string | null {
+  return _lastAgentError;
+}
+
+export function getLastGeminiError(): string | null {
+  return _lastGeminiError;
+}
 
 function getAuth(): GoogleAuth | null {
   if (_auth) return _auth;
@@ -91,18 +101,25 @@ export async function callAgentEndpoint(
 
     if (!res.ok) {
       const err = await res.text();
-      console.error(`[Agent] 调用失败 (${endpoint}):`);
-      console.error(`  Status: ${res.status}`);
-      console.error(`  Error: ${err.slice(0, 500)}`);
+      _lastAgentError = `HTTP ${res.status}: ${err.slice(0, 300)}`;
+      console.error(`[Agent] 调用失败 (${endpoint}): ${_lastAgentError}`);
       return null;
     }
 
     const data = await res.json();
     // Reasoning Engine 返回格式：{ output: { text: "..." } } 或 { output: "..." }
-    const text = data.output?.text || data.output || '';
+    const raw = data.output;
+    const text = typeof raw === 'string' ? raw : (raw?.text ?? '');
+    if (!text) {
+      _lastAgentError = `empty output; raw=${JSON.stringify(data).slice(0, 300)}`;
+      console.error(`[Agent] 空输出 (${endpoint}): ${_lastAgentError}`);
+      return null;
+    }
+    _lastAgentError = null;
     return { text };
   } catch (e) {
-    console.error(`[Agent] 异常 (${endpoint}):`, (e as Error).message);
+    _lastAgentError = (e as Error).message;
+    console.error(`[Agent] 异常 (${endpoint}):`, _lastAgentError);
     return null;
   }
 }
@@ -167,15 +184,23 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
 
     if (!res.ok) {
       const err = await res.text();
-      console.error('[Gemini] 调用失败:', res.status, err.slice(0, 200));
+      _lastGeminiError = `HTTP ${res.status}: ${err.slice(0, 300)}`;
+      console.error('[Gemini] 调用失败:', _lastGeminiError);
       return null;
     }
 
     const data = await res.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!text) {
+      _lastGeminiError = `empty output; raw=${JSON.stringify(data).slice(0, 300)}`;
+      console.error('[Gemini] 空输出:', _lastGeminiError);
+      return null;
+    }
+    _lastGeminiError = null;
     return { text };
   } catch (e) {
-    console.error('[Gemini] 异常:', (e as Error).message);
+    _lastGeminiError = (e as Error).message;
+    console.error('[Gemini] 异常:', _lastGeminiError);
     return null;
   }
 }
