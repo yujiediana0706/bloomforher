@@ -6,6 +6,7 @@ import {
   getLastAgentError,
   getLastGeminiError,
   isAgentAvailable,
+  listReasoningEngines,
 } from '@/lib/agent-client';
 
 export const runtime = 'nodejs';
@@ -30,6 +31,11 @@ export async function GET() {
   const agent = coachEp ? await callAgentEndpoint(coachEp, { input: '只回复两个字：你好' }) : null;
   const agentError = getLastAgentError();
 
+  const [enginesUsWest1, enginesUsCentral1] = await Promise.all([
+    listReasoningEngines('us-west1'),
+    listReasoningEngines('us-central1'),
+  ]);
+
   return NextResponse.json({
     revision: process.env.K_REVISION ?? null,
     service: process.env.K_SERVICE ?? null,
@@ -41,5 +47,6 @@ export async function GET() {
     ),
     gemini: gemini ? { ok: true, sample: gemini.text.slice(0, 120) } : { ok: false, error: geminiError },
     agent: agent ? { ok: true, sample: agent.text.slice(0, 120) } : { ok: false, error: agentError },
+    engines: { 'us-west1': enginesUsWest1, 'us-central1': enginesUsCentral1 },
   });
 }

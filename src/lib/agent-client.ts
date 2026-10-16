@@ -228,3 +228,36 @@ export function getAgentEndpoint(agentName: 'assessment' | 'coach' | 'memory' | 
   };
   return process.env[envMap[agentName]] || null;
 }
+
+/** 列出某区域下所有 Reasoning Engine（用于诊断 Agent 是否真正部署） */
+export async function listReasoningEngines(location: string): Promise<Record<string, unknown>> {
+  const auth = getAuth();
+  if (!auth || !projectId) return { error: 'no auth or project id' };
+
+  try {
+    const client = await auth.getClient();
+    const token = (await client.getAccessToken()).token;
+
+    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/reasoningEngines`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+
+    if (!res.ok) {
+      return { error: `HTTP ${res.status}: ${(await res.text()).slice(0, 300)}` };
+    }
+
+    const data = await res.json();
+    const engines = (data.reasoningEngines ?? []).map((e: any) => ({
+      name: e.name,
+      displayName: e.displayName,
+      state: e.state,
+      hasPackageSpec: !!e.spec?.packageSpec,
+      classMethod: e.spec?.classMethod ?? null,
+      createTime: e.createTime,
+      updateTime: e.updateTime,
+    }));
+
+    return { count: engines.length, engines };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
