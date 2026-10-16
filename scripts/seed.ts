@@ -27,6 +27,9 @@ const PROJECT_ID =
   process.env.GOOGLE_CLOUD_PROJECT ??
   'buildercup2026-511504';
 
+// The project uses a named Firestore database (`buildercup2026`), not `(default)`.
+const DATABASE_ID = process.env.FIRESTORE_DATABASE_ID ?? 'buildercup2026';
+
 function initApp(): App {
   if (getApps().length) return getApps()[0];
   const saPath = process.env.SERVICE_ACCOUNT_PATH;
@@ -39,7 +42,7 @@ function initApp(): App {
 }
 
 const app = initApp();
-const db: Firestore = getFirestore(app);
+const db: Firestore = getFirestore(app, DATABASE_ID);
 
 const ALL_PROFILES: UserProfile[] = [...COMMUNITY_USERS, ...MENTOR_USERS];
 

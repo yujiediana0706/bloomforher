@@ -31,7 +31,7 @@ steps:
       - 'managed'
       - '--allow-unauthenticated'
       - '--set-env-vars'
-      - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FIREBASE_PROJECT_ID=$PROJECT_ID,AUTH_SECRET=rebloom-cloud-run-auth-secret-2026,AGENT_ENDPOINT_ASSESSMENT=projects/107927033625/locations/us-west1/reasoningEngines/5963861020219801600,AGENT_ENDPOINT_COACH=projects/107927033625/locations/us-west1/reasoningEngines/3754845402994573312,AGENT_ENDPOINT_MEMORY=projects/107927033625/locations/us-west1/reasoningEngines/6254343196185198592,AGENT_ENDPOINT_PROACTIVE=projects/107927033625/locations/us-west1/reasoningEngines/7979221853468098560,AGENT_ENDPOINT_MENTOR_MATCH=projects/107927033625/locations/us-west1/reasoningEngines/8951999372980125696'
+      - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FIREBASE_PROJECT_ID=$PROJECT_ID,FIRESTORE_DATABASE_ID=buildercup2026,AUTH_SECRET=rebloom-cloud-run-auth-secret-2026,AGENT_ENDPOINT_ASSESSMENT=projects/107927033625/locations/us-west1/reasoningEngines/5963861020219801600,AGENT_ENDPOINT_COACH=projects/107927033625/locations/us-west1/reasoningEngines/3754845402994573312,AGENT_ENDPOINT_MEMORY=projects/107927033625/locations/us-west1/reasoningEngines/6254343196185198592,AGENT_ENDPOINT_PROACTIVE=projects/107927033625/locations/us-west1/reasoningEngines/7979221853468098560,AGENT_ENDPOINT_MENTOR_MATCH=projects/107927033625/locations/us-west1/reasoningEngines/8951999372980125696'
       - '--memory'
       - '512Mi'
       - '--cpu'
