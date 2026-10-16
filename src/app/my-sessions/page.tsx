@@ -165,7 +165,7 @@ export default function MySessionsPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-lg font-black text-slateblue-900">My sessions</h1>
-        <EmptyState text="Please sign in first (you can switch demo accounts from the top-right menu)." />
+        <EmptyState text="Please sign in first." />
       </div>
     );
   }

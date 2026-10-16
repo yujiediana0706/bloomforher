@@ -97,28 +97,30 @@ export default function HomePage() {
           <span className="h-px w-8 bg-coral-300" />
         </p>
 
-        <h1 className="mx-auto mt-6 max-w-xl text-4xl font-black leading-[1.22] tracking-tight text-slateblue-900 sm:text-[3.4rem]">
-          Turn your experience into
+        <h1 className="mx-auto mt-6 max-w-xl text-4xl font-black leading-[1.18] tracking-tight text-slateblue-900 sm:text-[3.4rem]">
+          From <span className="italic">Why me</span>,
           <br />
-          <span className="text-coral-500">a new career in the AI era</span>
+          to <span className="text-coral-500">Why not me</span>
         </h1>
 
         <p className="mt-5 text-base font-bold text-slateblue-700">
-          &ldquo;From Why me, to Why not me.&rdquo;
+          Turn your experience into a new career in the AI era.
         </p>
 
-        <div className="mt-9 flex justify-center">
+        <div className="mt-9 flex flex-col items-center gap-2">
           <Link
             href="/register"
             className="inline-flex items-center gap-2 rounded-full bg-coral-500 px-9 py-3.5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-coral-600"
           >
-            Start your free career diagnosis
+            Start your free diagnosis
             <ArrowRight className="h-4 w-4" />
           </Link>
+          <p className="text-xs text-slateblue-700/80">
+            About 3 minutes · your information stays with your account
+          </p>
         </div>
         <p className="mt-5 text-xs text-slateblue-700/80">
-          For women exploring student life, facing career uncertainty, returning
-          after parental leave, or transitioning through part-time work
+          For mid-career women facing career uncertainty in the age of AI
         </p>
 
         {/* What we offer */}
@@ -147,15 +149,8 @@ export default function HomePage() {
         </div>
 
         <p className="mt-9 text-xs text-slateblue-700/70">
-          Plus{' '}
-          <Link href="/tasks-lab" className="underline decoration-coral-300 underline-offset-4 transition-colors hover:text-coral-600">
-            Hands-on Tasks
-          </Link>{' '}
-          and{' '}
-          <Link href="/community" className="underline decoration-coral-300 underline-offset-4 transition-colors hover:text-coral-600">
-            Certified Coaches
-          </Link>{' '}
-          available for you
+          Evidence-based AI coaching · honest gap analysis · free peer support
+          in the Community
         </p>
       </div>
     </div>

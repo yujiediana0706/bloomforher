@@ -73,7 +73,7 @@ export default function MentorDetailPage({
 
   const book = async (kind: 'single' | 'package') => {
     if (!user) {
-      setNotice('Please sign in (switch demo accounts in the top-right corner)');
+      setNotice('Please sign in first.');
       return;
     }
     if (!selectedSlot) {
@@ -291,7 +291,7 @@ export default function MentorDetailPage({
 
         {!authLoading && !user ? (
           <p className="mt-3 text-sm font-bold text-coral-700">
-            Please sign in (switch demo accounts in the top-right corner)
+            Please sign in first.
           </p>
         ) : null}
 

@@ -97,7 +97,7 @@ export default function PlanPage() {
   if (loading) return <EmptyState text="Loading…" />;
   if (!user)
     return (
-      <EmptyState text="Please sign in first (you can switch demo accounts from the top-right menu)." />
+      <EmptyState text="Please sign in first." />
     );
 
   return (

@@ -8,14 +8,10 @@ import {
   BrainCog,
   CalendarClock,
   Check,
-  Compass,
   FileText,
-  Rocket,
   Send,
   Sparkles,
   User,
-  UserCircle,
-  Users,
 } from 'lucide-react';
 import {
   RadarChart,
@@ -26,7 +22,6 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useAuth } from '@/components/AuthProvider';
-import { MENTOR_DASHBOARD_LINKS } from '@/lib/constants';
 import { Button, Card, ProgressBar } from '@/components/ui';
 import { apiGet, apiSend } from '@/lib/client';
 import type {
@@ -234,7 +229,7 @@ export default function CoachPage() {
     return (
       <Card>
         <p className="text-sm text-slateblue-700">
-          Please sign in first (switch demo accounts from the top-right corner)
+          Please sign in first to open your AI Mentor workspace.
         </p>
       </Card>
     );
@@ -252,8 +247,9 @@ export default function CoachPage() {
           AI Mentor · Your personal companion
         </h1>
         <p className="mt-0.5 text-xs text-slateblue-700">
-          Chat on the left, track progress on the right—I remember your plan and
-          every real conversation.
+          Chat on the left; your diagnosis and progress evidence on the right.
+          Every judgment I give traces back to your real experience and task
+          results.
         </p>
       </div>
 
@@ -508,11 +504,11 @@ export default function CoachPage() {
                   </>
                 ) : (
                   <p className="mt-1 text-sm font-bold text-slateblue-900">
-                    You don't have a 30-day return plan yet—
-                    <Link href="/plan" className="text-coral-600 underline">
-                      generate one
+                    You haven&apos;t picked a path yet—
+                    <Link href="/opportunities" className="text-coral-600 underline">
+                      choose one
                     </Link>
-                    , and I will remind you to follow through.
+                    , and I will build your plan and help you follow through.
                   </p>
                 )}
               </div>
@@ -623,47 +619,6 @@ export default function CoachPage() {
             </Card>
           ) : null}
 
-          {/* 5. More feature entries */}
-          <Card className="p-4">
-            <p className="text-[11px] font-black uppercase tracking-wide text-coral-600">
-              More features
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {MENTOR_DASHBOARD_LINKS.map((item) => {
-                const Icon =
-                  item.icon === 'FileText'
-                    ? FileText
-                    : item.icon === 'Compass'
-                      ? Compass
-                      : item.icon === 'CalendarClock'
-                        ? CalendarClock
-                        : item.icon === 'Rocket'
-                          ? Rocket
-                          : item.icon === 'Users'
-                            ? Users
-                            : UserCircle;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-start gap-2.5 rounded-2xl border border-silver-200 bg-white p-3 transition-colors hover:border-coral-300 hover:bg-coral-50"
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-softpink-200 text-coral-600">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-black text-slateblue-900">
-                        {item.label}
-                      </p>
-                      <p className="mt-0.5 text-[11px] leading-snug text-slateblue-700">
-                        {item.desc}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </Card>
         </div>
       </div>
     </div>

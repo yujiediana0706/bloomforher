@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Menu, Sparkles, X } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, Sparkles, UserCircle, X } from 'lucide-react';
 import { NAV_ITEMS } from '@/lib/constants';
 import { useAuth } from './AuthProvider';
 
@@ -13,6 +13,14 @@ export function Navbar() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  async function handleLogout() {
+    setProfileOpen(false);
+    setMenuOpen(false);
+    await logout();
+    router.push('/');
+  }
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -46,26 +54,58 @@ export function Navbar() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="relative ml-auto flex items-center gap-2">
             {user ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="hidden max-w-[140px] truncate rounded-xl border border-silver-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slateblue-900 hover:bg-silver-100 sm:block"
-                >
-                  {user.name}
-                </Link>
+              <div className="relative">
                 <button
                   type="button"
-                  onClick={async () => {
-                    await logout();
-                    router.push('/');
-                  }}
-                  className="rounded-xl border border-silver-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slateblue-700 hover:bg-silver-100"
+                  onClick={() => setProfileOpen((v) => !v)}
+                  className="flex max-w-[160px] items-center gap-1 rounded-xl border border-silver-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slateblue-900 hover:bg-silver-100"
+                  aria-haspopup="menu"
+                  aria-expanded={profileOpen}
                 >
-                  Log out
+                  <span className="truncate">{user.name}</span>
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 shrink-0 text-slateblue-700 transition-transform ${
+                      profileOpen ? 'rotate-180' : ''
+                    }`}
+                  />
                 </button>
-              </>
+                {profileOpen ? (
+                  <>
+                    <button
+                      type="button"
+                      aria-hidden
+                      tabIndex={-1}
+                      onClick={() => setProfileOpen(false)}
+                      className="fixed inset-0 z-40 cursor-default"
+                    />
+                    <div
+                      role="menu"
+                      className="absolute right-0 z-50 mt-1.5 w-44 overflow-hidden rounded-xl border border-silver-300 bg-white py-1 shadow-lg"
+                    >
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slateblue-900 hover:bg-silver-100"
+                        role="menuitem"
+                      >
+                        <UserCircle className="h-4 w-4 text-coral-500" />
+                        My profile
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-xs font-bold text-slateblue-700 hover:bg-silver-100"
+                        role="menuitem"
+                      >
+                        <LogOut className="h-4 w-4 text-coral-500" />
+                        Log out
+                      </button>
+                    </div>
+                  </>
+                ) : null}
+              </div>
             ) : (
               <>
                 <Link
@@ -110,6 +150,26 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slateblue-700 hover:bg-silver-100"
+                >
+                  <UserCircle className="h-4 w-4 text-coral-500" />
+                  My profile
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slateblue-700 hover:bg-silver-100"
+                >
+                  <LogOut className="h-4 w-4 text-coral-500" />
+                  Log out
+                </button>
+              </>
+            ) : null}
           </nav>
         ) : null}
       </div>

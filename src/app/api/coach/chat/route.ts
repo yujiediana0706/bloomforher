@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, newId, nowIso } from '@/lib/store';
+import { ensureLoaded, findUser, newId, nowIso } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { coachReply, type CoachContext } from '@/lib/ai';
 import type { CoachMessage } from '@/lib/types';
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const db = getDB();
+  const db = await ensureLoaded();
   const user = findUser(db, uid);
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
@@ -61,10 +61,27 @@ export async function POST(req: NextRequest) {
   const completedSessionCount = db.bookings.filter(
     (b) => b.coacheeId === uid && (b.status === 'completed' || b.status === 'released')
   ).length;
+
+  // Skill portrait: the coach only gets the evidence-based summary, so every
+  // ability claim can be traced to the user's real data.
+  const skillProfile = db.skillProfiles[uid];
+  const strengths = skillProfile?.transferableSkills.map((s) => ({
+    name: s.name,
+    evidenceLevel: s.evidenceLevel ?? 'unrated',
+    evidence: s.evidence,
+  }));
+  const skillGaps = skillProfile?.skillGaps?.map((g) => ({
+    skill: g.skill,
+    priority: g.priority,
+    why: g.why,
+  }));
+
   const context: CoachContext = {
     planProgress,
     recentFeedbackScore: feedbackScores.at(-1),
     completedSessionCount,
+    strengths,
+    skillGaps,
   };
 
   const { content, microAction } = await coachReply(user, recentEvidences, message, context);

@@ -122,8 +122,7 @@ export default function DashboardPage() {
     return (
       <Card>
         <p className="text-sm text-slateblue-700">
-          Please sign in first (you can switch demo accounts from the top-right
-          menu).
+          Please sign in first.
         </p>
       </Card>
     );

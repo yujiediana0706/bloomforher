@@ -114,7 +114,7 @@ export default function BecomeMentorPage() {
     return (
       <Card>
         <p className="text-sm text-slateblue-700">
-          Please sign in (switch demo accounts in the top-right corner)
+          Please sign in first.
         </p>
       </Card>
     );

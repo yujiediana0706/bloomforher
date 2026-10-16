@@ -192,7 +192,7 @@ export default function PlazaPage() {
 
   const handleWilling = async (postId: string) => {
     if (!user) {
-      setNotice('Please sign in (switch demo accounts in the top-right corner)');
+      setNotice('Please sign in first.');
       return;
     }
     try {
@@ -247,7 +247,7 @@ export default function PlazaPage() {
 
   const handlePublish = async () => {
     if (!user) {
-      setNotice('Please sign in (switch demo accounts in the top-right corner)');
+      setNotice('Please sign in first.');
       return;
     }
     if (!form.title.trim() && !form.body.trim() && form.images.length === 0) {
@@ -309,7 +309,7 @@ export default function PlazaPage() {
 
       {!authLoading && !user ? (
         <div className="rounded-2xl border border-coral-100 bg-coral-50 px-4 py-3 text-sm font-bold text-coral-700">
-          Please sign in (switch demo accounts in the top-right corner)
+          Please sign in first.
         </div>
       ) : null}
 

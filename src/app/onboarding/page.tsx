@@ -83,9 +83,9 @@ const COACH_LINES: Record<number, string> = {
   3: 'You can have several goals at once, and adjust direction along the way. Tell me your current constraints, and I will help you design a pace you can actually keep.',
   4: 'You can upload your resume here—I will actually read the text inside it and use your real experience for your diagnosis. This is optional, and you can skip it.',
   5: 'Your current life stage directly shapes the pace of the plan—none is better or worse, just different ways to arrange things.',
-  6: 'Next is a self-rated confidence check. Go with your gut—there are no right answers; I will later calibrate objectively based on your evidence.',
-  7: 'Just three questions left. Remember: women often underestimate themselves systematically, so your scores may be lower than your real ability.',
-  8: 'Confirm your information and I will generate your skill profile, AI opportunities, and a 30-day return plan. You just need to click "Finish".',
+  6: 'Next is a self-rated confidence check. Answer with your honest gut feeling; there are no right answers, and I will compare each score with the evidence in your experience.',
+  7: 'A note on the next step: self-ratings can run too low or too high. I will not automatically raise your scores; I will check them against what your experience actually demonstrates.',
+  8: 'Confirm your information, and you will see your skill portrait next: the strengths the evidence actually supports and the real gaps worth closing. Nothing in it is invented.',
 };
 
 const inputCls =
@@ -231,7 +231,8 @@ export default function OnboardingPage() {
       await apiSend('/api/skills', 'POST');
       await apiSend('/api/opportunities', 'POST');
       await refresh();
-      router.push('/coach');
+      // Strengths-first journey: skill portrait -> pick one path -> AI Mentor.
+      router.push('/skills?from=onboarding');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed, please try again');
     } finally {
@@ -250,7 +251,7 @@ export default function OnboardingPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl">
-        <EmptyState text="Please sign in first (use the top-right corner to switch demo accounts)" />
+        <EmptyState text="Please sign in first to start your diagnosis." />
       </div>
     );
   }
@@ -631,7 +632,7 @@ export default function OnboardingPage() {
                   Generating…
                 </>
               ) : (
-                'Finish and generate my profile'
+                'See my strengths'
               )}
             </Button>
           )}

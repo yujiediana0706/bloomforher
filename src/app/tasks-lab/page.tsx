@@ -154,7 +154,7 @@ export default function TasksLabPage() {
   }
   if (!user) {
     return (
-      <EmptyState text="Please sign in first (you can switch demo accounts from the top-right menu)." />
+      <EmptyState text="Please sign in first." />
     );
   }
 

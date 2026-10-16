@@ -20,6 +20,7 @@ const ALLOWED_FIELDS = [
   'segment',
   'resumePath',
   'avatarUrl',
+  'chosenRole',
 ] as const;
 
 export async function GET(req: NextRequest) {

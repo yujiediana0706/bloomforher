@@ -118,7 +118,7 @@ export default function PlazaDetailPage({
 
   const sendAction = async (body: Record<string, unknown>) => {
     if (!user) {
-      setNotice('Please sign in (switch demo accounts in the top-right corner)');
+      setNotice('Please sign in first.');
       return false;
     }
     try {
@@ -169,7 +169,7 @@ export default function PlazaDetailPage({
 
   const handleCreateChat = async () => {
     if (!user) {
-      setNotice('Please sign in (switch demo accounts in the top-right corner)');
+      setNotice('Please sign in first.');
       return;
     }
     if (!selectedHelper) return;
@@ -203,7 +203,7 @@ export default function PlazaDetailPage({
 
   const handleChatAction = async (body: Record<string, unknown>) => {
     if (!user) {
-      setNotice('Please sign in (switch demo accounts in the top-right corner)');
+      setNotice('Please sign in first.');
       return;
     }
     try {
@@ -260,7 +260,7 @@ export default function PlazaDetailPage({
 
       {!authLoading && !user ? (
         <div className="rounded-2xl border border-coral-100 bg-coral-50 px-4 py-3 text-sm font-bold text-coral-700">
-          Please sign in (switch demo accounts in the top-right corner)
+          Please sign in first.
         </div>
       ) : null}
 
@@ -347,7 +347,7 @@ export default function PlazaDetailPage({
               variant="outline"
               onClick={async () => {
                 if (!user) {
-                  setNotice('Please sign in (switch demo accounts in the top-right corner)');
+                  setNotice('Please sign in first.');
                   return;
                 }
                 try {

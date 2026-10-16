@@ -94,19 +94,9 @@ export const JOURNEY_STEPS = [
   { step: 6, label: 'Join the community', href: '/plaza' },
 ] as const;
 
-// —— Main navigation (minimal: three core entries; everything else lives in the AI Mentor dashboard) ——
+// —— Main navigation (the product is three surfaces: Home, AI Mentor, Community) ——
 export const NAV_ITEMS = [
   { href: '/', label: 'Home' },
   { href: '/coach', label: 'AI Mentor' },
   { href: '/plaza', label: 'Community' },
-] as const;
-
-/** Feature entries shown in the AI Mentor dashboard */
-export const MENTOR_DASHBOARD_LINKS = [
-  { href: '/skills', label: 'Skill profile', desc: 'AI-calibrated confidence across six dimensions', icon: 'FileText' },
-  { href: '/opportunities', label: 'AI opportunities', desc: 'Roles matched to you', icon: 'Compass' },
-  { href: '/plan', label: 'Return plan', desc: 'A 30-day rhythm you can pause', icon: 'CalendarClock' },
-  { href: '/tasks-lab', label: 'Hands-on tasks', desc: 'Build your first portfolio piece in 30 minutes', icon: 'Rocket' },
-  { href: '/community', label: 'Mentor community', desc: 'Certified coaches, paid with escrow', icon: 'Users' },
-  { href: '/dashboard', label: 'My profile', desc: 'Profile, resumes, account', icon: 'UserCircle' },
 ] as const;

@@ -38,6 +38,8 @@ export interface UserProfile {
   resumeFileName?: string;
   /** Plain text extracted from the uploaded resume, used by the AI coach. */
   resumeText?: string;
+  /** The one direction the user chose on the "pick one path" step. */
+  chosenRole?: string;
   goals: string[];
   constraints: UserConstraints;
   segment: Segment;
@@ -52,19 +54,36 @@ export interface UserProfile {
 }
 
 // —— Journey ② Skill discovery ——
+
+/**
+ * How strongly the evidence supports the skill:
+ * - verified: demonstrated by concrete experience in the resume/background
+ * - transferable: real adjacent experience, but not yet proven in an AI setting
+ * - hypothesis: plausible but currently unsupported by evidence
+ */
+export type EvidenceLevel = 'verified' | 'transferable' | 'hypothesis';
+
 export interface TransferableSkill {
   id: string;
   name: string;
   evidence: string; // must reference real experience
   aiRelevance: number; // 0-100
   narrative: string;
+  evidenceLevel?: EvidenceLevel;
 }
 
 export interface ConfidenceCalibrationItem {
   dimension: string;
   selfScore: number; // 1-10 self-assessment
   aiScore: number; // 1-10 evidence-based objective score
-  evidenceRef: string; // "In X you already did Y, which is exactly the Z an AI role needs"
+  evidenceRef: string; // what the score is based on, incl. explicit uncertainty
+}
+
+/** A real, prioritized gap between the user's evidence and the target work. */
+export interface SkillGap {
+  skill: string;
+  why: string; // why it matters for the chosen/target direction
+  priority: 'high' | 'medium' | 'low';
 }
 
 export interface SkillProfile {
@@ -72,6 +91,8 @@ export interface SkillProfile {
   transferableSkills: TransferableSkill[];
   uniqueValue: string;
   confidenceCalibration: ConfidenceCalibrationItem[];
+  /** Real skill gaps the evidence does not yet cover. */
+  skillGaps?: SkillGap[];
   createdAt: string;
 }
 
@@ -94,6 +115,8 @@ export interface RoleMatch {
   realWorldExamples: string[];
   tradeoffs: string;
   category: RoleCategory;
+  /** Concrete capabilities the user would need to build for this direction. */
+  skillGaps?: string[];
 }
 
 export interface WomenFriendlyTrack {
