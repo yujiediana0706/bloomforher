@@ -124,20 +124,22 @@ export async function callAgentEndpoint(
   }
 }
 
-/** 调 Vertex AI Gemini generateContent（fallback） */
+/** 调 Vertex AI Gemini generateContent（fallback）。模型名可通过 GEMINI_MODEL 覆盖，默认按候选列表逐个探测。 */
+const MODEL_CANDIDATES = process.env.GEMINI_MODEL
+  ? [process.env.GEMINI_MODEL]
+  : ['gemini-2.5-flash', 'gemini-2.0-flash-001', 'gemini-1.5-flash-002'];
+
 export async function callGemini(req: AgentRequest): Promise<AgentResponse | null> {
   const auth = getAuth();
-  if (!auth) return null;
+  if (!auth || !projectId) return null;
 
   try {
     const client = await auth.getClient();
     const token = (await client.getAccessToken()).token;
 
     const location = 'us-central1';
-    const model = 'gemini-2.0-flash';
-    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
 
-    // 构建 contents
+    // 构建 contents（各模型复用）
     const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
     if (req.systemInstruction) {
@@ -173,31 +175,36 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
 
     contents.push({ role: 'user', parts: [{ text: req.input }] });
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ contents }),
-    });
+    for (const model of MODEL_CANDIDATES) {
+      const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
 
-    if (!res.ok) {
-      const err = await res.text();
-      _lastGeminiError = `HTTP ${res.status}: ${err.slice(0, 300)}`;
-      console.error('[Gemini] 调用失败:', _lastGeminiError);
-      return null;
-    }
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ contents }),
+      });
 
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    if (!text) {
-      _lastGeminiError = `empty output; raw=${JSON.stringify(data).slice(0, 300)}`;
-      console.error('[Gemini] 空输出:', _lastGeminiError);
-      return null;
+      if (!res.ok) {
+        const err = await res.text();
+        _lastGeminiError = `HTTP ${res.status} (${model}): ${err.slice(0, 200)}`;
+        console.error('[Gemini] 调用失败:', _lastGeminiError);
+        continue;
+      }
+
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!text) {
+        _lastGeminiError = `empty output (${model}); raw=${JSON.stringify(data).slice(0, 200)}`;
+        console.error('[Gemini] 空输出:', _lastGeminiError);
+        continue;
+      }
+      _lastGeminiError = null;
+      return { text };
     }
-    _lastGeminiError = null;
-    return { text };
+    return null;
   } catch (e) {
     _lastGeminiError = (e as Error).message;
     console.error('[Gemini] 异常:', _lastGeminiError);
