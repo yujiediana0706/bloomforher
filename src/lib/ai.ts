@@ -366,14 +366,17 @@ export async function coachReply(
     });
 
     if (res) {
-      // 从回复中提取微行动：兼容 【微行动】 与 **微行动：** 两种写法
+      // 从回复中提取微行动：兼容 【微行动】、**微行动：**、### 10 分钟微行动： 等写法
       const DEFAULT_MICRO = '花 5 分钟，在你的「我可以」墙里挑一条证据，读一遍并写下一句感受。';
-      const markerRe = /(?:【微行动】|\*\*微行动\*\*\s*[:：]?)/;
-      const idx = res.text.search(markerRe);
-      if (idx >= 0) {
-        const content = res.text.slice(0, idx).replace(/[-—\s]+$/, '').trim();
+      const markerRe =
+        /【微行动】|\*\*微行动\*\*\s*[:：]?|^#{0,6}\s*(?:\d{1,2}\s*分钟\s*)?微行动\s*[:：]?/m;
+      const matched = res.text.match(markerRe);
+      if (matched && matched.index !== undefined) {
+        const idx = matched.index;
+        const content = res.text.slice(0, idx).replace(/[\s\-—#*]+$/, '').trim();
         const microAction =
-          res.text.slice(idx).replace(markerRe, '').replace(/^[\s:：*]+/, '').trim() || DEFAULT_MICRO;
+          res.text.slice(idx + matched[0].length).split('\n')[0].replace(/^[\s:：*]+/, '').trim() ||
+          DEFAULT_MICRO;
         return { content, microAction };
       }
       return { content: res.text.trim(), microAction: DEFAULT_MICRO };

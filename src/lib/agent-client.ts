@@ -12,24 +12,6 @@ let _auth: GoogleAuth | null = null;
 let _initFailed = false;
 let _lastAgentError: string | null = null;
 let _lastGeminiError: string | null = null;
-let _lastGeminiModel: string | null = null;
-let _geminiAttempts: Array<{ model: string; location: string; ok: boolean; error?: string }> = [];
-
-export function getGeminiAttempts() {
-  return _geminiAttempts;
-}
-
-export function getLastAgentError(): string | null {
-  return _lastAgentError;
-}
-
-export function getLastGeminiError(): string | null {
-  return _lastGeminiError;
-}
-
-export function getLastGeminiModel(): string | null {
-  return _lastGeminiModel;
-}
 
 function getAuth(): GoogleAuth | null {
   if (_auth) return _auth;
@@ -187,8 +169,6 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
 
     contents.push({ role: 'user', parts: [{ text: req.input }] });
 
-    _geminiAttempts = [];
-
     for (const { model, location } of MODEL_CANDIDATES) {
       // global 端点主机名不带区域前缀，其余区域为 {location}-aiplatform.googleapis.com
       const host = location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
@@ -207,7 +187,6 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
         const err = await res.text();
         _lastGeminiError = `HTTP ${res.status} (${model}): ${err.slice(0, 200)}`;
         console.error('[Gemini] 调用失败:', _lastGeminiError);
-        _geminiAttempts.push({ model, location, ok: false, error: _lastGeminiError });
         continue;
       }
 
@@ -216,12 +195,9 @@ export async function callGemini(req: AgentRequest): Promise<AgentResponse | nul
       if (!text) {
         _lastGeminiError = `empty output (${model}); raw=${JSON.stringify(data).slice(0, 200)}`;
         console.error('[Gemini] 空输出:', _lastGeminiError);
-        _geminiAttempts.push({ model, location, ok: false, error: _lastGeminiError });
         continue;
       }
       _lastGeminiError = null;
-      _lastGeminiModel = model;
-      _geminiAttempts.push({ model, location, ok: true });
       return { text };
     }
     return null;
@@ -247,37 +223,4 @@ export function getAgentEndpoint(agentName: 'assessment' | 'coach' | 'memory' | 
     mentorMatch: 'AGENT_ENDPOINT_MENTOR_MATCH',
   };
   return process.env[envMap[agentName]] || null;
-}
-
-/** 列出某区域下所有 Reasoning Engine（用于诊断 Agent 是否真正部署） */
-export async function listReasoningEngines(location: string): Promise<Record<string, unknown>> {
-  const auth = getAuth();
-  if (!auth || !projectId) return { error: 'no auth or project id' };
-
-  try {
-    const client = await auth.getClient();
-    const token = (await client.getAccessToken()).token;
-
-    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/reasoningEngines`;
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-
-    if (!res.ok) {
-      return { error: `HTTP ${res.status}: ${(await res.text()).slice(0, 300)}` };
-    }
-
-    const data = await res.json();
-    const engines = (data.reasoningEngines ?? []).map((e: any) => ({
-      name: e.name,
-      displayName: e.displayName,
-      state: e.state,
-      hasPackageSpec: !!e.spec?.packageSpec,
-      classMethod: e.spec?.classMethod ?? null,
-      createTime: e.createTime,
-      updateTime: e.updateTime,
-    }));
-
-    return { count: engines.length, engines };
-  } catch (e) {
-    return { error: (e as Error).message };
-  }
 }
