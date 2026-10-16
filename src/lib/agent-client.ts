@@ -6,6 +6,7 @@ import { readFileSync } from 'fs';
 
 const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 const projectId = process.env.GOOGLE_CLOUD_PROJECT;
+const SCOPES = ['https://www.googleapis.com/auth/cloud-platform'];
 
 let _auth: GoogleAuth | null = null;
 let _initFailed = false;
@@ -13,14 +14,16 @@ let _initFailed = false;
 function getAuth(): GoogleAuth | null {
   if (_auth) return _auth;
   if (_initFailed) return null;
-  if (!keyPath || !projectId) return null;
 
   try {
-    const key = JSON.parse(readFileSync(keyPath, 'utf8'));
-    _auth = new GoogleAuth({
-      credentials: key,
-      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-    });
+    if (keyPath) {
+      // 本地开发：显式服务账号 key 文件
+      const key = JSON.parse(readFileSync(keyPath, 'utf8'));
+      _auth = new GoogleAuth({ credentials: key, projectId: projectId || undefined, scopes: SCOPES });
+    } else {
+      // Cloud Run / GCP：Application Default Credentials（元数据服务器），无需 key 文件
+      _auth = new GoogleAuth({ projectId: projectId || undefined, scopes: SCOPES });
+    }
     return _auth;
   } catch (e) {
     console.error('[Agent] 初始化失败:', (e as Error).message);
@@ -29,7 +32,7 @@ function getAuth(): GoogleAuth | null {
   }
 }
 
-interface AgentRequest {
+export interface AgentRequest {
   /** 系统提示词（角色设定） */
   systemInstruction?: string;
   /** 用户输入 */

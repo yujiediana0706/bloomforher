@@ -2,7 +2,8 @@
 // 所有函数均为异步，返回类型不变。
 
 import { LIFE_STAGE_LABELS } from './constants';
-import { callAgentEndpoint, getAgentEndpoint, isAgentAvailable } from './agent-client';
+import { callAgentEndpoint, callGemini, getAgentEndpoint, isAgentAvailable } from './agent-client';
+import type { AgentRequest } from './agent-client';
 import type {
   EvidenceItem,
   GenderRiskHint,
@@ -16,6 +17,16 @@ import type {
   UserProfile,
   WomenFriendlyTrack,
 } from './types';
+
+// —— 工具：优先调 Agent Platform，失败则回退到 Vertex AI Gemini ——
+
+async function callModel(ep: string | null, req: AgentRequest): Promise<{ text: string } | null> {
+  if (ep) {
+    const r = await callAgentEndpoint(ep, req);
+    if (r?.text) return r;
+  }
+  return callGemini(req);
+}
 
 // —— 工具：从 Agent 文本中提取 JSON ——
 
@@ -173,8 +184,7 @@ export async function buildSkillProfile(user: UserProfile): Promise<Omit<SkillPr
 }`;
 
     const ep = getAgentEndpoint('assessment');
-    if (!ep) return fallbackSkillProfile(user);
-    const res = await callAgentEndpoint(ep, { input: prompt, context: { user } });
+    const res = await callModel(ep, { input: prompt, context: { user } });
     if (res) {
       const parsed = extractJson<Omit<SkillProfile, 'uid' | 'createdAt'>>(res.text);
       if (parsed) return parsed;
@@ -212,8 +222,7 @@ ${skills.transferableSkills.map(s => `- ${s.name}: ${s.evidence}`).join('\n')}
 }`;
 
     const ep = getAgentEndpoint('assessment');
-    if (!ep) return fallbackOpportunityReport(user, skills);
-    const res = await callAgentEndpoint(ep, { input: prompt, context: { user, skills } });
+    const res = await callModel(ep, { input: prompt, context: { user, skills } });
     if (res) {
       const parsed = extractJson<Omit<OpportunityReport, 'uid' | 'createdAt'>>(res.text);
       if (parsed) return parsed;
@@ -252,8 +261,7 @@ ${adjustmentFeedback ? `- 调整反馈：${adjustmentFeedback}` : ''}
 }`;
 
     const ep = getAgentEndpoint('assessment');
-    if (!ep) return fallbackReturnPlan(user);
-    const res = await callAgentEndpoint(ep, { input: prompt, context: { user, adjustmentFeedback } });
+    const res = await callModel(ep, { input: prompt, context: { user, adjustmentFeedback } });
     if (res) {
       const parsed = extractJson<Omit<ReturnPlan, 'uid' | 'createdAt'>>(res.text);
       if (parsed) return parsed;
@@ -276,8 +284,7 @@ export async function buildLabTasks(user: UserProfile): Promise<Omit<LabTask, 'i
 [{"taskKey": "...", "title": "...", "scenario": "...", "toolHint": "...", "rubric": ["..."], "estimatedMinutes": 30, "status": "todo", "submissions": []}]`;
 
     const ep = getAgentEndpoint('assessment');
-    if (!ep) return fallbackLabTasks(user);
-    const res = await callAgentEndpoint(ep, { input: prompt, context: { user } });
+    const res = await callModel(ep, { input: prompt, context: { user } });
     if (res) {
       const parsed = extractJson<Omit<LabTask, 'id' | 'uid' | 'createdAt'>[]>(res.text);
       if (parsed) return parsed;
@@ -304,8 +311,7 @@ ${submissionText}
 {"highlights": ["..."], "actionableSuggestions": ["..."], "skillGapAnalysis": ["..."], "score": 4.5, "evaluatedAt": "..."}`;
 
     const ep = getAgentEndpoint('assessment');
-    if (!ep) return fallbackEvaluateSubmission(submissionText);
-    const res = await callAgentEndpoint(ep, { input: prompt });
+    const res = await callModel(ep, { input: prompt });
     if (res) {
       const parsed = extractJson<LabFeedback>(res.text);
       if (parsed) return parsed;
@@ -353,8 +359,7 @@ export async function coachReply(
     };
 
     const ep = getAgentEndpoint('coach');
-    if (!ep) return fallbackCoachReply(user, evidences, userMessage, context);
-    const res = await callAgentEndpoint(ep, {
+    const res = await callModel(ep, {
       systemInstruction: systemPrompt,
       input: userMessage,
       context: contextStr,
@@ -387,8 +392,7 @@ ${evidences.slice(0, 5).map((e, i) => `${i + 1}. ${e.title} — ${e.detail}`).jo
 - 结尾给一个鼓励`;
 
     const ep = getAgentEndpoint('coach');
-    if (!ep) return `${user.name}，这周你开始建立证据了。等再多积累几条，我就能为你写出更具体的自信总结。`;
-    const res = await callAgentEndpoint(ep, { input: prompt });
+    const res = await callModel(ep, { input: prompt });
     if (res) return res.text;
   }
 
@@ -407,7 +411,6 @@ export async function moderateContent(content: { title?: string; body?: string; 
   }
 
   const ep = getAgentEndpoint('coach');
-  if (!ep) return { pass: true };
 
   const text = [content.title, content.body].filter(Boolean).join('\n\n');
   const hasImages = (content.images?.length ?? 0) > 0;
@@ -432,7 +435,7 @@ ${hasImages ? `[包含 ${content.images!.length} 张图片]` : ''}
 - 建议要温柔，不说教，像朋友提醒一样
 - 如果内容只是消极但不违规，pass: true，advice 可以写「这里好像有点消极，要不要换个表述？」`;
 
-  const res = await callAgentEndpoint(ep, { input: prompt });
+  const res = await callModel(ep, { input: prompt });
   if (res) {
     const parsed = extractJson<{ pass: boolean; advice?: string }>(res.text);
     if (parsed) return parsed;
