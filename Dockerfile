@@ -1,4 +1,4 @@
-# ReBloom AI — Cloud Run deployment image
+# HerRise — Cloud Run deployment image
 
 FROM node:20-alpine AS base
 

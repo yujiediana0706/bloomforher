@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// ReBloom AI — Firestore security rules
+// HerRise — Firestore security rules
 //
 // Security design notes:
 // - Sensitive aggregate data (evidence, bookings, transactions, reviews) can never be written

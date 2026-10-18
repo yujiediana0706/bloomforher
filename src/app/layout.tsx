@@ -5,7 +5,7 @@ import { AuthGate } from '@/components/AuthGate';
 import { Navbar } from '@/components/Navbar';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://rebloom-ai-107927033625.asia-southeast1.run.app'),
+  metadataBase: new URL('https://herrise-frontend-41961229241.us-central1.run.app'),
   title: 'HerRise | Your experience. A brighter future in the AI era.',
   description:
     'An AI career-transition platform built for women: helping women move from "Why me" to "Why not me". Skill portrait · pick one path · evidence-based AI mentor · community plaza.',

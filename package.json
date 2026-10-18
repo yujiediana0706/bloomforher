@@ -1,8 +1,8 @@
 {
-  "name": "rebloom-ai-her-path",
+  "name": "herrise",
   "version": "0.1.0",
   "private": true,
-  "description": "ReBloom AI — a career-transition platform helping women move into AI roles (prototype)",
+  "description": "HerRise — a career-transition platform helping women move into AI roles (prototype)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

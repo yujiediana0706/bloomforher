@@ -63,12 +63,12 @@ export interface DB {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __rebloomDB: DB | undefined;
+  var __herriseDB: DB | undefined;
   // eslint-disable-next-line no-var
-  var __rebloomFirestoreLoaded: boolean | undefined;
+  var __herriseFirestoreLoaded: boolean | undefined;
   // In-flight Firestore load, shared so concurrent callers await one pass.
   // eslint-disable-next-line no-var
-  var __rebloomLoadPromise: Promise<void> | undefined;
+  var __herriseLoadPromise: Promise<void> | undefined;
 }
 
 function initDB(): DB {
@@ -98,20 +98,20 @@ function initDB(): DB {
 }
 
 export function getDB(): DB {
-  if (!globalThis.__rebloomDB) {
-    globalThis.__rebloomDB = initDB();
+  if (!globalThis.__herriseDB) {
+    globalThis.__herriseDB = initDB();
     // Load from Firestore asynchronously on first call (fire-and-forget).
     loadFromFirestore().catch((e) => {
       console.error('[Firestore] initial load failed:', (e as Error).message);
     });
   }
-  return globalThis.__rebloomDB;
+  return globalThis.__herriseDB;
 }
 
 /** Ensure Firestore data is loaded (called by API routes before writes). */
 export async function ensureLoaded(): Promise<DB> {
   const db = getDB();
-  if (!globalThis.__rebloomFirestoreLoaded) {
+  if (!globalThis.__herriseFirestoreLoaded) {
     await loadFromFirestore();
   }
   return db;
@@ -144,17 +144,17 @@ const COLLECTION_MAP: Record<string, keyof DB> = {
  * never overwrite the in-memory DB after new writes have already happened.
  */
 export async function loadFromFirestore(): Promise<void> {
-  if (globalThis.__rebloomFirestoreLoaded) return;
-  if (!globalThis.__rebloomLoadPromise) {
-    globalThis.__rebloomLoadPromise = doLoadFromFirestore()
+  if (globalThis.__herriseFirestoreLoaded) return;
+  if (!globalThis.__herriseLoadPromise) {
+    globalThis.__herriseLoadPromise = doLoadFromFirestore()
       .then((loaded) => {
-        if (loaded) globalThis.__rebloomFirestoreLoaded = true;
+        if (loaded) globalThis.__herriseFirestoreLoaded = true;
       })
       .finally(() => {
-        globalThis.__rebloomLoadPromise = undefined;
+        globalThis.__herriseLoadPromise = undefined;
       });
   }
-  await globalThis.__rebloomLoadPromise;
+  await globalThis.__herriseLoadPromise;
 }
 
 async function doLoadFromFirestore(): Promise<boolean> {

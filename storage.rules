@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// ReBloom AI — Cloud Storage rules
+// HerRise — Cloud Storage rules
 // resumes/{uid}/**: owner read/write only (resume / certificate files are private)
 // docs/{uid}/**   : owner read/write only (credential materials, etc.)
 service firebase.storage {

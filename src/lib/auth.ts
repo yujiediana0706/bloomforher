@@ -10,8 +10,8 @@ import {
 } from 'node:crypto';
 
 // Fallback secret for local development only. In production AUTH_SECRET must be
-// set (Cloud Run injects it via cloudbuild.yaml).
-const DEV_SECRET = 'rebloom-dev-secret-change-me';
+// set (Cloud Run injects it via environment variables).
+const DEV_SECRET = 'herrise-dev-secret-change-me';
 
 function authSecret(): string {
   const secret = process.env.AUTH_SECRET;

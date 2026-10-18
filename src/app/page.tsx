@@ -109,14 +109,14 @@ export default function HomePage() {
 
         <div className="mt-9 flex flex-col items-center gap-2">
           <Link
-            href="/register"
+            href="/onboarding"
             className="inline-flex items-center gap-2 rounded-full bg-coral-500 px-9 py-3.5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-coral-600"
           >
             Start your diagnosis
             <ArrowRight className="h-4 w-4" />
           </Link>
           <p className="text-sm text-slateblue-700">
-            About 3 minutes · your information stays with your account
+            About 3 minutes · no sign-up needed
           </p>
         </div>
         <p className="mt-5 text-sm font-bold text-slateblue-800">

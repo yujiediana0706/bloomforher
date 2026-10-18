@@ -27,14 +27,14 @@ async function testAgent(name, endpoint) {
 
 async function main() {
   const agents = [
-    { name: 'rebloom-assessment', env: 'AGENT_ENDPOINT_ASSESSMENT' },
-    { name: 'rebloom-coach', env: 'AGENT_ENDPOINT_COACH' },
-    { name: 'rebloom-memory', env: 'AGENT_ENDPOINT_MEMORY' },
-    { name: 'rebloom-proactive', env: 'AGENT_ENDPOINT_PROACTIVE' },
-    { name: 'rebloom-mentor-match', env: 'AGENT_ENDPOINT_MENTOR_MATCH' },
+    { name: 'herrise-assessment', env: 'AGENT_ENDPOINT_ASSESSMENT' },
+    { name: 'herrise-coach', env: 'AGENT_ENDPOINT_COACH' },
+    { name: 'herrise-memory', env: 'AGENT_ENDPOINT_MEMORY' },
+    { name: 'herrise-proactive', env: 'AGENT_ENDPOINT_PROACTIVE' },
+    { name: 'herrise-mentor-match', env: 'AGENT_ENDPOINT_MENTOR_MATCH' },
   ];
 
-  console.log('=== ReBloom AI agent connection test ===');
+  console.log('=== HerRise agent connection test ===');
 
   let passed = 0;
   let failed = 0;
