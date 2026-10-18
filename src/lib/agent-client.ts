@@ -5,13 +5,14 @@ import { GoogleAuth } from 'google-auth-library';
 import { readFileSync } from 'fs';
 
 const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-const projectId = process.env.GOOGLE_CLOUD_PROJECT;
+const envProjectId = process.env.GOOGLE_CLOUD_PROJECT;
 const SCOPES = ['https://www.googleapis.com/auth/cloud-platform'];
 
 let _auth: GoogleAuth | null = null;
 let _initFailed = false;
 let _lastAgentError: string | null = null;
 let _lastGeminiError: string | null = null;
+let _resolvedProjectId: string | null | undefined;
 
 function getAuth(): GoogleAuth | null {
   if (_auth) return _auth;
@@ -21,10 +22,10 @@ function getAuth(): GoogleAuth | null {
     if (keyPath) {
       // Local development: explicit service-account key file
       const key = JSON.parse(readFileSync(keyPath, 'utf8'));
-      _auth = new GoogleAuth({ credentials: key, projectId: projectId || undefined, scopes: SCOPES });
+      _auth = new GoogleAuth({ credentials: key, projectId: envProjectId || undefined, scopes: SCOPES });
     } else {
       // Cloud Run / GCP: Application Default Credentials (metadata server), no key file needed
-      _auth = new GoogleAuth({ projectId: projectId || undefined, scopes: SCOPES });
+      _auth = new GoogleAuth({ projectId: envProjectId || undefined, scopes: SCOPES });
     }
     return _auth;
   } catch (e) {
@@ -32,6 +33,23 @@ function getAuth(): GoogleAuth | null {
     _initFailed = true;
     return null;
   }
+}
+
+/** Resolve the GCP project ID from env or the GCP metadata server (Cloud Run). */
+async function getProjectId(): Promise<string | null> {
+  if (envProjectId) return envProjectId;
+  if (_resolvedProjectId !== undefined) return _resolvedProjectId;
+  const auth = getAuth();
+  if (!auth) {
+    _resolvedProjectId = null;
+    return null;
+  }
+  try {
+    _resolvedProjectId = await auth.getProjectId();
+  } catch {
+    _resolvedProjectId = null;
+  }
+  return _resolvedProjectId;
 }
 
 export interface AgentRequest {
@@ -127,6 +145,7 @@ const MODEL_CANDIDATES: Array<{ model: string; location: string }> = process.env
 
 export async function callGemini(req: AgentRequest): Promise<AgentResponse | null> {
   const auth = getAuth();
+  const projectId = await getProjectId();
   if (!auth || !projectId) return null;
 
   try {
