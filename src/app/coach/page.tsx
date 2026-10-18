@@ -584,40 +584,47 @@ export default function CoachPage() {
                     </div>
                     <div className="mt-1.5 space-y-1">
                       {week.practiceTasks.map((t) => (
-                        <button
+                        <div
                           key={t.id}
-                          type="button"
-                          onClick={() => void toggleTask(t.id, !t.completed)}
                           className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors hover:bg-silver-100"
                         >
-                          <span
-                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                              t.completed
-                                ? 'border-coral-500 bg-coral-500 text-white'
-                                : 'border-silver-300 bg-white text-transparent'
-                            }`}
+                          <button
+                            type="button"
+                            onClick={() => void toggleTask(t.id, !t.completed)}
+                            className="flex min-w-0 flex-1 items-center gap-2.5"
                           >
-                            <Check className="h-3 w-3" />
-                          </span>
-                          <span
-                            className={`min-w-0 flex-1 text-sm font-bold ${
-                              t.completed
-                                ? 'text-slateblue-700/50 line-through'
-                                : 'text-slateblue-900'
-                            }`}
-                          >
-                            {t.title}
-                          </span>
-                          <span
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black ${
-                              t.category === 'milestone'
-                                ? 'bg-coral-100 text-coral-600'
-                                : 'bg-silver-100 text-slateblue-700'
-                            }`}
-                          >
-                            {t.category === 'milestone' ? 'Milestone' : 'Practice'}
-                          </span>
-                        </button>
+                            <span
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                                t.completed
+                                  ? 'border-coral-500 bg-coral-500 text-white'
+                                  : 'border-silver-300 bg-white text-transparent'
+                              }`}
+                            >
+                              <Check className="h-3 w-3" />
+                            </span>
+                            <span
+                              className={`min-w-0 flex-1 text-sm font-bold ${
+                                t.completed
+                                  ? 'text-slateblue-700/50 line-through'
+                                  : 'text-slateblue-900'
+                              }`}
+                            >
+                              {t.title}
+                            </span>
+                          </button>
+                          {t.category !== 'milestone' ? (
+                            <Link
+                              href="/tasks-lab"
+                              className="shrink-0 rounded-full bg-silver-100 px-2.5 py-1 text-[10px] font-black text-coral-600 transition-colors hover:bg-coral-500 hover:text-white"
+                            >
+                              Practice
+                            </Link>
+                          ) : (
+                            <span className="shrink-0 rounded-full bg-coral-100 px-2 py-0.5 text-[10px] font-black text-coral-600">
+                              Milestone
+                            </span>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>

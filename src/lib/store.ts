@@ -271,6 +271,83 @@ export function findUserByEmail(db: DB, email: string): UserProfile | undefined 
   return db.users.find((u) => u.email.toLowerCase() === target);
 }
 
+/**
+ * For deferred registration: an anonymous visitor (uid starts with "anon_")
+ * may not have a UserProfile yet. Create a minimal one so the diagnosis
+ * flow can store data under that uid before the user registers.
+ */
+export function ensureUser(db: DB, uid: string): UserProfile {
+  const existing = findUser(db, uid);
+  if (existing) return existing;
+
+  const now = nowIso();
+  const user: UserProfile = {
+    uid,
+    name: 'Explorer',
+    email: '',
+    currentRole: '',
+    targetRole: '',
+    skills: [],
+    goals: [],
+    constraints: {
+      returnToWork: false,
+      newIndustry: false,
+      flexibility: false,
+      weeklyHours: 0,
+    },
+    segment: 'setter',
+    lifeStage: 'growth',
+    confidenceSelf: 5,
+    journeyStep: 1,
+    coffeeAvailability: [],
+    communityAgreed: false,
+    backgroundSummary: '',
+    createdAt: now,
+    updatedAt: now,
+  };
+  db.users.push(user);
+  syncToFirestore('users', uid, user);
+  return user;
+}
+
+/**
+ * Migrate all anonymous data to a newly registered user. Called from the
+ * registration route when an anonymous visitor signs up: every collection
+ * keyed by the old anon uid is re-keyed to the new real uid, then the anon
+ * user row is removed.
+ */
+export function migrateAnonymousData(db: DB, anonUid: string, realUid: string): void {
+  for (const collection of [
+    'skillProfiles',
+    'opportunityReports',
+    'returnPlans',
+  ] as const) {
+    if (db[collection][anonUid]) {
+      db[collection][realUid] = db[collection][anonUid];
+      delete db[collection][anonUid];
+      syncToFirestore(collection, realUid, db[collection][realUid]);
+    }
+  }
+  for (const task of db.labTasks) {
+    if (task.uid === anonUid) {
+      task.uid = realUid;
+      syncToFirestore('labTasks', task.id, task);
+    }
+  }
+  for (const ev of db.evidences) {
+    if (ev.uid === anonUid) {
+      ev.uid = realUid;
+      syncToFirestore('evidences', ev.id, ev);
+    }
+  }
+  if (db.coachMessages[anonUid]) {
+    db.coachMessages[realUid] = db.coachMessages[anonUid];
+    delete db.coachMessages[anonUid];
+  }
+  const idx = db.users.findIndex((u) => u.uid === anonUid);
+  if (idx >= 0) db.users.splice(idx, 1);
+}
+
 export function addEvidence(
   db: DB,
   ev: Omit<EvidenceItem, 'id' | 'createdAt'>

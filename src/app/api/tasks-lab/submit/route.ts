@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  getDB,
-  findUser,
+  ensureLoaded,
+  ensureUser,
   newId,
   nowIso,
   addEvidence,
@@ -22,9 +22,8 @@ export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const db = getDB();
-  const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  const db = await ensureLoaded();
+  ensureUser(db, uid);
 
   let body: SubmitBody = {};
   try {
@@ -57,7 +56,7 @@ export async function POST(req: NextRequest) {
 
   if (task.status !== 'done') task.status = 'done';
 
-  const evidence = addEvidence(db, {
+  addEvidence(db, {
     uid,
     type: 'task_outcome',
     title: `Hands-on task: ${task.title}`,
@@ -71,8 +70,5 @@ export async function POST(req: NextRequest) {
 
   checkTaskMilestones(db, uid);
 
-  if (user.journeyStep < 4) user.journeyStep = 4;
-  user.updatedAt = nowIso();
-
-  return NextResponse.json({ task, feedback, evidence });
+  return NextResponse.json({ task, feedback });
 }

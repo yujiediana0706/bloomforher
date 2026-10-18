@@ -275,8 +275,8 @@ export default function SkillsPage() {
   }, []);
 
   useEffect(() => {
-    if (user) void load();
-  }, [user, load]);
+    if (!loading) void load();
+  }, [loading, load]);
 
   async function handleGenerate() {
     setGenerating(true);
@@ -292,7 +292,7 @@ export default function SkillsPage() {
   }
 
   if (loading) return <EmptyState text="Loading…" />;
-  if (!user) return <EmptyState text="Please sign in first to view your skill portrait." />;
+  // Anonymous visitors can view their skill portrait without an account.
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-10">

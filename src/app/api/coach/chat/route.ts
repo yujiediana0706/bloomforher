@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureLoaded, findUser, newId, nowIso } from '@/lib/store';
-import { getUidFromRequest } from '@/lib/session';
+import { getUidFromRequest, isAnonymousUid } from '@/lib/session';
 import { coachReply, type CoachContext } from '@/lib/ai';
 import type { CoachMessage } from '@/lib/types';
 
@@ -21,6 +21,13 @@ function sleep(ms: number): Promise<void> {
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
+  // The AI Mentor is a protected feature: anonymous visitors must sign up first.
+  if (isAnonymousUid(uid)) {
+    return NextResponse.json(
+      { error: 'Please sign up first to chat with your AI Mentor.' },
+      { status: 401 }
+    );
+  }
 
   const db = await ensureLoaded();
   const user = findUser(db, uid);
@@ -83,6 +90,17 @@ export async function POST(req: NextRequest) {
     strengths,
     skillGaps,
   };
+
+  // Load the persisted conversation history so the coach remembers prior turns.
+  // We feed the last 10 messages (5 user/coach pairs) — enough for continuity
+  // without drowning the current prompt.
+  const history = (db.coachMessages[uid] ?? []).slice(-10).map((m) => ({
+    role: m.role as 'user' | 'coach',
+    content: m.content,
+  }));
+  if (history.length) {
+    context.conversationHistory = history;
+  }
 
   const { content, microAction } = await coachReply(user, recentEvidences, message, context);
 

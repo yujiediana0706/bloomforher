@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureLoaded, findUser, getDB, nowIso, syncToFirestore } from '@/lib/store';
+import { ensureLoaded, ensureUser, nowIso, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { MAX_RESUME_BYTES, parseResume } from '@/lib/resume';
 
@@ -11,8 +11,7 @@ export async function GET(req: NextRequest) {
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = await ensureLoaded();
-  const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  const user = ensureUser(db, uid);
 
   return NextResponse.json({
     resumeFileName: user.resumeFileName ?? null,
@@ -26,8 +25,7 @@ export async function POST(req: NextRequest) {
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = await ensureLoaded();
-  const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  const user = ensureUser(db, uid);
 
   let form: FormData;
   try {
@@ -76,8 +74,7 @@ export async function DELETE(req: NextRequest) {
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = await ensureLoaded();
-  const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  const user = ensureUser(db, uid);
 
   delete user.resumeFileName;
   delete user.resumePath;

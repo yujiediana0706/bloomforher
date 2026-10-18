@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureLoaded, findUser, nowIso, syncToFirestore } from '@/lib/store';
+import { ensureLoaded, ensureUser, nowIso, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { buildReturnPlan } from '@/lib/ai';
 import type { ReturnPlan } from '@/lib/types';
@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = await ensureLoaded();
+  ensureUser(db, uid);
   return NextResponse.json({ plan: db.returnPlans[uid] ?? null });
 }
 
@@ -19,8 +20,7 @@ export async function POST(req: NextRequest) {
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = await ensureLoaded();
-  const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  const user = ensureUser(db, uid);
 
   let feedback: string | undefined;
   try {

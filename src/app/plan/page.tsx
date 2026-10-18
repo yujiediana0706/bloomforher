@@ -40,8 +40,8 @@ export default function PlanPage() {
   }, []);
 
   useEffect(() => {
-    if (user) void load();
-  }, [user, load]);
+    if (!loading) void load();
+  }, [loading, load]);
 
   async function handleGenerate(body?: { feedback?: string }) {
     setGenerating(true);
@@ -95,10 +95,7 @@ export default function PlanPage() {
   }
 
   if (loading) return <EmptyState text="Loading…" />;
-  if (!user)
-    return (
-      <EmptyState text="Please sign in first." />
-    );
+  // Anonymous visitors can view their plan without an account.
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">

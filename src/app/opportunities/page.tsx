@@ -69,8 +69,8 @@ export default function OpportunitiesPage() {
   }, []);
 
   useEffect(() => {
-    if (user) void load();
-  }, [user, load]);
+    if (!loading) void load();
+  }, [loading, load]);
 
   // Preselect a previously chosen direction.
   useEffect(() => {
@@ -128,7 +128,7 @@ export default function OpportunitiesPage() {
   }
 
   if (loading) return <EmptyState text="Loading…" />;
-  if (!user) return <EmptyState text="Please sign in first to choose a path." />;
+  // Anonymous visitors can browse and pick a path without an account.
 
   const selected = report?.roleMatches.find((r) => r.id === selectedId) ?? null;
 

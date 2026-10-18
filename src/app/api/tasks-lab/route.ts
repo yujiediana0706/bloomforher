@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser, newId, nowIso, syncBatchToFirestore } from '@/lib/store';
+import { ensureLoaded, ensureUser, newId, nowIso, syncBatchToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import { buildLabTasks } from '@/lib/ai';
 import type { LabTask } from '@/lib/types';
@@ -10,9 +10,8 @@ export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const db = getDB();
-  const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  const db = await ensureLoaded();
+  const user = ensureUser(db, uid);
 
   let tasks = db.labTasks.filter((t) => t.uid === uid);
   if (tasks.length === 0) {

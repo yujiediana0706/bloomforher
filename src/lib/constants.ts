@@ -1,8 +1,9 @@
 import type { EvidenceType, LifeStage } from './types';
 
 // —— Brand ——
+// Stable coach portrait (Unsplash CDN, browser-cacheable).
 export const COACH_AVATAR_URL =
-  'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Warm%20professional%20female%20career%20coach%20avatar%2C%203D%20stylized%20Pixar-like%20render%2C%20mid-30s%20Asian%20woman%2C%20gentle%20confident%20smile%2C%20soft%20studio%20lighting%2C%20clean%20cream%20background%2C%20head-and-shoulders%20portrait%2C%20modern%20minimal&image_size=square';
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&q=80&auto=format';
 
 // —— Life stage labels (spec §5.5 rhythm tags) ——
 export const LIFE_STAGE_LABELS: Record<LifeStage, string> = {

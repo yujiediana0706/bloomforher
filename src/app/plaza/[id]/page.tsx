@@ -321,7 +321,7 @@ export default function PlazaDetailPage({
         <div className="mt-3 flex flex-wrap items-center gap-4 text-xs font-bold text-slateblue-700">
           <span className="inline-flex items-center gap-1">
             <Users className="h-3.5 w-3.5" />
-            {post.willingToHelpCount} willing to help
+            {post.willingToHelpCount} walking with her
           </span>
           <span className="inline-flex items-center gap-1">
             <Heart className="h-3.5 w-3.5" />
@@ -340,7 +340,7 @@ export default function PlazaDetailPage({
           </Button>
           {myWilling ? (
             <span className="inline-flex items-center rounded-xl bg-coral-500 px-4 py-2 text-sm font-bold text-white">
-              ✓ Willing to help
+              ✓ Walking with her
             </span>
           ) : (
             <Button
@@ -352,19 +352,19 @@ export default function PlazaDetailPage({
                 }
                 try {
                   await apiSend(`/api/plaza/${id}/willing`, 'POST');
-                  setNotice('Marked as willing to help — thank you for walking alongside her.');
+                  setNotice("You're now walking with her — thank you for the companionship.");
                   await load();
                 } catch (e) {
                   const msg = e instanceof Error ? e.message : '';
                   setNotice(
                     msg.includes('already')
-                      ? 'You are already willing to help.'
+                      ? "You're already walking with her."
                       : msg || 'Action failed'
                   );
                 }
               }}
             >
-              I'm willing to help
+              I'll walk with you
             </Button>
           )}
           <Button variant="ghost" onClick={() => setReportOpen(true)}>
@@ -383,7 +383,7 @@ export default function PlazaDetailPage({
         <Card className="!bg-softpink-100">
           <div className="mb-3 flex items-center gap-2">
             <h2 className="text-base font-extrabold text-slateblue-900">
-              {helpers.length} peers willing to help
+              {helpers.length} peers walking with her
             </h2>
             <Badge tone="green">Free · peer support</Badge>
           </div>

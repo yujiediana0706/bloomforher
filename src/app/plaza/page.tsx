@@ -27,8 +27,8 @@ const MAX_IMAGES = 3;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // single image ≤ 2MB
 
 // Button wording: not "help", but "walk alongside" — a peer community, not a request desk
-const WILLING_CTA = "I'm willing to help";
-const WILLING_DONE = '✓ Willing to help';
+const WILLING_CTA = "I'll walk with you";
+const WILLING_DONE = '✓ Walking with her';
 
 const AGREEMENTS = [
   'No judgment: every question deserves to be taken seriously — no mockery, no lecturing.',
@@ -114,7 +114,7 @@ function PostCard({
           <span className="inline-flex shrink-0 items-center gap-2.5">
             <span className="inline-flex items-center gap-1">
               <Users className="h-3 w-3" />
-              {post.willingToHelpCount} willing to help
+              {post.willingToHelpCount} walking with her
             </span>
             <span className="inline-flex items-center gap-1">
               <Heart className="h-3 w-3" />
@@ -302,8 +302,8 @@ export default function PlazaPage() {
         </h1>
         <p className="mt-1 text-sm leading-relaxed text-slateblue-700">
           Post it like a photo note — questions, wins, feelings, or finding a
-          buddy. Share freely, then tap "I'm willing to help" to walk alongside
-          someone.
+          buddy. Share freely, then tap "I'll walk with you" to accompany
+          someone on her path.
         </p>
       </div>
 

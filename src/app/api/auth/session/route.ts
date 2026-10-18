@@ -5,10 +5,16 @@ import {
   findUser,
   findUserByEmail,
   getDB,
+  migrateAnonymousData,
   nowIso,
   syncToFirestore,
 } from '@/lib/store';
-import { clearSessionCookie, getUidFromRequest, setSessionCookie } from '@/lib/session';
+import {
+  clearSessionCookie,
+  getUidFromRequest,
+  isAnonymousUid,
+  setSessionCookie,
+} from '@/lib/session';
 import {
   hashPassword,
   isValidEmail,
@@ -107,8 +113,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // If the visitor was anonymous, carry all diagnosis data (profile,
+    // skills, opportunities, plan, evidence, lab tasks, chat history) onto
+    // the new real account.
+    const anonUid = getUidFromRequest(req);
     const uid = newUid();
     const user = createProfile(uid, name, email);
+
+    if (anonUid && isAnonymousUid(anonUid)) {
+      const anon = findUser(db, anonUid);
+      if (anon) {
+        // Copy the anonymous profile's real fields onto the new account,
+        // keeping the new uid/email/name.
+        user.currentRole = anon.currentRole;
+        user.targetRole = anon.targetRole;
+        user.skills = anon.skills;
+        user.goals = anon.goals;
+        user.constraints = anon.constraints;
+        user.segment = anon.segment;
+        user.lifeStage = anon.lifeStage;
+        user.confidenceSelf = anon.confidenceSelf;
+        user.journeyStep = anon.journeyStep;
+        user.communityAgreed = anon.communityAgreed;
+        user.backgroundSummary = anon.backgroundSummary;
+        user.coffeeAvailability = anon.coffeeAvailability;
+        user.resumeFileName = anon.resumeFileName;
+        user.resumePath = anon.resumePath;
+        user.resumeText = anon.resumeText;
+        user.chosenRole = anon.chosenRole;
+      }
+      migrateAnonymousData(db, anonUid, uid);
+    }
+
     const { salt, hash } = hashPassword(password);
 
     db.users.push(user);
@@ -118,6 +154,8 @@ export async function POST(req: NextRequest) {
 
     const res = NextResponse.json({ user });
     setSessionCookie(res, uid);
+    // Clear the anonymous cookie now that the user has a real session.
+    res.cookies.set('herrise_anon', '', { path: '/', maxAge: 0 });
     return res;
   }
 

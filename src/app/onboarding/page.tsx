@@ -248,11 +248,8 @@ export default function OnboardingPage() {
   }
 
   if (!user) {
-    return (
-      <div className="mx-auto max-w-2xl">
-        <EmptyState text="Please sign in first to start your diagnosis." />
-      </div>
-    );
+    // Anonymous visitors can complete onboarding without an account. The
+    // profile is saved under their anonymous uid and migrated on sign-up.
   }
 
   const confidenceSlice =

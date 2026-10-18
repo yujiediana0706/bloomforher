@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureLoaded, findUser, nowIso, syncToFirestore } from '@/lib/store';
+import { ensureLoaded, ensureUser, nowIso, syncToFirestore } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 
 export const runtime = 'nodejs';
@@ -27,8 +27,8 @@ export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
   const db = await ensureLoaded();
-  const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  // Anonymous visitors get a minimal profile created on first access.
+  const user = ensureUser(db, uid);
   return NextResponse.json({ user });
 }
 
@@ -43,8 +43,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request parameters' }, { status: 400 });
   }
   const db = await ensureLoaded();
-  const user = findUser(db, uid);
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  const user = ensureUser(db, uid);
 
   for (const key of ALLOWED_FIELDS) {
     if (key in body) {

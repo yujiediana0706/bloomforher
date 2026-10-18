@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB, findUser, newId, nowIso, addEvidence, syncToFirestore } from '@/lib/store';
 import type { DB } from '@/lib/store';
-import { getUidFromRequest } from '@/lib/session';
+import { getUidFromRequest, isAnonymousUid } from '@/lib/session';
 import type { Booking, BookingKind, BookingStatus, PackageOrder } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -55,6 +55,12 @@ interface BookingBody {
 export async function POST(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
+  if (isAnonymousUid(uid)) {
+    return NextResponse.json(
+      { error: 'Please sign up first to book a mentor or peer session.' },
+      { status: 401 }
+    );
+  }
 
   const db = getDB();
   const user = findUser(db, uid);

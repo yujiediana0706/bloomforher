@@ -536,6 +536,8 @@ export interface CoachContext {
   strengths?: { name: string; evidenceLevel?: string; evidence: string }[];
   /** Real prioritized skill gaps from the skill portrait. */
   skillGaps?: { skill: string; priority: string; why: string }[];
+  /** Recent conversation history so the coach remembers prior turns. */
+  conversationHistory?: { role: 'user' | 'coach'; content: string }[];
 }
 
 const DEFAULT_MICRO_ACTION =
@@ -613,10 +615,15 @@ Reply format (follow strictly):
     };
 
     const ep = getAgentEndpoint('coach');
+    const history = context.conversationHistory?.map((m) => ({
+      role: m.role === 'user' ? ('user' as const) : ('model' as const),
+      content: m.content,
+    }));
     const res = await callModel(ep, {
       systemInstruction: systemPrompt,
       input: userMessage,
       context: contextStr,
+      ...(history && history.length ? { history } : {}),
     });
 
     if (res) {
