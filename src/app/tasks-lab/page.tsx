@@ -102,7 +102,9 @@ export default function TasksLabPage() {
   const [justSubmitted, setJustSubmitted] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    // Anonymous visitors have no client-side `user` object; the server
+    // identifies them by cookie. Load as soon as auth state settles.
+    if (loading) return;
     let cancelled = false;
     (async () => {
       setFetching(true);
@@ -120,7 +122,7 @@ export default function TasksLabPage() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [loading]);
 
   const activeTask = tasks.find((t) => t.id === activeTaskId) ?? null;
 
@@ -152,11 +154,7 @@ export default function TasksLabPage() {
   if (loading) {
     return <EmptyState text="Loading…" />;
   }
-  if (!user) {
-    return (
-      <EmptyState text="Please sign in first." />
-    );
-  }
+  // Anonymous visitors are welcome: the server tracks them by cookie.
 
   const sortedSubmissions = activeTask
     ? [...activeTask.submissions].sort((a, b) =>

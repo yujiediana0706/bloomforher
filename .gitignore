@@ -37,3 +37,4 @@ gcp-keys/
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+video/

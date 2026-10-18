@@ -9,7 +9,7 @@
 - ✅ **Deferred registration**: visitors complete the full diagnosis (profile → skill portrait → path selection) **anonymously** — no sign-up wall. An account is only requested when they want to chat with the AI Mentor or book a peer/mentor session. Anonymous data is migrated to the new account on registration.
 - ✅ **Real AI is wired in**: the platform calls **Agent Platform (Vertex AI Reasoning Engine) first**, and falls back to a direct **Vertex AI Gemini 3.5 Flash** call (global endpoint) — so live answers always come from a real large model.
 - ✅ **Coach memory**: the AI Mentor receives the user's parsed resume text, past conversation history, tracked action items, and diagnosis conclusions in every prompt — so the coaching is genuinely personal.
-- ✅ **Real users and real auth**: self-built email + password registration/login (scrypt salted hashing + a signed httpOnly session cookie); users and credentials are persisted in Firestore. There are **no demo or pre-seeded accounts**.
+- ✅ **Real users and real auth**: self-built email + password registration/login (scrypt salted hashing + a signed httpOnly session cookie); users and credentials are persisted in Firestore. There are **no pre-seeded or test accounts**.
 - ✅ **Real resume parsing**: users can upload a resume (PDF / DOCX / TXT); the server extracts the text, stores it on their profile, and feeds it to the AI coach and the diagnosis prompts.
 - ✅ **Hands-on practice loop**: every plan task links to a designed micro-task in the Tasks Lab; submissions are graded by AI with rubric feedback, and progress flows back to the dashboard automatically.
 
@@ -179,7 +179,7 @@ npm run build          # production build
 
 ### Accounts and zero-state flow
 
-There are **no demo accounts**. A brand-new visitor clicks **Start your diagnosis** and immediately begins onboarding — no sign-up wall. The full diagnosis flow (`/onboarding → /skills → /opportunities → /plan`) works anonymously under a persistent `herrise_anon` cookie issued by middleware. An account is only requested when the visitor wants to use the AI Mentor, dashboard, or book a peer/mentor session; on registration, all anonymous data is migrated to the new account.
+There are **no pre-registered accounts**. A brand-new visitor clicks **Start your diagnosis** and immediately begins onboarding — no sign-up wall. The full diagnosis flow (`/onboarding → /skills → /opportunities → /plan`) works anonymously under a persistent `herrise_anon` cookie issued by middleware. An account is only requested when the visitor wants to use the AI Mentor, dashboard, or book a peer/mentor session; on registration, all anonymous data is migrated to the new account.
 
 ---
 
@@ -252,30 +252,12 @@ gcloud run deploy herrise-frontend --source . --region us-central1 \
 | Core flow (diagnosis → path selection → AI Mentor) is fully interactive | ✅ |
 | AI replies come from a real model | ✅ Vertex AI Gemini 3.5 Flash (global endpoint) |
 | Content moderation | ✅ herrise-coach gentle moderation |
-| Email + password auth (scrypt + signed httpOnly cookie) | ✅ No demo accounts |
+| Email + password auth (scrypt + signed httpOnly cookie) | ✅ No pre-registered accounts |
 | Live URL + GitHub + Cloud Run deployment | ✅ |
 
 ---
 
-## 10. 30-second demo script
-
-> (Open the landing page and click **Start your diagnosis** — no account needed)
-
-"Many women are not short on ability — they **underestimate how much technology is already theirs**. HerRise does something simple —
-
-**First, it translates experience into evidence.** The skill portrait shows that the projects you led and the people you coordinated are exactly the capabilities AI roles need — verified strengths and transferable skills are labeled with evidence levels, and a confidence-calibration slider helps you reclaim the self you undervalued.
-
-**Second, it turns a direction into something executable.** The path-selection page lays out matched roles with skill gaps and honest trade-offs; hands-on micro-tasks let you produce your first portfolio piece in 30 minutes with AI rubric feedback; the 30-day plan adapts to your rhythm — **pausing is not dropping out.**
-
-**Third, it turns companionship into two tracks.** When you feel low, the AI Mentor doesn't serve platitudes — it **remembers your resume and past conversations**, reframes 'why me' into 'why not me', and sends you to the **Talk Plaza** to meet other women. The Plaza is public-interest: one 'I'll walk with you' books a free peer chat. When you need more professional support, you book a verified mentor — fees are held in escrow and **released only after you confirm the session is complete.**
-
-Every positive signal — mentor endorsements, peer thank-yous, kudos — settles automatically into a row of '**I can**'s in your evidence vault.
-
-From **Why me** to **Why not me**."
-
----
-
-## 11. Roadmap
+## 10. Roadmap
 
 | Item | Current state | Next step |
 | --- | --- | --- |

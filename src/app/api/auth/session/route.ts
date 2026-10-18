@@ -81,7 +81,12 @@ export async function POST(req: NextRequest) {
 
   if (action === 'get') {
     const uid = getUidFromRequest(req);
-    const user = uid ? findUser(db, uid) ?? null : null;
+    const found = uid ? findUser(db, uid) ?? null : null;
+    // Anonymous visitors get a profile too (deferred registration), so mark
+    // them explicitly — the client must not treat them as signed in.
+    const user = found
+      ? { ...found, anonymous: uid ? isAnonymousUid(uid) : false }
+      : null;
     return NextResponse.json({ user });
   }
 

@@ -51,6 +51,8 @@ export interface UserProfile {
   backgroundSummary: string;
   createdAt: string;
   updatedAt: string;
+  /** API-only flag: true when this profile belongs to a pre-registration anonymous visitor. */
+  anonymous?: boolean;
 }
 
 // —— Journey ② Skill discovery ——

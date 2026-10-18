@@ -182,7 +182,9 @@ export default function OnboardingPage() {
   }
 
   async function handleFinish() {
-    if (!user) return;
+    // Do not gate on the client-side `user` object: anonymous visitors have no
+    // profile until the first API write, and the server identifies everyone by
+    // cookie anyway (ensureUser creates the profile on demand).
     if (!name.trim()) {
       setError('Please enter your name first');
       setStep(1);

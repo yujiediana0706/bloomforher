@@ -1,14 +1,24 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Card } from '@/components/ui';
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next');
   const { user, loading, register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,8 +28,9 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) router.replace('/onboarding');
-  }, [loading, user, router]);
+    // Anonymous visitors still need to see this page so they can sign up.
+    if (!loading && user && !user.anonymous) router.replace(next ?? '/onboarding');
+  }, [loading, user, router, next]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,7 +42,7 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       await register(name.trim(), email.trim(), password);
-      router.replace('/onboarding');
+      router.replace(next ?? '/onboarding');
     } catch (err) {
       setError((err as Error).message || 'Unable to create your account.');
     } finally {

@@ -27,8 +27,11 @@ export function AuthGate() {
     const needsAuth = PROTECTED_PREFIXES.some(
       (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
     );
-    if (needsAuth && !user) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    // Anonymous visitors (deferred registration) have a profile but no real
+    // account — send them to sign up, carrying the page they wanted.
+    const signedIn = !!user && !user.anonymous;
+    if (needsAuth && !signedIn) {
+      router.replace(`/register?next=${encodeURIComponent(pathname)}`);
     }
   }, [user, loading, pathname, router]);
 
