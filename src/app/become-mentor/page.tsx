@@ -30,8 +30,8 @@ const EMPTY_FORM: FormState = {
   companies: '',
   schools: '',
   topicTags: '',
-  priceSingle: '199',
-  pricePackage5: '899',
+  priceSingle: '49',
+  pricePackage5: '199',
 };
 
 export default function BecomeMentorPage() {
@@ -213,7 +213,7 @@ export default function BecomeMentorPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-xs font-bold text-slateblue-900">
-                Single-session price (CNY)
+                Single-session price (USD)
               </span>
               <input
                 type="number"
@@ -226,7 +226,7 @@ export default function BecomeMentorPage() {
             </label>
             <label className="block">
               <span className="text-xs font-bold text-slateblue-900">
-                5-session package price (CNY)
+                5-session package price (USD)
               </span>
               <input
                 type="number"

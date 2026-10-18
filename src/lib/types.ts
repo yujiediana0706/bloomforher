@@ -1,4 +1,4 @@
-// ReBloom AI domain types (aligned with spec §6 data model)
+// HerRise domain types (aligned with spec §6 data model)
 
 export type Segment = 'explorer' | 'setter' | 'mentor';
 

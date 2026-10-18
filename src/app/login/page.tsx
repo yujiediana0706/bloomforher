@@ -96,7 +96,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-4 text-center text-xs text-slateblue-700">
-          New to ReBloom?{' '}
+          New to HerRise?{' '}
           <Link
             href="/register"
             className="font-bold text-coral-600 underline underline-offset-4"

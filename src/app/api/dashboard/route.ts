@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB, findUser } from '@/lib/store';
+import { ensureLoaded, findUser } from '@/lib/store';
 import { getUidFromRequest } from '@/lib/session';
 import {
   computeConfidenceScore,
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const uid = getUidFromRequest(req);
   if (!uid) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const db = getDB();
+  const db = await ensureLoaded();
   const user = findUser(db, uid);
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
@@ -46,22 +46,10 @@ export async function GET(req: NextRequest) {
     nextTasks.push({ title: 'Complete sign-up and goal setting', href: '/onboarding' });
   }
   if (!db.skillProfiles[uid]) {
-    nextTasks.push({ title: 'Complete Skill Discovery and generate your transferable-skills profile', href: '/skills' });
+    nextTasks.push({ title: 'Complete Skill Discovery to see your transferable skills', href: '/skills' });
   }
-  if (!db.opportunityReports[uid]) {
-    nextTasks.push({ title: 'Explore AI opportunities matched to you', href: '/opportunities' });
-  }
-  const doneTasks = db.labTasks.filter(
-    (t) => t.uid === uid && t.status === 'done'
-  ).length;
-  if (doneTasks === 0) {
-    nextTasks.push({ title: 'Complete your first hands-on task', href: '/tasks-lab' });
-  }
-  if (!db.returnPlans[uid]) {
-    nextTasks.push({ title: 'Generate your 30-day return plan', href: '/plan' });
-  }
-  if (user.journeyStep < 6) {
-    nextTasks.push({ title: 'Join the Plaza to meet fellow travelers', href: '/plaza' });
+  if (!user.chosenRole) {
+    nextTasks.push({ title: 'Pick one career path that excites you', href: '/opportunities' });
   }
 
   const lifts = db.users.map((u) =>

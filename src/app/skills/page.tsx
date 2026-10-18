@@ -2,40 +2,255 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
 import {
-  Button,
-  Card,
-  EmptyState,
-  ProgressBar,
-} from '@/components/ui';
+  ArrowLeft,
+  ArrowRight,
+  AlertTriangle,
+  RefreshCw,
+  Sparkles,
+  CheckCircle2,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
+import { Button, Card, EmptyState } from '@/components/ui';
 import { useAuth } from '@/components/AuthProvider';
 import { apiGet, apiSend } from '@/lib/client';
 import type { EvidenceLevel, SkillProfile } from '@/lib/types';
 
-const EVIDENCE_LEVEL_META: Record<EvidenceLevel, { label: string; cls: string }> = {
-  verified: { label: 'Verified by evidence', cls: 'bg-emerald-100 text-emerald-800' },
-  transferable: { label: 'Transferable, not yet proven in AI', cls: 'bg-coral-100 text-coral-700' },
-  hypothesis: { label: 'Plausible, currently unverified', cls: 'bg-silver-200 text-slateblue-700' },
+const EVIDENCE_META: Record<EvidenceLevel, { label: string; short: string; dot: string; badge: string }> = {
+  verified: {
+    label: 'Verified',
+    short: 'VERIFIED',
+    dot: 'bg-emerald-500',
+    badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  },
+  transferable: {
+    label: 'Transferable',
+    short: 'TRANSFERABLE',
+    dot: 'bg-coral-500',
+    badge: 'bg-coral-50 text-coral-700 border-coral-200',
+  },
+  hypothesis: {
+    label: 'Unverified',
+    short: 'UNVERIFIED',
+    dot: 'bg-silver-400',
+    badge: 'bg-silver-100 text-slateblue-600 border-silver-300',
+  },
 };
 
 const PRIORITY_META: Record<string, { label: string; cls: string }> = {
-  high: { label: 'Critical gap', cls: 'border-warmred/40 bg-warmred/10 text-warmred' },
-  medium: { label: 'Important', cls: 'border-coral-200 bg-coral-50 text-coral-700' },
-  low: { label: 'Nice to have', cls: 'border-silver-300 bg-silver-50 text-slateblue-700' },
+  high: { label: 'CRITICAL', cls: 'border-warmred/30 bg-warmred/10 text-warmred' },
+  medium: { label: 'IMPORTANT', cls: 'border-coral-200 bg-coral-50 text-coral-700' },
+  low: { label: 'NICE TO HAVE', cls: 'border-silver-300 bg-silver-50 text-slateblue-700' },
 };
 
-function ScoreBar({ value, tone }: { value: number; tone: 'self' | 'ai' }) {
-  const pct = Math.max(0, Math.min(100, value * 10));
+/* —— Radar chart (pentagon) —— */
+function RadarChart({ skills }: { skills: { name: string; value: number }[] }) {
+  const size = 200;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = 75;
+  const n = 5;
+  const angles = Array.from({ length: n }, (_, i) => (Math.PI * 2 * i) / n - Math.PI / 2);
+
+  const points = angles.map((a, i) => {
+    const val = (skills[i]?.value ?? 50) / 100;
+    const x = cx + r * val * Math.cos(a);
+    const y = cy + r * val * Math.sin(a);
+    return `${x},${y}`;
+  });
+
+  const labelPoints = angles.map((a, i) => {
+    const lr = r + 18;
+    const x = cx + lr * Math.cos(a);
+    const y = cy + lr * Math.sin(a);
+    return { x, y, label: skills[i]?.name ?? '' };
+  });
+
+  const gridPoints = [0.2, 0.4, 0.6, 0.8, 1].map((scale) =>
+    angles.map((a) => `${cx + r * scale * Math.cos(a)},${cy + r * scale * Math.sin(a)}`).join(' ')
+  );
+
   return (
-    <div className="h-2.5 w-full overflow-hidden rounded-full border border-silver-300 bg-silver-100">
-      <div
-        className={`h-full rounded-full transition-all ${
-          tone === 'ai' ? 'bg-coral-500' : 'bg-silver-400'
-        }`}
-        style={{ width: `${pct}%` }}
-      />
+    <div className="flex flex-col items-center">
+      <svg viewBox={`0 0 ${size} ${size}`} className="h-44 w-44">
+        {/* Grid */}
+        {gridPoints.map((pts, idx) => (
+          <polygon
+            key={idx}
+            points={pts}
+            fill="none"
+            stroke="#e5e1d8"
+            strokeWidth={1}
+          />
+        ))}
+        {/* Axes */}
+        {angles.map((a, i) => (
+          <line
+            key={i}
+            x1={cx}
+            y1={cy}
+            x2={cx + r * Math.cos(a)}
+            y2={cy + r * Math.sin(a)}
+            stroke="#e5e1d8"
+            strokeWidth={1}
+          />
+        ))}
+        {/* Data area */}
+        <polygon
+          points={points.join(' ')}
+          fill="rgba(234, 119, 101, 0.12)"
+          stroke="#ea7765"
+          strokeWidth={2}
+        />
+        {/* Dots */}
+        {points.map((pt, i) => (
+          <circle key={i} cx={pt.split(',')[0]} cy={pt.split(',')[1]} r={3} fill="#ea7765" />
+        ))}
+      </svg>
+      <div className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1">
+        {labelPoints.map((lp, i) => (
+          <span key={i} className="text-[10px] font-bold text-slateblue-700">
+            {lp.label}
+          </span>
+        ))}
+      </div>
+      <p className="mt-1 text-[10px] font-bold text-slateblue-500">AI relevance by strength</p>
     </div>
+  );
+}
+
+/* —— Score ring —— */
+function ScoreRing({ value, size = 44 }: { value: number; size?: number }) {
+  const stroke = 4;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const dash = (value / 100) * c;
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f0ebe3" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="#ea7765"
+          strokeWidth={stroke}
+          strokeDasharray={`${dash} ${c - dash}`}
+          strokeLinecap="round"
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-black text-slateblue-900">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/* —— Confidence slider —— */
+function ConfidenceSlider({
+  dimension,
+  selfScore,
+  aiScore,
+}: {
+  dimension: string;
+  selfScore: number;
+  aiScore: number;
+}) {
+  const max = 10;
+  const selfPct = (selfScore / max) * 100;
+  const aiPct = (aiScore / max) * 100;
+  const diff = aiScore - selfScore;
+  let badge = null;
+  if (diff >= 2)
+    badge = (
+      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+        ↑ {diff} underrated
+      </span>
+    );
+  else if (diff <= -2)
+    badge = (
+      <span className="rounded-full border border-warmred/30 bg-warmred/10 px-2 py-0.5 text-[10px] font-black text-warmred">
+        ↓ {Math.abs(diff)} overrated
+      </span>
+    );
+  else
+    badge = (
+      <span className="rounded-full border border-silver-300 bg-silver-100 px-2 py-0.5 text-[10px] font-black text-slateblue-600">
+        aligned
+      </span>
+    );
+
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <span className="w-40 shrink-0 text-xs font-extrabold text-slateblue-900 sm:w-48">
+        {dimension}
+      </span>
+      <div className="relative h-1.5 flex-1 rounded-full bg-silver-200">
+        {/* AI dot */}
+        <div
+          className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-coral-500 bg-white"
+          style={{ left: `${aiPct}%` }}
+        />
+        {/* Self dot */}
+        <div
+          className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-slateblue-400 bg-slateblue-400"
+          style={{ left: `${selfPct}%` }}
+        />
+      </div>
+      <div className="ml-2 w-24 shrink-0 text-right">{badge}</div>
+    </div>
+  );
+}
+
+/* —— Strength card —— */
+function StrengthCard({
+  skill,
+}: {
+  skill: SkillProfile['transferableSkills'][number];
+}) {
+  const level = skill.evidenceLevel ?? 'hypothesis';
+  const meta = EVIDENCE_META[level];
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Card className="flex flex-col">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5">
+          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-silver-300">
+            <Sparkles className="h-3.5 w-3.5 text-coral-500" />
+          </div>
+          <div>
+            <h4 className="text-xs font-extrabold leading-tight text-slateblue-900">
+              {skill.name}
+            </h4>
+            <span
+              className={`mt-1 inline-block rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide ${meta.badge}`}
+            >
+              {meta.short}
+            </span>
+          </div>
+        </div>
+        <ScoreRing value={skill.aiRelevance} />
+      </div>
+      <p className="mt-2 text-[11px] font-bold leading-relaxed text-coral-700">
+        {skill.evidence}
+      </p>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="mt-1 flex items-center gap-1 self-start text-[10px] font-bold text-slateblue-500 hover:text-coral-600"
+      >
+        {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        See evidence
+      </button>
+      {open ? (
+        <p className="mt-1.5 rounded-lg border border-silver-200 bg-silver-50 px-3 py-2 text-[11px] leading-relaxed text-slateblue-700">
+          {skill.narrative}
+        </p>
+      ) : null}
+    </Card>
   );
 }
 
@@ -50,9 +265,7 @@ export default function SkillsPage() {
     setFetching(true);
     setError('');
     try {
-      const data = await apiGet<{ skillProfile: SkillProfile | null }>(
-        '/api/skills'
-      );
+      const data = await apiGet<{ skillProfile: SkillProfile | null }>('/api/skills');
       setSkillProfile(data.skillProfile);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load');
@@ -69,10 +282,7 @@ export default function SkillsPage() {
     setGenerating(true);
     setError('');
     try {
-      const data = await apiSend<{ skillProfile: SkillProfile }>(
-        '/api/skills',
-        'POST'
-      );
+      const data = await apiSend<{ skillProfile: SkillProfile }>('/api/skills', 'POST');
       setSkillProfile(data.skillProfile);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to generate');
@@ -85,26 +295,17 @@ export default function SkillsPage() {
   if (!user) return <EmptyState text="Please sign in first to view your skill portrait." />;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      {/* Back link */}
-      <Link
-        href="/coach"
-        className="inline-flex items-center gap-1 text-xs font-bold text-slateblue-700 underline underline-offset-4 hover:text-coral-600"
-      >
-        <ArrowLeft className="h-3 w-3" />
-        Back to AI Mentor
-      </Link>
-
+    <div className="mx-auto max-w-3xl space-y-6 pb-10">
+      {/* Header */}
       <div>
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-coral-500">
           See · Skill portrait
         </p>
-        <h1 className="mt-1 text-2xl font-black text-slateblue-900">
+        <h1 className="mt-1 text-3xl font-black text-slateblue-900">
           Your skill portrait
         </h1>
         <p className="mt-1 text-sm text-slateblue-700">
-          What your experience actually demonstrates. Each strength below is
-          tied to evidence; the gaps are real items worth building, not praise.
+          What your experience proves, and what to build next.
         </p>
       </div>
 
@@ -145,86 +346,78 @@ export default function SkillsPage() {
             <p className="text-[11px] font-bold uppercase tracking-wider text-coral-500">
               Your unique value
             </p>
-            <p className="mt-2 text-base font-extrabold leading-relaxed text-slateblue-900">
+            <p className="mt-2 text-lg font-extrabold leading-relaxed text-slateblue-900">
               {skillProfile.uniqueValue}
             </p>
           </Card>
 
-          {/* Transferable skills */}
+          {/* Strengths */}
           <section>
-            <h3 className="mb-1 text-sm font-extrabold text-slateblue-900">
-              Strengths, with evidence levels ({skillProfile.transferableSkills.length})
-            </h3>
-            <p className="mb-2 text-xs text-slateblue-700">
-              <span className="font-bold text-emerald-700">Verified</span> means
-              demonstrated in your actual experience;{' '}
-              <span className="font-bold text-coral-700">transferable</span>{' '}
-              means relevant but not yet proven in an AI setting;{' '}
-              <span className="font-bold text-slateblue-700">unverified</span>{' '}
-              means plausible and still to be tested.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {skillProfile.transferableSkills.map((skill) => {
-                const level = skill.evidenceLevel ?? 'hypothesis';
-                const meta = EVIDENCE_LEVEL_META[level];
-                return (
-                  <Card key={skill.id} className="flex flex-col">
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="text-sm font-extrabold text-slateblue-900">
-                        {skill.name}
-                      </h4>
-                      <span className="shrink-0 rounded-full bg-coral-100 px-2 py-0.5 text-[11px] font-black text-coral-700">
-                        AI relevance {skill.aiRelevance}%
-                      </span>
-                    </div>
-                    <span
-                      className={`mt-2 inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${meta.cls}`}
-                    >
-                      {meta.label}
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-extrabold text-slateblue-900">
+                Strengths · {skillProfile.transferableSkills.length}
+              </h3>
+              <div className="flex items-center gap-3">
+                {(Object.keys(EVIDENCE_META) as EvidenceLevel[]).map((k) => (
+                  <div key={k} className="flex items-center gap-1">
+                    <span className={`h-2 w-2 rounded-full ${EVIDENCE_META[k].dot}`} />
+                    <span className="text-[10px] font-bold text-slateblue-600">
+                      {EVIDENCE_META[k].label}
                     </span>
-                    <div className="mt-2">
-                      <ProgressBar value={skill.aiRelevance} />
-                    </div>
-                    <p className="mt-2 text-xs font-bold text-coral-700">
-                      Evidence: {skill.evidence}
-                    </p>
-                    <p className="mt-1.5 text-xs leading-relaxed text-slateblue-700">
-                      {skill.narrative}
-                    </p>
-                  </Card>
-                );
-              })}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-[220px_1fr]">
+              {/* Radar */}
+              <Card className="flex items-center justify-center">
+                <RadarChart
+                  skills={skillProfile.transferableSkills.slice(0, 5).map((s) => ({
+                    name: s.name.length > 14 ? s.name.slice(0, 14) + '…' : s.name,
+                    value: s.aiRelevance,
+                  }))}
+                />
+              </Card>
+
+              {/* Strength cards */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                {skillProfile.transferableSkills.map((skill) => (
+                  <StrengthCard key={skill.id} skill={skill} />
+                ))}
+              </div>
             </div>
           </section>
 
           {/* Real skill gaps */}
           {skillProfile.skillGaps && skillProfile.skillGaps.length > 0 ? (
             <section>
-              <h3 className="mb-1 flex items-center gap-1.5 text-sm font-extrabold text-slateblue-900">
+              <h3 className="mb-0.5 flex items-center gap-1.5 text-sm font-extrabold text-slateblue-900">
                 <AlertTriangle className="h-4 w-4 text-warmred" />
                 Real skill gaps
               </h3>
-              <p className="mb-2 text-xs text-slateblue-700">
-                These are the gaps that actually stand between your current
-                evidence and the directions you are considering, ordered by
-                impact.
+              <p className="mb-3 text-[11px] font-bold text-slateblue-500">
+                Ordered by impact
               </p>
-              <div className="space-y-2.5">
-                {skillProfile.skillGaps.map((gap, idx) => {
+              <div className="grid gap-3 sm:grid-cols-3">
+                {skillProfile.skillGaps.slice(0, 6).map((gap, idx) => {
                   const meta = PRIORITY_META[gap.priority] ?? PRIORITY_META.medium;
                   return (
-                    <Card key={idx} className="border-silver-300">
-                      <div className="flex items-start justify-between gap-3">
-                        <h4 className="text-sm font-extrabold text-slateblue-900">
-                          {gap.skill}
-                        </h4>
+                    <Card key={idx} className="relative overflow-hidden border-silver-300">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-2xl font-black text-silver-200">
+                          {String(idx + 1).padStart(2, '0')}
+                        </span>
                         <span
-                          className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${meta.cls}`}
+                          className={`rounded border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ${meta.cls}`}
                         >
                           {meta.label}
                         </span>
                       </div>
-                      <p className="mt-1.5 text-xs leading-relaxed text-slateblue-700">
+                      <h4 className="mt-1 text-xs font-extrabold text-slateblue-900">
+                        {gap.skill}
+                      </h4>
+                      <p className="mt-1 text-[11px] leading-relaxed text-slateblue-700">
                         {gap.why}
                       </p>
                     </Card>
@@ -234,55 +427,36 @@ export default function SkillsPage() {
             </section>
           ) : null}
 
-          {/* Confidence calibration board */}
-          <section>
-            <h3 className="mb-1 text-sm font-extrabold text-slateblue-900">
-              Confidence calibration board
-            </h3>
-            <p className="mb-2 text-xs text-slateblue-700">
-              The grey bar is your self-assessment; the coral bar is the
-              evidence-based calibration. It may be higher, equal, or lower than
-              yours — the point is accuracy, not reassurance.
-            </p>
-            <div className="space-y-2.5">
-              {skillProfile.confidenceCalibration.map((item) => (
-                <Card key={item.dimension}>
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-sm font-extrabold text-slateblue-900">
-                      {item.dimension}
-                    </h4>
-                    <div className="flex items-center gap-3 text-xs font-bold">
-                      <span className="text-slateblue-700">
-                        Self {item.selfScore}/10
-                      </span>
-                      <span className="text-coral-600">
-                        AI {item.aiScore}/10
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-2 space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 shrink-0 text-[10px] font-bold text-slateblue-700">
-                        Self
-                      </span>
-                      <ScoreBar value={item.selfScore} tone="self" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 shrink-0 text-[10px] font-bold text-coral-600">
-                        AI
-                      </span>
-                      <ScoreBar value={item.aiScore} tone="ai" />
-                    </div>
-                  </div>
-                  <p className="mt-2 rounded-xl border border-softpink-300 bg-softpink-100 px-3 py-2 text-xs leading-relaxed text-coral-700">
-                    {item.evidenceRef}
-                  </p>
-                </Card>
-              ))}
-            </div>
-          </section>
+          {/* Confidence calibration */}
+          {skillProfile.confidenceCalibration.length > 0 ? (
+            <section>
+              <h3 className="mb-1 text-sm font-extrabold text-slateblue-900">
+                Confidence calibration
+              </h3>
+              <div className="mb-2 flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-full border-2 border-slateblue-400 bg-slateblue-400" />
+                  <span className="text-[10px] font-bold text-slateblue-600">You</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-full border-2 border-coral-500 bg-white" />
+                  <span className="text-[10px] font-bold text-slateblue-600">Evidence</span>
+                </div>
+              </div>
+              <Card>
+                {skillProfile.confidenceCalibration.map((item) => (
+                  <ConfidenceSlider
+                    key={item.dimension}
+                    dimension={item.dimension}
+                    selfScore={item.selfScore}
+                    aiScore={item.aiScore}
+                  />
+                ))}
+              </Card>
+            </section>
+          ) : null}
 
-          {/* Forward CTA: pick one path */}
+          {/* Forward CTA */}
           <Card className="flex flex-col items-start gap-3 border-coral-300 bg-gradient-to-br from-softpink-100 to-white sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-extrabold text-slateblue-900">

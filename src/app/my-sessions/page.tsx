@@ -371,7 +371,7 @@ export default function MySessionsPage() {
                   </p>
                   <p>
                     Amount:{' '}
-                    <span className="font-bold">¥{b.amount}</span>
+                    <span className="font-bold">${b.amount}</span>
                     <span className="ml-2 text-[11px] font-bold text-slateblue-700">
                       Demo environment · simulated charge/release
                     </span>
@@ -550,7 +550,7 @@ export default function MySessionsPage() {
                 {packageOrders.map((o) => (
                   <p key={o.id} className="text-sm text-slateblue-700">
                     {o.totalSessions}-session package · {o.remainingRedemptions}{' '}
-                    remaining · ¥{o.amount} ·{' '}
+                    remaining · ${o.amount} ·{' '}
                     <span className="font-bold">
                       {o.status === 'active' ? 'Active' : 'Used up'}
                     </span>

@@ -1,5 +1,9 @@
 import type { EvidenceType, LifeStage } from './types';
 
+// —— Brand ——
+export const COACH_AVATAR_URL =
+  'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Warm%20professional%20female%20career%20coach%20avatar%2C%203D%20stylized%20Pixar-like%20render%2C%20mid-30s%20Asian%20woman%2C%20gentle%20confident%20smile%2C%20soft%20studio%20lighting%2C%20clean%20cream%20background%2C%20head-and-shoulders%20portrait%2C%20modern%20minimal&image_size=square';
+
 // —— Life stage labels (spec §5.5 rhythm tags) ——
 export const LIFE_STAGE_LABELS: Record<LifeStage, string> = {
   student: 'Student explorer',
@@ -88,10 +92,8 @@ export function pickAnonymousHandle(uid: string, salt: string): string {
 export const JOURNEY_STEPS = [
   { step: 1, label: 'Sign up & goals', href: '/onboarding' },
   { step: 2, label: 'Skill discovery', href: '/skills' },
-  { step: 3, label: 'AI opportunities', href: '/opportunities' },
-  { step: 4, label: 'Hands-on tasks', href: '/tasks-lab' },
-  { step: 5, label: 'Return plan', href: '/plan' },
-  { step: 6, label: 'Join the community', href: '/plaza' },
+  { step: 3, label: 'Pick your path', href: '/opportunities' },
+  { step: 4, label: 'AI Mentor', href: '/coach' },
 ] as const;
 
 // —— Main navigation (the product is three surfaces: Home, AI Mentor, Community) ——

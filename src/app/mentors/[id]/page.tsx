@@ -225,11 +225,11 @@ export default function MentorDetailPage({
 
           <div className="shrink-0 rounded-2xl border border-coral-100 bg-coral-50 p-3 text-center sm:min-w-[130px]">
             <p className="text-xl font-black text-slateblue-900">
-              ¥{mentor.priceSingle}
+              ${mentor.priceSingle}
               <span className="text-xs font-bold text-slateblue-700"> / session</span>
             </p>
             <p className="mt-0.5 text-[11px] font-bold text-slateblue-700">
-              5-session package ¥{mentor.pricePackage5}
+              5-session package ${mentor.pricePackage5}
             </p>
           </div>
         </div>
@@ -307,7 +307,7 @@ export default function MentorDetailPage({
             onClick={() => void book('package')}
             disabled={submitting || availableSlots.length === 0}
           >
-            Buy the 5-session package (¥{mentor.pricePackage5})
+            Buy the 5-session package (${mentor.pricePackage5})
           </Button>
         </div>
       </Card>

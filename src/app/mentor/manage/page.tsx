@@ -376,7 +376,7 @@ export default function MentorManagePage() {
               </span>
               <div>
                 <p className="text-2xl font-black text-slateblue-900">
-                  ¥{settledAmount}
+                  ${settledAmount}
                 </p>
                 <p className="text-xs font-bold text-slateblue-700">
                   Settled ({settled.length} bookings)
@@ -389,7 +389,7 @@ export default function MentorManagePage() {
               </span>
               <div>
                 <p className="text-2xl font-black text-slateblue-900">
-                  ¥{pendingAmount}
+                  ${pendingAmount}
                 </p>
                 <p className="text-xs font-bold text-slateblue-700">
                   Pending settlement ({pending.length} bookings)

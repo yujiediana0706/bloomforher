@@ -27,15 +27,21 @@ export async function POST(req: NextRequest) {
   db.skillProfiles[uid] = skillProfile;
   syncToFirestore('skillProfiles', uid, skillProfile);
 
-  addEvidence(db, {
-    uid,
-    type: 'assessment_result',
-    title: 'Completed the Skill Discovery assessment',
-    detail: `AI identified ${built.transferableSkills.length} transferable skills and completed confidence calibration across ${built.confidenceCalibration.length} dimensions.`,
-    source: 'auto',
-    tags: ['Skill discovery', 'Calibration'],
-    isPublic: true,
-  });
+  // Record the assessment once — regenerating the profile must not duplicate it.
+  const alreadyRecorded = db.evidences.some(
+    (e) => e.uid === uid && e.type === 'assessment_result' && e.title === 'Completed the Skill Discovery assessment'
+  );
+  if (!alreadyRecorded) {
+    addEvidence(db, {
+      uid,
+      type: 'assessment_result',
+      title: 'Completed the Skill Discovery assessment',
+      detail: `AI identified ${built.transferableSkills.length} transferable skills and completed confidence calibration across ${built.confidenceCalibration.length} dimensions.`,
+      source: 'auto',
+      tags: ['Skill discovery', 'Calibration'],
+      isPublic: true,
+    });
+  }
 
   if (user.journeyStep < 2) user.journeyStep = 2;
   user.updatedAt = nowIso();

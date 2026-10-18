@@ -469,7 +469,7 @@ export default function PlazaPage() {
       <Modal
         open={agreementOpen}
         onClose={() => setAgreementDone(true)}
-        title="ReBloom Plaza Agreement"
+        title="HerRise Plaza Agreement"
         width="max-w-xl"
       >
         <p className="mb-3 text-sm leading-relaxed text-slateblue-700">

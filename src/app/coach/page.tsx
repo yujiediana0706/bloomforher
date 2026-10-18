@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   BellRing,
-  Bot,
   BrainCog,
   CalendarClock,
   Check,
@@ -22,6 +21,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useAuth } from '@/components/AuthProvider';
+import { COACH_AVATAR_URL } from '@/lib/constants';
 import { Button, Card, ProgressBar } from '@/components/ui';
 import { apiGet, apiSend } from '@/lib/client';
 import type {
@@ -237,7 +237,8 @@ export default function CoachPage() {
 
   const radarData = buildRadarData(skill);
   const topRoles = opp?.roleMatches.slice(0, 3) ?? [];
-  const hasDiagnosis = !!skill && !!opp;
+  // The skill portrait alone already IS the diagnosis; role matches are a bonus.
+  const hasDiagnosis = !!skill;
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -265,19 +266,18 @@ export default function CoachPage() {
                   m.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                 }`}
               >
-                <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                    m.role === 'user'
-                      ? 'bg-slateblue-800 text-white'
-                      : 'bg-coral-500 text-white'
-                  }`}
-                >
-                  {m.role === 'user' ? (
+                {m.role === 'user' ? (
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slateblue-800 text-white">
                     <User className="h-4 w-4" />
-                  ) : (
-                    <Bot className="h-4 w-4" />
-                  )}
-                </span>
+                  </span>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={COACH_AVATAR_URL}
+                    alt="Your AI coach"
+                    className="h-9 w-9 shrink-0 rounded-full border border-softpink-300 object-cover shadow-sm"
+                  />
+                )}
                 <div
                   className={`max-w-[80%] space-y-2 ${
                     m.role === 'user' ? 'items-end text-right' : 'items-start'
@@ -465,7 +465,18 @@ export default function CoachPage() {
                       ))}
                     </div>
                   </div>
-                ) : null}
+                ) : (
+                  <p className="mt-3 border-t border-silver-200 pt-3 text-xs text-slateblue-700">
+                    Skill portrait is ready.{' '}
+                    <Link
+                      href="/opportunities"
+                      className="font-bold text-coral-600 underline underline-offset-4"
+                    >
+                      Pick one path
+                    </Link>{' '}
+                    to see role matches and start your plan.
+                  </p>
+                )}
               </>
             ) : (
               <Card className="mt-3 border-dashed border-silver-300 bg-silver-50 text-center">

@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Bot,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -23,7 +22,7 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/components/AuthProvider';
 import { apiSend } from '@/lib/client';
-import { LIFE_STAGE_DESCRIPTIONS, LIFE_STAGE_LABELS } from '@/lib/constants';
+import { COACH_AVATAR_URL, LIFE_STAGE_DESCRIPTIONS, LIFE_STAGE_LABELS } from '@/lib/constants';
 import type { LifeStage, Segment, UserConstraints } from '@/lib/types';
 
 const TOTAL_STEPS = 8;
@@ -274,9 +273,12 @@ export default function OnboardingPage() {
       {/* AI Coach bubble prompt */}
       <div className="mb-4 rounded-2xl border border-softpink-300 bg-softpink-100 p-3">
         <div className="flex items-start gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-coral-500 text-white">
-            <Bot className="h-4 w-4" />
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={COACH_AVATAR_URL}
+            alt="Your AI coach"
+            className="h-9 w-9 shrink-0 rounded-full border border-softpink-300 object-cover shadow-sm"
+          />
           <p className="text-sm leading-relaxed text-slateblue-800">
             {COACH_LINES[step]}
           </p>

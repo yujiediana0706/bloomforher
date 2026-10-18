@@ -44,7 +44,7 @@ export default function HomePage() {
       >
         <div className="absolute -right-28 -top-28 h-96 w-96 rounded-full bg-softpink-300/50 blur-3xl" />
         <div className="absolute -bottom-36 -left-28 h-96 w-96 rounded-full bg-coral-200/40 blur-3xl" />
-        {/* Five-petal flower outline (the ReBloom blooming motif) */}
+        {/* Five-petal flower outline (brand motif) */}
         <svg
           className="absolute -right-8 top-8 h-44 w-44 rotate-12 text-coral-400/30 sm:h-56 sm:w-56"
           viewBox="0 0 100 100"
@@ -93,7 +93,7 @@ export default function HomePage() {
       <div className="relative">
         <p className="flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-[0.3em] text-coral-500">
           <span className="h-px w-8 bg-coral-300" />
-          ReBloom AI
+          HerRise
           <span className="h-px w-8 bg-coral-300" />
         </p>
 
@@ -112,30 +112,27 @@ export default function HomePage() {
             href="/register"
             className="inline-flex items-center gap-2 rounded-full bg-coral-500 px-9 py-3.5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-coral-600"
           >
-            Start your free diagnosis
+            Start your diagnosis
             <ArrowRight className="h-4 w-4" />
           </Link>
-          <p className="text-xs text-slateblue-700/80">
+          <p className="text-sm text-slateblue-700">
             About 3 minutes · your information stays with your account
           </p>
         </div>
-        <p className="mt-5 text-xs text-slateblue-700/80">
+        <p className="mt-5 text-sm font-bold text-slateblue-800">
           For mid-career women facing career uncertainty in the age of AI
         </p>
 
         {/* What we offer */}
         <div className="mx-auto mt-16 grid max-w-3xl gap-4 md:grid-cols-3">
-          {WHATS.map((w, i) => {
+          {WHATS.map((w) => {
             const Icon = w.icon;
             return (
               <Link
                 key={w.title}
                 href={w.href}
-                className="relative flex flex-col items-center gap-2.5 rounded-3xl bg-white/80 p-7 shadow-card backdrop-blur transition hover:-translate-y-1 hover:bg-white hover:shadow-lg"
+                className="flex flex-col items-center gap-2.5 rounded-3xl bg-white/80 p-7 shadow-card backdrop-blur transition hover:-translate-y-1 hover:bg-white hover:shadow-lg"
               >
-                <span className="absolute right-5 top-4 text-xs font-black text-coral-300">
-                  {i + 1}
-                </span>
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-softpink-200 text-coral-600">
                   <Icon className="h-5 w-5" />
                 </span>

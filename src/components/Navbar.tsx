@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, LogOut, Menu, Sparkles, UserCircle, X } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, UserCircle, X } from 'lucide-react';
 import { NAV_ITEMS } from '@/lib/constants';
+import { Logo } from './Logo';
 import { useAuth } from './AuthProvider';
 
 export function Navbar() {
@@ -29,13 +30,8 @@ export function Navbar() {
     <header className="sticky top-0 z-40">
       <div className="metal-surface border-b border-silver-300">
         <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
-          <Link href="/" className="flex shrink-0 items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-coral-500 text-white">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <span className="text-sm font-black leading-tight text-slateblue-900 sm:text-base">
-              ReBloom AI
-            </span>
+          <Link href="/" aria-label="HerRise home">
+            <Logo />
           </Link>
 
           <nav className="no-scrollbar hidden flex-1 items-center gap-1 overflow-x-auto lg:flex">

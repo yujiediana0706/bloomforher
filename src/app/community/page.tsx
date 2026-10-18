@@ -73,11 +73,11 @@ function MentorCard({ mentor }: { mentor: Mentor }) {
         <div className="mt-4 flex items-end justify-between gap-2 border-t border-silver-300 pt-3">
           <div>
             <p className="text-lg font-black text-slateblue-900">
-              ¥{mentor.priceSingle}
+              ${mentor.priceSingle}
               <span className="text-xs font-bold text-slateblue-700"> / session</span>
             </p>
             <p className="text-[11px] font-bold text-slateblue-700">
-              5-session package ¥{mentor.pricePackage5}
+              5-session package ${mentor.pricePackage5}
             </p>
           </div>
           <span className="inline-flex items-center gap-1 text-xs font-bold text-coral-600">

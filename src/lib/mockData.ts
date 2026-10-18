@@ -1,4 +1,4 @@
-// ReBloom AI prototype seed data (aligned with spec section 9)
+// HerRise prototype seed data (aligned with spec section 9)
 // Note: this file is used for the front-end prototype; scripts/seed.ts plays the
 // same role once the app is connected to Firestore.
 
@@ -29,7 +29,7 @@ export const COMMUNITY_USERS: UserProfile[] = [
   {
     uid: 'user_zhou',
     name: 'Zhou Min',
-    email: 'zhou.min@rebloom.test',
+    email: 'zhou.min@herrise.test',
     currentRole: 'Freelance Content Editor',
     targetRole: 'AI Operations',
     skills: ['Content Strategy', 'Data Organization', 'Community Operations'],
@@ -57,7 +57,7 @@ export const COMMUNITY_USERS: UserProfile[] = [
   {
     uid: 'user_li',
     name: 'Li Nan',
-    email: 'li.nan@rebloom.test',
+    email: 'li.nan@herrise.test',
     currentRole: 'Cross-border E-commerce Operations',
     targetRole: 'AI Education',
     skills: ['Cross-border Operations', 'Copywriting', 'User Growth'],
@@ -82,7 +82,7 @@ export const COMMUNITY_USERS: UserProfile[] = [
   {
     uid: 'user_su',
     name: 'Su Xiao',
-    email: 'su.xiao@rebloom.test',
+    email: 'su.xiao@herrise.test',
     currentRole: 'HR Specialist',
     targetRole: 'AI Ethics',
     skills: ['Recruiting', 'Organizational Communication', 'Compliance Awareness'],
@@ -116,11 +116,11 @@ export const MENTORS: Mentor[] = [
       'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop&q=80',
     headline: 'Former Big-Tech AI Product Manager · Returning mother',
     bio: 'Led an AI assistant product line at a big tech company and re-planned her career after returning from a second maternity leave. She excels at helping postpartum women translate operations experience into the language of AI products.',
-    companies: ['ByteDance', 'Kuaishou'],
-    schools: ['Zhejiang University'],
+    companies: ['Global AI Platform', 'Tech Startup'],
+    schools: ['National University of Singapore'],
     topicTags: ['AI Product', 'Returning to Work', 'Resume Rewriting', 'Interview Coaching'],
-    priceSingle: 299,
-    pricePackage5: 1299,
+    priceSingle: 49,
+    pricePackage5: 199,
     verified: true,
     verificationStatus: 'seed_approved',
     rating: 4.9,
@@ -155,10 +155,10 @@ export const MENTORS: Mentor[] = [
     headline: 'Women-in-Tech Founder · AI education',
     bio: 'Serial entrepreneur focused on bringing AI education products to market, skilled at zero-to-one product validation and business model design.',
     companies: ['Mingyuan Tech (Founder)'],
-    schools: ['Tsinghua University'],
+    schools: ['University of Melbourne'],
     topicTags: ['Women in Tech', 'AI Education', 'Business Models', 'Fundraising'],
-    priceSingle: 399,
-    pricePackage5: 1799,
+    priceSingle: 59,
+    pricePackage5: 249,
     verified: true,
     verificationStatus: 'seed_approved',
     rating: 4.8,
@@ -193,10 +193,10 @@ export const MENTORS: Mentor[] = [
     headline: 'AI Operations Expert · Early-career mentor',
     bio: 'Expert in AI content and operations, skilled at guiding women with no technical background through their first AI portfolio, patient and with a clear methodology.',
     companies: ['An AI SaaS company'],
-    schools: ['Fudan University'],
+    schools: ['University of Sydney'],
     topicTags: ['AI Operations', 'Portfolio', 'Beginner Onboarding', 'Prompting'],
-    priceSingle: 199,
-    pricePackage5: 899,
+    priceSingle: 39,
+    pricePackage5: 179,
     verified: true,
     verificationStatus: 'seed_approved',
     rating: 4.9,
@@ -227,7 +227,7 @@ export const MENTORS: Mentor[] = [
 export const MENTOR_USERS: UserProfile[] = MENTORS.map((m, i) => ({
   uid: m.userId,
   name: m.displayName,
-  email: `mentor${i + 1}@rebloom.test`,
+  email: `mentor${i + 1}@herrise.test`,
   avatarUrl: m.avatarUrl,
   currentRole: m.headline,
   targetRole: 'AI Mentor',
